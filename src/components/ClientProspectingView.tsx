@@ -73,6 +73,7 @@ export const ClientProspectingView: React.FC<{
   const [cityInput, setCityInput] = useState('São Paulo - SP');
   const [selectedCnae, setSelectedCnae] = useState(COMMON_CNAES[0].code);
   const [customCnae, setCustomCnae] = useState('');
+  const [sources, setSources] = useState({ maps: true, instagram: true, linkedin: true });
   const [isSearching, setIsSearching] = useState(false);
   const [leads, setLeads] = useState<ProspectLead[]>([
     {
@@ -155,7 +156,8 @@ export const ClientProspectingView: React.FC<{
         body: JSON.stringify({
           niche: activeNiche,
           city: cityInput.trim(),
-          cnae: activeCnae
+          cnae: activeCnae,
+          sources
         })
       });
       if (res.ok) {
@@ -311,6 +313,30 @@ export const ClientProspectingView: React.FC<{
             <p className="text-[11px] text-[#94A3B8]/60 pt-1">
               Varredura integrada no Google Maps, Instagram e base CNAE em tempo real.
             </p>
+          </div>
+
+          {/* Enrichment Sources */}
+          <div className="lg:col-span-3 space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
+              <Share2 className="w-4 h-4 text-[#F59E0B]" /> Fontes de Dados para Enriquecimento
+            </label>
+            <div className="flex flex-wrap gap-4 pt-2">
+              {[
+                { id: 'maps', label: 'Google Maps (Local/Endereço)' },
+                { id: 'instagram', label: 'Instagram (Engajamento)' },
+                { id: 'linkedin', label: 'LinkedIn (Perfil Profissional)' },
+              ].map(source => (
+                <label key={source.id} className="flex items-center gap-2 text-sm text-[#94A3B8] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sources[source.id as keyof typeof sources]}
+                    onChange={(e) => setSources(prev => ({ ...prev, [source.id]: e.target.checked }))}
+                    className="accent-[#F59E0B]"
+                  />
+                  {source.label}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 

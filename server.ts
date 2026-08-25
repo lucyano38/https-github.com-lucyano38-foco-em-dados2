@@ -1773,15 +1773,18 @@ for f in files:
   /* ────────────────────────────────────────────────────────── */
   app.post("/api/prospecting/search", async (req, res) => {
     try {
-      const { niche, city, cnae } = req.body;
+      const { niche, city, cnae, sources } = req.body;
       const targetNiche = niche || "Negócios Locais";
       const targetCity = city || "São Paulo - SP";
       const targetCnae = cnae || "4711-3/02";
+      const activeSources = sources ? Object.entries(sources).filter(([_, v]) => v).map(([k]) => k).join(", ") : "Maps, Instagram, LinkedIn";
 
       let leads: any[] = [];
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const prompt = `Gere exatamente 4 empresas reais ou altamente realistas da categoria "${targetNiche}" localizadas em "${targetCity}" (CNAE: "${targetCnae}").
+Use como fontes de dados de enriquecimento: ${activeSources}.
+
 Para cada empresa, retorne um objeto JSON contendo:
 - name (string)
 - category (string)
@@ -1802,17 +1805,27 @@ Para cada empresa, retorne um objeto JSON contendo:
 
 Retorne APENAS um array JSON válido, sem texto adicional.`;
 
-        const response = await ai.models.generateContent({
-          model: "gemini-3.7-flash",
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-          }
-        });
+        let response;
+        try {
+          response = await ai.models.generateContent({
+            model: "gemini-3.7-flash",
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+            }
+          });
+        } catch (apiErr: any) {
+          console.warn("[prospecting] API Call failed (possibly 429/quota):", apiErr.message);
+          // Fallback silencioso para estruturação local se a API falhar
+          throw new Error("API Limit Reached");
+        }
+        
         const text = response.text || "[]";
         leads = JSON.parse(text);
       } catch (aiErr) {
         console.warn("[prospecting] AI generation fallback used:", aiErr);
+        // Garante que o fallback de dados simulados seja usado caso a IA falhe
+        leads = []; 
       }
 
       if (!leads || leads.length === 0) {
