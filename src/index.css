@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Hanken Grotesk", sans-serif;
+  --font-sans: "Manrope", sans-serif;
+  --font-mono: "Geist", monospace;
+
+  --color-app-bg: #121414;
+  --color-app-surface: #1e2020;
+  --color-app-primary: #ffe4af;
+  --color-app-accent: #fabd00;
+}
+
+@layer utilities {
+  .glass-panel {
+    backdrop-filter: blur(24px);
+    background: rgba(13, 14, 15, 0.75);
+    border: 1px solid rgba(250, 189, 0, 0.2);
+  }
+  .glow-hover:hover {
+    box-shadow: 0 0 30px rgba(250, 189, 0, 0.35);
+    border-color: rgba(250, 189, 0, 0.6);
+  }
+  .text-glow {
+    text-shadow: 0 0 15px rgba(255, 228, 175, 0.4);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d0e0f; }
+::-webkit-scrollbar-thumb { background: #4f4632; border-radius: 10px; }

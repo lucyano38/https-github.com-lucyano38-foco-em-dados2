@@ -1,0 +1,8 @@
+{
+  "name": "Gemini AI Data Analyst & Prospector CRM",
+  "description": "Plataforma integrada de Análise de Dados com IA Gemini, OpenSquad de Prospecção Multi-Agente (PM, Hunter, Dev, Copywriter, QA), CRM com Pipeline Kanban, Comparador Antes/Depois, Minutas de Contrato e Previsão de MRR em D3.js.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

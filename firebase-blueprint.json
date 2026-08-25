@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "CRM Lead entity",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "nome": { "type": "string" },
+        "empresa": { "type": "string" },
+        "email": { "type": "string" },
+        "telefone": { "type": "string" },
+        "status": { "type": "string" },
+        "valor": { "type": "number" },
+        "dataProposta": { "type": "string" }
+      },
+      "required": ["slug", "nome"]
+    },
+    "AnalysisReport": {
+      "title": "AnalysisReport",
+      "description": "AI Analysis Report entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "dataset_name": { "type": "string" },
+        "question": { "type": "string" },
+        "title": { "type": "string" },
+        "executive_summary": { "type": "string" },
+        "generated_at": { "type": "string" }
+      },
+      "required": ["id", "title"]
+    }
+  },
+  "firestore": {
+    "/crm_leads/{leadId}": {
+      "schema": "Lead",
+      "description": "CRM leads collection"
+    },
+    "/analysis_reports/{reportId}": {
+      "schema": "AnalysisReport",
+      "description": "AI analysis reports collection"
+    }
+  }
+}
