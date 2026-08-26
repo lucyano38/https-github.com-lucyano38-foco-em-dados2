@@ -13,7 +13,7 @@ import { AnalysisReport } from '../types';
 
 // Initialize Firebase if not already initialized
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
+export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
 
 const REPORTS_COLLECTION = 'analysis_reports';
 

@@ -59,13 +59,13 @@ const STATUS_CONFIG: Record<
   LeadStatus,
   { label: string; color: string; bg: string; border: string }
 > = {
-  novo: { label: 'Novo Lead', color: 'text-slate-700', bg: 'bg-slate-100', border: 'border-slate-300' },
-  redesenhado: { label: 'Redesenhado', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-300' },
-  publicado: { label: 'Publicado', color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-300' },
-  proposta: { label: 'Proposta Enviada', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-300' },
-  respondeu: { label: 'Respondeu', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-300' },
-  fechado: { label: 'Fechado', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-300' },
-  descartado: { label: 'Descartado', color: 'text-neutral-500', bg: 'bg-neutral-100', border: 'border-neutral-300' },
+  novo: { label: 'Novo Lead', color: 'text-serenity-charcoal', bg: 'bg-serenity-cream', border: 'border-serenity-charcoal/20' },
+  redesenhado: { label: 'Redesenhado', color: 'text-serenity-rose', bg: 'bg-serenity-rose/10', border: 'border-serenity-rose/30' },
+  publicado: { label: 'Publicado', color: 'text-serenity-sage', bg: 'bg-serenity-sage/10', border: 'border-serenity-sage/30' },
+  proposta: { label: 'Proposta Enviada', color: 'text-serenity-gold', bg: 'bg-serenity-gold/10', border: 'border-serenity-gold/30' },
+  respondeu: { label: 'Respondeu', color: 'text-serenity-charcoal', bg: 'bg-serenity-cream', border: 'border-serenity-charcoal/20' },
+  fechado: { label: 'Fechado', color: 'text-serenity-sage', bg: 'bg-serenity-sage/10', border: 'border-serenity-sage/30' },
+  descartado: { label: 'Descartado', color: 'text-serenity-charcoal', bg: 'bg-neutral-100', border: 'border-neutral-300' },
 };
 
 const KANBAN_COLUMNS: LeadStatus[] = [
@@ -319,9 +319,9 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
   return (
     <div className="flex-1 flex flex-col h-full bg-neutral-100 text-neutral-900 overflow-hidden font-sans">
       {/* Top Header Controls */}
-      <div className="bg-white border-b border-neutral-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
+      <div className="bg-white border-b border-serenity-rose/20 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-serenity-rose to-serenity-gold text-white flex items-center justify-center shadow-xs">
             <Kanban className="w-5 h-5" />
           </div>
           <div>
@@ -389,7 +389,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
       {/* Main App Layout: Sidebar Tabs + View Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Navigation Sidebar */}
-        <aside className="w-60 bg-neutral-900 text-neutral-300 p-3.5 flex flex-col justify-between shrink-0 border-r border-neutral-800">
+        <aside className="w-60 bg-serenity-charcoal text-serenity-cream/80 p-3.5 flex flex-col justify-between shrink-0 border-r border-serenity-charcoal">
           <nav className="space-y-1">
             {[
               { id: 'geral', label: 'Visão Geral & Funil', icon: LayoutGrid, count: null },
@@ -413,10 +413,10 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
                   onClick={() => setView(item.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition ${
                     active
-                      ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                      ? 'bg-serenity-gold text-white font-semibold shadow-xs'
                       : item.highlight
-                      ? 'bg-blue-950/40 text-blue-300 hover:bg-blue-900/50 border border-blue-800/40'
-                      : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
+                      ? 'bg-serenity-gold/20 text-serenity-gold hover:bg-serenity-gold/30 border border-serenity-gold/20'
+                      : 'text-serenity-cream/70 hover:bg-serenity-cream/10 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">

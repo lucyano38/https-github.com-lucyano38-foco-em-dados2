@@ -1,28 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Hanken Grotesk", sans-serif;
-  --font-sans: "Manrope", sans-serif;
+  --font-display: "Cormorant Garamond", serif;
+  --font-sans: "Montserrat", sans-serif;
   --font-mono: "Geist", monospace;
 
-  --color-app-bg: #121414;
-  --color-app-surface: #1e2020;
-  --color-app-primary: #ffe4af;
-  --color-app-accent: #fabd00;
+  --color-app-bg: #FFF5F5;
+  --color-app-surface: #FFFFFF;
+  --color-app-primary: #E8B4B8;
+  --color-app-secondary: #A8D5BA;
+  --color-app-cta: #D4AF37;
+  --color-app-text: #2D3436;
 }
 
 @layer utilities {
   .glass-panel {
-    backdrop-filter: blur(24px);
-    background: rgba(13, 14, 15, 0.75);
-    border: 1px solid rgba(250, 189, 0, 0.2);
-  }
-  .glow-hover:hover {
-    box-shadow: 0 0 30px rgba(250, 189, 0, 0.35);
-    border-color: rgba(250, 189, 0, 0.6);
-  }
-  .text-glow {
-    text-shadow: 0 0 15px rgba(255, 228, 175, 0.4);
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(232, 180, 184, 0.2);
   }
 }
 

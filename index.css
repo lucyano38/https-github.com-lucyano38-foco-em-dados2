@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-serenity-rose: #E8B4B8;
+  --color-serenity-sage: #A8D5BA;
+  --color-serenity-gold: #D4AF37;
+  --color-serenity-cream: #FFF5F5;
+  --color-serenity-charcoal: #2D3436;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-serenity-cream);
+    color: var(--color-serenity-charcoal);
+  }
+}

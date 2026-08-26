@@ -622,7 +622,14 @@ async function startServer() {
       return res.status(400).json({ error: "Provide at least one CSV file." });
     }
 
-    console.log(`[analyze] Skipping daily quota tracking as requested.`);
+    console.log(`[analyze] Checking daily quota.`);
+    
+    const userHash = await getUserHash(req);
+    const count = getQuotaCount(userHash);
+    if (count >= 5) {
+      return res.status(429).json({ error: "Limite diário de 5 prospecções/análises atingido." });
+    }
+    incrementQuotaCount(userHash);
 
     const effectiveDatasetName = datasetName;
 
@@ -1699,6 +1706,30 @@ for f in files:
     }
   });
 
+  const QUOTA_LIMIT = 5;
+
+  app.get("/api/nearby-search", async (req, res) => {
+    try {
+      const userHash = await getUserHash(req);
+      const count = getQuotaCount(userHash);
+      if (count >= QUOTA_LIMIT) {
+        return res.status(429).json({ error: "Limite diário de 5 pesquisas atingido." });
+      }
+
+      const { lat, lng, radius, type } = req.query;
+      if (!process.env.GOOGLE_MAPS_API_KEY) {
+        return res.status(500).json({ error: "API Key not configured" });
+      }
+      const response = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
+      const data = await response.json();
+      
+      incrementQuotaCount(userHash);
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/slides", async (req, res) => {
     try {
       const { report } = req.body;
@@ -1814,6 +1845,20 @@ Retorne APENAS um array JSON válido, sem texto adicional.`;
               responseMimeType: "application/json",
             }
           });
+          leads = JSON.parse(response.text || "[]");
+          
+          // Trigger OpenSquad mission
+          try {
+            await runOpenSquadMission({
+              cardId: 'prospect_hunt',
+              niche: targetNiche,
+              city: targetCity,
+              crmLeads: leads
+            });
+            console.log("[prospecting] OpenSquad mission triggered automatically.");
+          } catch (squadErr) {
+            console.error("[prospecting] Failed to trigger OpenSquad mission:", squadErr);
+          }
         } catch (apiErr: any) {
           console.warn("[prospecting] API Call failed (possibly 429/quota):", apiErr.message);
           // Fallback silencioso para estruturação local se a API falhar
@@ -2018,16 +2063,8 @@ Retorne APENAS um array JSON válido, sem texto adicional.`;
               ⚠️
             </div>
             <h3 class="text-sm font-bold text-white">Site Original Inacessível ou Bloqueado</h3>
-            <p class="text-xs text-neutral-400 leading-relaxed">
-              O site atual em <span class="font-mono text-amber-300 break-all">${targetUrl}</span> está com lentidão, sem certificado SSL válido ou bloqueando conexões externas.
-            </p>
-            <div class="p-3 bg-neutral-950 rounded-xl border border-neutral-800 text-[11px] text-neutral-400 space-y-1">
-              <div class="text-emerald-400 font-bold">💡 Argumento de Venda / Fechamento:</div>
-              <div>Esta falha técnica comprova para o cliente a urgência de migrar para a nova versão modernizada de alta velocidade!</div>
-            </div>
-            <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-semibold border border-neutral-700 transition">
-              Tentar Abrir em Nova Aba ↗
-            </a>
+            <p class="text-xs text-neutral-400 leading-relaxed">O endereço <strong>${targetUrl}</strong> está inacessível no momento.</p>
+            <p class="text-[10px] text-neutral-600">Erro: ${err.message}</p>
           </div>
         </body>
         </html>

@@ -13,12 +13,13 @@ import {
   Plus,
   ArrowRight,
   Share2,
-  MessageSquare,
   Instagram,
   Linkedin,
   Compass,
   FileCode
 } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../lib/firestore';
 
 interface ProspectLead {
   id: string;
@@ -71,6 +72,7 @@ export const ClientProspectingView: React.FC<{
   const [selectedNiche, setSelectedNiche] = useState(COMMON_NICHES[0]);
   const [customNiche, setCustomNiche] = useState('');
   const [cityInput, setCityInput] = useState('São Paulo - SP');
+  const [radius, setRadius] = useState('5000');
   const [selectedCnae, setSelectedCnae] = useState(COMMON_CNAES[0].code);
   const [customCnae, setCustomCnae] = useState('');
   const [sources, setSources] = useState({ maps: true, instagram: true, linkedin: true });
@@ -150,6 +152,37 @@ export const ClientProspectingView: React.FC<{
     }
     setIsSearching(true);
     try {
+      let foundLeads: ProspectLead[] = [];
+      if (radius && parseInt(radius) > 0) {
+        // Mock geolocation for now - in a real app, use Geolocation API
+        const lat = -23.5505; // São Paulo
+        const lng = -46.6333;
+        const res = await fetch(`/api/nearby-search?lat=${lat}&lng=${lng}&radius=${radius}&type=spa`);
+        const data = await res.json();
+        if (data.results) {
+          foundLeads = data.results.map((place: any) => ({
+            id: place.place_id,
+            name: place.name,
+            category: 'spa',
+            city: cityInput,
+            phone: 'N/A',
+            email: 'N/A',
+            rating: place.rating || 0,
+            reviewsCount: place.user_ratings_total || 0,
+            revenueEst: 'N/A',
+            websiteStatus: 'N/A',
+            address: place.vicinity
+          }));
+          // Automatically save to Firestore
+          foundLeads.forEach(async (lead) => {
+            try {
+                await addDoc(collection(db, 'leads'), lead);
+            } catch (err) {
+                console.error('Error saving lead to Firestore:', err);
+            }
+          });
+        }
+      }
       const res = await fetch('/api/prospecting/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -213,29 +246,29 @@ export const ClientProspectingView: React.FC<{
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-8 p-4 md:p-8 font-['Inter'] bg-[#0F172A] text-[#F8FAFC]">
+    <div className="max-w-[1440px] mx-auto space-y-10 p-4 md:p-8 font-sans bg-[#FFF5F5] text-[#2D3436]">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[#1E293B] border border-[#334155] p-6 rounded-3xl shadow-xl">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-lg border border-serenity-rose/30">
         <div>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="bg-[#F59E0B]/10 border border-[#F59E0B]/30 text-[#F59E0B] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5 text-[#F59E0B]" /> Google Maps, Instagram & CNAE Intelligence
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="bg-serenity-sage/20 text-serenity-charcoal px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <Compass className="w-4 h-4" /> Inteligência de Mercado
             </span>
-            <span className="bg-blue-500/10 border border-blue-500/30 text-blue-300 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Auto-Redesign Ativo
+            <span className="bg-serenity-rose/20 text-serenity-charcoal px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <Sparkles className="w-4 h-4" /> Automação de Redesign
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#F8FAFC]">
-            Prospecção Multicanal B2B & Busca por CNAE
+          <h1 className="text-4xl font-display text-serenity-charcoal">
+            Prospecção Multicanal B2B
           </h1>
-          <p className="text-xs md:text-sm text-[#94A3B8] mt-1 max-w-2xl">
-            Busque empresas cruzando dados do Google Maps (Avaliações, Endereço), Instagram (Engajamento, Seguidores), LinkedIn e Receita Federal (CNAE), enviando leads diretamente para o CRM com o Redesign pré-configurado.
+          <p className="text-sm text-serenity-charcoal/70 mt-2 max-w-2xl font-sans">
+            Enriqueça leads cruzando dados de redes sociais, mapas e CNAE, com automação direta para CRM e túneis de redesign.
           </p>
         </div>
         {onNavigateToCrm && (
           <button
             onClick={onNavigateToCrm}
-            className="px-5 py-3 rounded-xl bg-[#F59E0B] text-[#0F172A] font-bold text-xs hover:bg-[#d9822b] transition shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-pointer flex items-center gap-2 shrink-0"
+            className="px-8 py-4 rounded-2xl bg-serenity-gold text-white font-display font-bold text-sm hover:bg-serenity-gold/80 transition shadow-lg flex items-center gap-2 shrink-0"
           >
             Acessar CRM & Redesign Túnel <ArrowRight className="w-4 h-4" />
           </button>
@@ -243,12 +276,12 @@ export const ClientProspectingView: React.FC<{
       </div>
 
       {/* Search Filter Form */}
-      <form onSubmit={handleSearch} className="bg-[#1E293B] border border-[#334155] p-6 rounded-3xl shadow-xl space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <form onSubmit={handleSearch} className="bg-white p-8 rounded-3xl shadow-lg border border-serenity-rose/30 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Niche Selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-[#F59E0B]" /> Nicho de Mercado
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-serenity-rose" /> Nicho de Mercado
             </label>
             <select
               value={selectedNiche}
@@ -256,25 +289,18 @@ export const ClientProspectingView: React.FC<{
                 setSelectedNiche(e.target.value);
                 setCustomNiche('');
               }}
-              className="w-full bg-[#0F172A] border border-[#334155] rounded-xl px-4 py-3 text-sm text-[#F8FAFC] focus:outline-none focus:border-[#F59E0B]"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
             >
               {COMMON_NICHES.map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
-            <input
-              type="text"
-              placeholder="Ou digite nicho personalizado..."
-              value={customNiche}
-              onChange={(e) => setCustomNiche(e.target.value)}
-              className="w-full bg-[#0F172A] border border-[#334155] rounded-xl px-4 py-2.5 text-xs text-[#F8FAFC] placeholder-[#94A3B8]/40 focus:outline-none focus:border-[#F59E0B] mt-2"
-            />
           </div>
 
           {/* CNAE Selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
-              <FileCode className="w-4 h-4 text-[#F59E0B]" /> Código ou Descrição CNAE
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
+              <FileCode className="w-4 h-4 text-serenity-rose" /> Código ou Descrição CNAE
             </label>
             <select
               value={selectedCnae}
@@ -282,56 +308,60 @@ export const ClientProspectingView: React.FC<{
                 setSelectedCnae(e.target.value);
                 setCustomCnae('');
               }}
-              className="w-full bg-[#0F172A] border border-[#334155] rounded-xl px-4 py-3 text-sm text-[#F8FAFC] focus:outline-none focus:border-[#F59E0B]"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
             >
               {COMMON_CNAES.map((c) => (
                 <option key={c.code} value={c.code}>{c.code} - {c.desc}</option>
               ))}
             </select>
-            <input
-              type="text"
-              placeholder="Ou digite CNAE (ex: 8630-5/03)..."
-              value={customCnae}
-              onChange={(e) => setCustomCnae(e.target.value)}
-              className="w-full bg-[#0F172A] border border-[#334155] rounded-xl px-4 py-2.5 text-xs text-[#F8FAFC] placeholder-[#94A3B8]/40 focus:outline-none focus:border-[#F59E0B] mt-2"
-            />
           </div>
 
           {/* City Input */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-[#F59E0B]" /> Cidade / Estado
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-serenity-rose" /> Cidade / Estado
             </label>
             <input
               type="text"
               required
-              placeholder="Ex: São Paulo - SP, Campinas - SP"
+              placeholder="Ex: São Paulo - SP"
               value={cityInput}
               onChange={(e) => setCityInput(e.target.value)}
-              className="w-full bg-[#0F172A] border border-[#334155] rounded-xl px-4 py-3 text-sm text-[#F8FAFC] placeholder-[#94A3B8]/40 focus:outline-none focus:border-[#F59E0B]"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
             />
-            <p className="text-[11px] text-[#94A3B8]/60 pt-1">
-              Varredura integrada no Google Maps, Instagram e base CNAE em tempo real.
-            </p>
+          </div>
+
+          {/* Radius Input */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-serenity-rose" /> Raio (km)
+            </label>
+            <input
+              type="number"
+              placeholder="Ex: 5"
+              value={Math.round(parseInt(radius) / 1000)}
+              onChange={(e) => setRadius((parseInt(e.target.value) * 1000).toString())}
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
+            />
           </div>
 
           {/* Enrichment Sources */}
-          <div className="lg:col-span-3 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
-              <Share2 className="w-4 h-4 text-[#F59E0B]" /> Fontes de Dados para Enriquecimento
+          <div className="lg:col-span-4 space-y-3">
+            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-serenity-rose" /> Fontes de Dados
             </label>
-            <div className="flex flex-wrap gap-4 pt-2">
+            <div className="flex flex-wrap gap-6 pt-2">
               {[
-                { id: 'maps', label: 'Google Maps (Local/Endereço)' },
-                { id: 'instagram', label: 'Instagram (Engajamento)' },
-                { id: 'linkedin', label: 'LinkedIn (Perfil Profissional)' },
+                { id: 'maps', label: 'Google Maps' },
+                { id: 'instagram', label: 'Instagram' },
+                { id: 'linkedin', label: 'LinkedIn' },
               ].map(source => (
-                <label key={source.id} className="flex items-center gap-2 text-sm text-[#94A3B8] cursor-pointer">
+                <label key={source.id} className="flex items-center gap-3 text-sm text-serenity-charcoal/80 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={sources[source.id as keyof typeof sources]}
                     onChange={(e) => setSources(prev => ({ ...prev, [source.id]: e.target.checked }))}
-                    className="accent-[#F59E0B]"
+                    className="accent-serenity-gold w-4 h-4"
                   />
                   {source.label}
                 </label>
@@ -340,17 +370,17 @@ export const ClientProspectingView: React.FC<{
           </div>
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-6 border-t border-serenity-rose/20">
           <button
             type="submit"
             disabled={isSearching}
-            className="px-8 py-3.5 rounded-xl bg-[#F59E0B] text-[#0F172A] font-bold text-sm hover:scale-105 transition shadow-[0_0_25px_rgba(245,158,11,0.4)] cursor-pointer flex items-center gap-2 disabled:opacity-50"
+            className="px-10 py-4 rounded-2xl bg-serenity-gold text-white font-display font-bold text-sm hover:bg-serenity-gold/80 transition shadow-lg cursor-pointer flex items-center gap-3 disabled:opacity-50"
           >
             {isSearching ? (
-              <>Varrendo Google Maps, Instagram & CNAE...</>
+              <>Varrendo dados...</>
             ) : (
               <>
-                <Search className="w-4 h-4" /> Disparar Prospecção Multicanal
+                <Search className="w-4 h-4" /> Iniciar Prospecção
               </>
             )}
           </button>
@@ -358,15 +388,12 @@ export const ClientProspectingView: React.FC<{
       </form>
 
       {/* Results Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h2 className="text-xl font-bold text-[#F8FAFC]">
-            Empresas Descobertas ({leads.length}) • Nicho: "{activeNiche}" em {cityInput}
-          </h2>
-          <span className="text-xs text-[#94A3B8] font-mono">Prontas para Redesign & CRM</span>
-        </div>
+      <div className="space-y-6">
+        <h2 className="text-2xl font-display text-serenity-charcoal">
+          Empresas Descobertas ({leads.length})
+        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {leads.map((lead) => {
             const isAdded = addedIds[lead.id];
             return (
@@ -374,84 +401,54 @@ export const ClientProspectingView: React.FC<{
                 key={lead.id}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#1E293B] border border-[#334155] p-6 rounded-3xl shadow-xl flex flex-col justify-between hover:border-[#F59E0B]/50 transition space-y-4"
+                className="bg-white p-8 rounded-3xl shadow-md border border-serenity-rose/20 flex flex-col justify-between hover:border-serenity-gold/50 transition"
               >
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#F59E0B] bg-[#F59E0B]/10 px-2.5 py-1 rounded-full border border-[#F59E0B]/20">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-serenity-rose bg-serenity-cream px-3 py-1 rounded-full border border-serenity-rose/30">
                         CNAE: {lead.cnaeCode || activeCnae}
                       </span>
-                      <h3 className="text-lg font-bold text-[#F8FAFC] mt-2">
+                      <h3 className="text-xl font-display text-serenity-charcoal mt-3">
                         {lead.name}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-1 bg-[#0F172A] px-2 py-1 rounded-lg border border-[#334155] text-xs text-[#F8FAFC]">
-                      <Star className="w-3.5 h-3.5 text-[#F59E0B] fill-[#F59E0B]" />
+                    <div className="flex items-center gap-1.5 bg-serenity-cream px-3 py-1 rounded-full text-xs font-semibold text-serenity-charcoal">
+                      <Star className="w-4 h-4 text-serenity-gold fill-serenity-gold" />
                       <span>{lead.rating}</span>
-                      <span className="text-[10px] text-[#94A3B8]">({lead.reviewsCount || 120})</span>
                     </div>
                   </div>
 
-                  {/* Multi-Source Badges (Maps, Instagram, LinkedIn) */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <div className="bg-[#0F172A] px-3 py-2 rounded-xl border border-[#334155] flex items-center gap-2">
-                      <Instagram className="w-3.5 h-3.5 text-pink-400 shrink-0" />
-                      <div className="truncate">
-                        <div className="text-[11px] font-bold text-[#F8FAFC] truncate">{lead.instagram || '@empresa'}</div>
-                        <div className="text-[9px] text-[#94A3B8]">{lead.instagramFollowers || '10k'} seg.</div>
-                      </div>
-                    </div>
-                    <div className="bg-[#0F172A] px-3 py-2 rounded-xl border border-[#334155] flex items-center gap-2">
-                      <Linkedin className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                      <div className="truncate">
-                        <div className="text-[11px] font-bold text-[#F8FAFC] truncate">LinkedIn</div>
-                        <div className="text-[9px] text-[#94A3B8]">{lead.linkedinSize || '11-50 func.'}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-[#94A3B8] pt-2 border-t border-[#334155]">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <div className="space-y-2 text-sm text-serenity-charcoal/80 font-sans">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-4 h-4 text-serenity-sage" />
                       <span className="truncate">{lead.address || lead.city}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-4 h-4 text-serenity-sage" />
                       <span>{lead.phone}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-serenity-sage" />
                       <span className="truncate">{lead.email}</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#0F172A] p-3 rounded-2xl border border-[#334155] space-y-1 text-xs">
-                    <div className="flex justify-between text-[#94A3B8]">
-                      <span>Faturamento Est.:</span>
-                      <span className="font-semibold text-[#F8FAFC]">{lead.revenueEst}</span>
-                    </div>
-                    <div className="flex justify-between text-[#94A3B8]">
-                      <span>Diagnóstico Web:</span>
-                      <span className="font-semibold text-[#F59E0B]">{lead.websiteStatus}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-8">
                   {isAdded ? (
                     <button
                       disabled
-                      className="w-full py-3 rounded-xl bg-green-500/20 border border-green-500/40 text-green-300 font-bold text-xs flex items-center justify-center gap-2 cursor-default"
+                      className="w-full py-4 rounded-2xl bg-serenity-sage/20 text-serenity-charcoal font-bold text-sm flex items-center justify-center gap-2 cursor-default"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-green-400" /> Adicionado & Redesenho Ativo
+                      <CheckCircle2 className="w-5 h-5 text-serenity-sage" /> Lead Adicionado
                     </button>
                   ) : (
                     <button
                       onClick={() => handleAddToCrm(lead)}
-                      className="w-full py-3 rounded-xl bg-[#F59E0B] text-[#0F172A] font-bold text-xs hover:bg-[#d9822b] transition shadow-[0_0_15px_rgba(245,158,11,0.2)] cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-4 rounded-2xl bg-serenity-charcoal text-white font-display font-bold text-sm hover:bg-serenity-charcoal/80 transition shadow-md cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <Plus className="w-4 h-4" /> Adicionar ao CRM & Ativar Redesign
+                      <Plus className="w-4 h-4" /> Adicionar ao CRM
                     </button>
                   )}
                 </div>

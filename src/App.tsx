@@ -36,6 +36,7 @@ import { EvoluaDemoDashboard } from './components/EvoluaDemoDashboard';
 import { ClientProspectingView } from './components/ClientProspectingView';
 import { AutomatedIndicatorsView } from './components/AutomatedIndicatorsView';
 import { CookieBanner } from './components/CookieBanner';
+import { useAuth } from './components/AuthProvider';
 
 
 
@@ -210,10 +211,24 @@ function environmentIdFromInteraction(interaction: any): string | null {
 }
 
 const App: React.FC = () => {
+  const { user, signInWithGoogle, signInWithGithub } = useAuth();
   const [showLanding, setShowLanding] = useState(true);
   const [ecosystemMode, setEcosystemMode] = useState<'analytics' | 'crm' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators'>('analytics');
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [appLeads, setAppLeads] = useState<any[]>([]);
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0F172A] text-[#F8FAFC] p-6 text-center">
+        <h1 className="text-4xl font-bold mb-8">Bem-vindo ao Foco em Dados</h1>
+        <p className="mb-8 text-neutral-400">Entre para acessar o ecossistema completo.</p>
+        <div className="flex gap-4">
+          <button onClick={signInWithGoogle} className="bg-white text-black px-6 py-3 rounded-lg font-bold">Login com Google</button>
+          <button onClick={signInWithGithub} className="bg-neutral-800 text-white px-6 py-3 rounded-lg font-bold">Login com GitHub</button>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch leads for OpenSquad and CRM sync
   const fetchAppLeads = async () => {
@@ -300,8 +315,7 @@ const App: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           datasetName,
-          columns: firstFile?.content ? firstFile.content.split('\n')[0].split(',') : [],
-          sampleRows: firstFile?.content ? firstFile.content.split('\n').slice(1, 4).join('\n') : '',
+          sampleData: (firstFile?.content || ''),
         }),
       });
       const data = await res.json();
