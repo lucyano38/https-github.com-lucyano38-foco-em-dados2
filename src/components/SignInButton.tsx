@@ -8,7 +8,7 @@ interface Props {
 export const SignInButton: React.FC<Props> = ({ onClick }) => (
   <button 
     onClick={onClick}
-    className="gsi-material-button flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+    className="gsi-material-button flex items-center gap-2 px-4 py-2.5 border border-[#4f4632]/60 bg-[#1e2020] rounded-xl text-[#f8fafc] text-sm font-medium hover:bg-[#292a2a] hover:border-[#ffc107]/50 transition shadow-lg"
   >
     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5">
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
