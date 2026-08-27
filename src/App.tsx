@@ -867,6 +867,7 @@ const App: React.FC = () => {
           setEcosystemMode(mode);
           setShowLanding(false);
         }}
+        onUploadFile={() => {}}
       />
     );
   }
