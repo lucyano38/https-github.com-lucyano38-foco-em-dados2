@@ -916,23 +916,21 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-[#0f172a] text-[#f4f4f5] font-sans flex flex-col pb-12">
       {/* TopNavBar - moderna estilo Landing */}
-      <nav className="fixed top-0 w-full z-50 h-16 bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border-b border-[#334155] shadow-lg">
-        <div className="flex justify-between items-center px-6 md:px-16 py-4 max-w-[1440px] mx-auto gap-4">
+      <nav className="fixed top-0 w-full z-50 h-16 glass-panel border-b border-white/[0.08] shadow-[0_1px_0_rgba(255,255,255,0.05)]">
+        <div className="flex justify-between items-center px-6 md:px-10 h-16 max-w-[1440px] mx-auto gap-3">
           {/* Esquerda: Logo + Badge */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#eab308] to-[#3b82f6] flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-              <Zap className="w-4 h-4 text-[#0f172a] fill-[#0f172a]" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#d4a574] to-[#c89556] flex items-center justify-center shadow-[0_0_15px_rgba(212,165,116,0.30)]">
+              <Zap className="w-4 h-4 text-[#1c1917] fill-[#1c1917]" />
             </div>
             <button
               onClick={() => setShowLanding(true)}
-              className="font-['Hanken_Grotesk'] text-lg md:text-xl font-extrabold text-[#f8fafc] tracking-tight hover:underline cursor-pointer"
+              className="font-display text-lg md:text-2xl font-semibold text-[#f5f1e8] tracking-tight hover:underline cursor-pointer"
               title="Voltar para a página inicial"
             >
               Foco em Dados
             </button>
-            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#eab308]/20 text-[#eab308] border border-[#eab308]/30 uppercase tracking-wider">
-              PRO
-            </span>
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#d4a574]/10 text-[#d4a574] border border-[#d4a574]/20 uppercase tracking-widest">PRO</span>
           </div>
 
           {/* Centro: Barra de pesquisa */}
@@ -949,9 +947,9 @@ const App: React.FC = () => {
 
           {/* Direita: 3 abas principais + Sign in */}
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setEcosystemMode('analytics')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='analytics'?'bg-[#eab308] text-[#0f172a]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Análise de Dados</button>
-            <button onClick={() => setEcosystemMode('prospecting')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='prospecting'?'bg-[#eab308] text-[#0f172a]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Prospecção & Redesign</button>
-            <button onClick={() => setEcosystemMode('crm')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='crm'?'bg-[#eab308] text-[#0f172a]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>CRM Kanban</button>
+            <button onClick={() => setEcosystemMode('analytics')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='analytics'?'bg-[#d4a574] text-[#1c1917]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Análise de Dados</button>
+            <button onClick={() => setEcosystemMode('prospecting')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='prospecting'?'bg-[#d4a574] text-[#1c1917]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Prospecção & Redesign</button>
+            <button onClick={() => setEcosystemMode('crm')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='crm'?'bg-[#d4a574] text-[#1c1917]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>CRM Kanban</button>
             <SignInButton onClick={handleLogin} />
           </div>
         </div>

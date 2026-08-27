@@ -1,0 +1,40 @@
+{
+  "dataset": "prospector-leads.json",
+  "records": 6,
+  "columns": [
+    "slug",
+    "nome",
+    "nicho",
+    "cidade",
+    "status",
+    "valor",
+    "manutencao",
+    "contratoStatus"
+  ],
+  "categories": [
+    "Arquitetura & Design",
+    "Automotivo & Serviços",
+    "Direito Tributário & Civil",
+    "Odontologia & Estética",
+    "Restaurante & Gastronomia",
+    "Saúde & Bem-estar"
+  ],
+  "cities": [
+    "Barueri / SP",
+    "Campinas / SP",
+    "Curitiba / PR",
+    "Florianópolis / SC",
+    "Gramado / RS",
+    "São Paulo / SP"
+  ],
+  "status_counts": {
+    "fechado": 1,
+    "proposta": 1,
+    "respondeu": 1,
+    "publicado": 1,
+    "redesenhado": 1,
+    "novo": 1
+  },
+  "avg_value": 1058,
+  "date_generated": "2026-08-27"
+}

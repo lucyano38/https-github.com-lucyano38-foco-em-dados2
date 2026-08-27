@@ -1,44 +1,104 @@
 @import "tailwindcss";
 
+/* IMPECCABLE: tokens humanos — não preto puro, não cinza frio puro */
 @theme {
-  --font-display: "Hanken Grotesk", sans-serif;
-  --font-sans: "Manrope", sans-serif;
-  --font-mono: "Geist", monospace;
+  --font-display: "Cormorant Garamond", "EB Garamond", serif;
+  --font-sans: "Inter", "Geist", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-  /* Modern Slate / Zinc dark theme */
-  --color-app-bg: #0f172a;
-  --color-app-surface: #18181b;
-  --color-app-card: #1e293b;
-  --color-app-border: #27272a;
-  --color-app-text: #f4f4f5;
-  --color-app-muted: #94a3b8;
-  --color-app-primary: #eab308;
-  --color-app-cta: #facc15;
+  /* Superfície: zinc com micro-subtom sépia/quente */
+  --color-app-bg: #0a0908;           /* sépia profundo, não preto puro */
+  --color-app-surface: #18181b;      /* zinc enriquecido */
+  --color-app-card: #1f1d1a;         /* mais quente que zinc puro */
+  --color-app-border: rgba(255,255,255,0.08);
+  --color-app-text: #f5f1e8;         /* off-white com tom papel */
+  --color-app-muted: #a1a1aa;
+  --color-app-primary: #d4a574;      /* dourado Champagne (não amarelo neon) */
+  --color-app-cta: #c89556;
+  --color-app-ink: #1c1917;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    background: var(--color-app-bg);
+    color: var(--color-app-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.6;
+  }
+  h1,h2,h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.018em;
+    line-height: 1.15;
+    color: #f5f1e8;
+  }
+  h1 { font-weight: 600; }
+  h2,h3 { font-weight: 500; }
 }
 
 @layer utilities {
   .glass-panel {
-    backdrop-filter: blur(24px);
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(51, 65, 85, 0.3);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    background: rgba(24, 24, 24, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
-  .glow-hover:hover {
-    box-shadow: 0 0 30px rgba(234, 179, 8, 0.35);
-    border-color: rgba(234, 179, 8, 0.6);
+  .card-tactile {
+    background: linear-gradient(180deg, #1f1d1a 0%, #18181b 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    transition: all 0.2s ease-in-out;
   }
-  .text-glow {
-    text-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+  .card-tactile:hover {
+    border-color: rgba(212, 165, 116, 0.25);
+    transform: translateY(-1px);
+  }
+  .btn-primary {
+    background: linear-gradient(180deg, #d4a574 0%, #c89556 100%);
+    color: #1c1917;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  .btn-primary:hover { filter: brightness(1.05); }
+  .btn-primary:active { transform: translateY(0.5px); }
+  .btn-ghost {
+    background: transparent;
+    color: #d4d4d8;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease-in-out;
+  }
+  .btn-ghost:hover {
+    color: #f5f1e8;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .input-human {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f5f1e8;
+    border-radius: 10px;
+    padding: 0.625rem 0.875rem;
+    transition: all 0.2s ease-in-out;
+  }
+  .input-human:focus {
+    outline: none;
+    border-color: rgba(212, 165, 116, 0.5);
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.animate-float { animation: float 6s ease-in-out infinite; }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+::-webkit-scrollbar-track { background: #0a0908; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }

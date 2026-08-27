@@ -1,0 +1,7 @@
+slug,nome,nicho,cidade,status,valor,manutencao,contratoStatus,score_redesign
+clinica-odonto-alphaville,Clínica Odonto Prime Alphaville,Odontologia & Estética,Barueri / SP,fechado,1200,190,assinado,100
+escritorio-advocacia-martins,Martins & Associados Advocacia,Direito Tributário & Civil,São Paulo / SP,proposta,1500,250,enviado,80
+studio-arquitetura-lumina,Lúmina Arquitetura & Interiores,Arquitetura & Design,Campinas / SP,respondeu,1100,150,pendente,60
+auto-mecanica-vortex,Vortex Centro Automotivo Premium,Automotivo & Serviços,Curitiba / PR,publicado,850,120,pendente,60
+bistro-terroir-gastronomia,Bistrô Terroir & Vinhos,Restaurante & Gastronomia,Gramado / RS,redesenhado,950,150,pendente,60
+espaco-zen-fisioterapia,Espaço Zen Pilates & Fisioterapia,Saúde & Bem-estar,Florianópolis / SC,novo,750,100,pendente,60
