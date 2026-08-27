@@ -246,22 +246,22 @@ export const ClientProspectingView: React.FC<{
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-10 p-4 md:p-8 font-sans bg-[#FFF5F5] text-[#2D3436]">
+    <div className="max-w-[1440px] mx-auto space-y-10 p-4 md:p-8 font-sans bg-[#0f172a] text-[#f4f4f5]">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-[#1e293b] p-8 rounded-3xl shadow-xl border border-[#334155]">
         <div>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className="bg-serenity-sage/20 text-serenity-charcoal px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+            <span className="bg-[#22c55e]/20 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
               <Compass className="w-4 h-4" /> Inteligência de Mercado
             </span>
-            <span className="bg-serenity-rose/20 text-serenity-charcoal px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+            <span className="bg-[#eab308]/20 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
               <Sparkles className="w-4 h-4" /> Automação de Redesign
             </span>
           </div>
-          <h1 className="text-4xl font-display text-serenity-charcoal">
+          <h1 className="text-4xl font-display text-white">
             Prospecção Multicanal B2B
           </h1>
-          <p className="text-sm text-serenity-charcoal/70 mt-2 max-w-2xl font-sans">
+          <p className="text-sm text-white/70 mt-2 max-w-2xl font-sans">
             Enriqueça leads cruzando dados de redes sociais, mapas e CNAE, com automação direta para CRM e túneis de redesign.
           </p>
         </div>
@@ -280,8 +280,8 @@ export const ClientProspectingView: React.FC<{
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Niche Selector */}
           <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-serenity-rose" /> Nicho de Mercado
+            <label className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#facc15]" /> Nicho de Mercado
             </label>
             <select
               value={selectedNiche}
@@ -289,7 +289,7 @@ export const ClientProspectingView: React.FC<{
                 setSelectedNiche(e.target.value);
                 setCustomNiche('');
               }}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             >
               {COMMON_NICHES.map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -299,8 +299,8 @@ export const ClientProspectingView: React.FC<{
 
           {/* CNAE Selector */}
           <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
-              <FileCode className="w-4 h-4 text-serenity-rose" /> Código ou Descrição CNAE
+            <label className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+              <FileCode className="w-4 h-4 text-[#facc15]" /> Código ou Descrição CNAE
             </label>
             <select
               value={selectedCnae}
@@ -308,7 +308,7 @@ export const ClientProspectingView: React.FC<{
                 setSelectedCnae(e.target.value);
                 setCustomCnae('');
               }}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             >
               {COMMON_CNAES.map((c) => (
                 <option key={c.code} value={c.code}>{c.code} - {c.desc}</option>
@@ -318,8 +318,8 @@ export const ClientProspectingView: React.FC<{
 
           {/* City Input */}
           <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-serenity-rose" /> Cidade / Estado
+            <label className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[#facc15]" /> Cidade / Estado
             </label>
             <input
               type="text"
@@ -327,28 +327,28 @@ export const ClientProspectingView: React.FC<{
               placeholder="Ex: São Paulo - SP"
               value={cityInput}
               onChange={(e) => setCityInput(e.target.value)}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             />
           </div>
 
           {/* Radius Input */}
           <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-serenity-rose" /> Raio (km)
+            <label className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[#facc15]" /> Raio (km)
             </label>
             <input
               type="number"
               placeholder="Ex: 5"
               value={Math.round(parseInt(radius) / 1000)}
               onChange={(e) => setRadius((parseInt(e.target.value) * 1000).toString())}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-serenity-charcoal focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             />
           </div>
 
           {/* Enrichment Sources */}
           <div className="lg:col-span-4 space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-serenity-charcoal flex items-center gap-2">
-              <Share2 className="w-4 h-4 text-serenity-rose" /> Fontes de Dados
+            <label className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-[#facc15]" /> Fontes de Dados
             </label>
             <div className="flex flex-wrap gap-6 pt-2">
               {[
@@ -356,7 +356,7 @@ export const ClientProspectingView: React.FC<{
                 { id: 'instagram', label: 'Instagram' },
                 { id: 'linkedin', label: 'LinkedIn' },
               ].map(source => (
-                <label key={source.id} className="flex items-center gap-3 text-sm text-serenity-charcoal/80 cursor-pointer">
+                <label key={source.id} className="flex items-center gap-3 text-sm text-white/80 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={sources[source.id as keyof typeof sources]}
@@ -374,7 +374,7 @@ export const ClientProspectingView: React.FC<{
           <button
             type="submit"
             disabled={isSearching}
-            className="px-10 py-4 rounded-2xl bg-[#eab308] text-[#0f172a] font-display font-bold text-sm hover:bg-serenity-gold/80 transition shadow-lg cursor-pointer flex items-center gap-3 disabled:opacity-50"
+            className="px-10 py-4 rounded-2xl bg-[#eab308] text-[#0f172a] font-display font-bold text-sm hover:bg-[#eab308]/80 transition shadow-lg cursor-pointer flex items-center gap-3 disabled:opacity-50"
           >
             {isSearching ? (
               <>Varrendo dados...</>
@@ -389,7 +389,7 @@ export const ClientProspectingView: React.FC<{
 
       {/* Results Section */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-display text-serenity-charcoal">
+        <h2 className="text-2xl font-display text-white">
           Empresas Descobertas ({leads.length})
         </h2>
 
@@ -406,30 +406,30 @@ export const ClientProspectingView: React.FC<{
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-serenity-rose bg-serenity-cream px-3 py-1 rounded-full border border-serenity-rose/30">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#facc15] bg-serenity-cream px-3 py-1 rounded-full border border-serenity-rose/30">
                         CNAE: {lead.cnaeCode || activeCnae}
                       </span>
-                      <h3 className="text-xl font-display text-serenity-charcoal mt-3">
+                      <h3 className="text-xl font-display text-white font-semibold mt-3">
                         {lead.name}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-serenity-cream px-3 py-1 rounded-full text-xs font-semibold text-serenity-charcoal">
+                    <div className="flex items-center gap-1.5 bg-serenity-cream px-3 py-1 rounded-full text-xs font-semibold text-white">
                       <Star className="w-4 h-4 text-serenity-gold fill-serenity-gold" />
                       <span>{lead.rating}</span>
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm text-serenity-charcoal/80 font-sans">
+                  <div className="space-y-2 text-sm text-white/80 font-sans">
                     <div className="flex items-center gap-3">
-                      <MapPin className="w-4 h-4 text-serenity-sage" />
+                      <MapPin className="w-4 h-4 text-[#22c55e]" />
                       <span className="truncate">{lead.address || lead.city}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-serenity-sage" />
+                      <Phone className="w-4 h-4 text-[#22c55e]" />
                       <span>{lead.phone}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-serenity-sage" />
+                      <Mail className="w-4 h-4 text-[#22c55e]" />
                       <span className="truncate">{lead.email}</span>
                     </div>
                   </div>
@@ -439,14 +439,14 @@ export const ClientProspectingView: React.FC<{
                   {isAdded ? (
                     <button
                       disabled
-                      className="w-full py-4 rounded-2xl bg-serenity-sage/20 text-serenity-charcoal font-bold text-sm flex items-center justify-center gap-2 cursor-default"
+                      className="w-full py-4 rounded-2xl bg-[#22c55e]/20 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-default"
                     >
-                      <CheckCircle2 className="w-5 h-5 text-serenity-sage" /> Lead Adicionado
+                      <CheckCircle2 className="w-5 h-5 text-[#22c55e]" /> Lead Adicionado
                     </button>
                   ) : (
                     <button
                       onClick={() => handleAddToCrm(lead)}
-                      className="w-full py-4 rounded-2xl font-display font-bold text-[#f4f4f5] font-display font-bold text-sm hover:bg-serenity-charcoal/80 transition shadow-md cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-4 rounded-2xl font-display font-bold text-[#f4f4f5] font-display font-bold text-sm hover:bg-[#27272a] transition shadow-md cursor-pointer flex items-center justify-center gap-2 text-[#f4f4f5]"
                     >
                       <Plus className="w-4 h-4" /> Adicionar ao CRM
                     </button>
