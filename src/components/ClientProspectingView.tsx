@@ -248,7 +248,7 @@ export const ClientProspectingView: React.FC<{
   return (
     <div className="max-w-[1440px] mx-auto space-y-10 p-4 md:p-8 font-sans bg-[#FFF5F5] text-[#2D3436]">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-lg border border-serenity-rose/30">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-[#1e293b] p-8 rounded-3xl shadow-xl border border-[#334155]">
         <div>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className="bg-serenity-sage/20 text-serenity-charcoal px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
@@ -268,7 +268,7 @@ export const ClientProspectingView: React.FC<{
         {onNavigateToCrm && (
           <button
             onClick={onNavigateToCrm}
-            className="px-8 py-4 rounded-2xl bg-serenity-gold text-white font-display font-bold text-sm hover:bg-serenity-gold/80 transition shadow-lg flex items-center gap-2 shrink-0"
+            className="px-8 py-4 rounded-2xl bg-[#eab308] text-[#0f172a] font-display font-bold text-sm hover:bg-[#facc15] transition shadow-lg flex items-center gap-2 shrink-0"
           >
             Acessar CRM & Redesign Túnel <ArrowRight className="w-4 h-4" />
           </button>
@@ -276,7 +276,7 @@ export const ClientProspectingView: React.FC<{
       </div>
 
       {/* Search Filter Form */}
-      <form onSubmit={handleSearch} className="bg-white p-8 rounded-3xl shadow-lg border border-serenity-rose/30 space-y-6">
+      <form onSubmit={handleSearch} className="bg-[#1e293b] p-8 rounded-3xl shadow-xl border border-[#334155] space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Niche Selector */}
           <div className="space-y-3">
@@ -374,7 +374,7 @@ export const ClientProspectingView: React.FC<{
           <button
             type="submit"
             disabled={isSearching}
-            className="px-10 py-4 rounded-2xl bg-serenity-gold text-white font-display font-bold text-sm hover:bg-serenity-gold/80 transition shadow-lg cursor-pointer flex items-center gap-3 disabled:opacity-50"
+            className="px-10 py-4 rounded-2xl bg-[#eab308] text-[#0f172a] font-display font-bold text-sm hover:bg-serenity-gold/80 transition shadow-lg cursor-pointer flex items-center gap-3 disabled:opacity-50"
           >
             {isSearching ? (
               <>Varrendo dados...</>
@@ -401,7 +401,7 @@ export const ClientProspectingView: React.FC<{
                 key={lead.id}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white p-8 rounded-3xl shadow-md border border-serenity-rose/20 flex flex-col justify-between hover:border-serenity-gold/50 transition"
+                className="bg-[#18181b] p-8 rounded-3xl shadow-xl border border-[#27272a] flex flex-col justify-between hover:border-serenity-gold/50 transition"
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
@@ -446,7 +446,7 @@ export const ClientProspectingView: React.FC<{
                   ) : (
                     <button
                       onClick={() => handleAddToCrm(lead)}
-                      className="w-full py-4 rounded-2xl bg-serenity-charcoal text-white font-display font-bold text-sm hover:bg-serenity-charcoal/80 transition shadow-md cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-4 rounded-2xl font-display font-bold text-[#f4f4f5] font-display font-bold text-sm hover:bg-serenity-charcoal/80 transition shadow-md cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Plus className="w-4 h-4" /> Adicionar ao CRM
                     </button>

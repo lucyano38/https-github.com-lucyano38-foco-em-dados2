@@ -1,0 +1,1 @@
+{"name":"Foco em Dados","url":"focoemdados.com.br","description":"Plataforma de inteligência de dados B2B","features":["Upload planilha","Dashboard BI","Prospecção","OpenSquad AI","Auth Google/GitHub"],"design_ask":"Estiloso, responsivo, alta conversão, sem cara de IA"}

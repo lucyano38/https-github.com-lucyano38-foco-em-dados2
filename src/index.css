@@ -1,23 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Cormorant Garamond", serif;
-  --font-sans: "Montserrat", sans-serif;
+  --font-display: "Hanken Grotesk", sans-serif;
+  --font-sans: "Manrope", sans-serif;
   --font-mono: "Geist", monospace;
 
-  --color-app-bg: #FFF5F5;
-  --color-app-surface: #FFFFFF;
-  --color-app-primary: #E8B4B8;
-  --color-app-secondary: #A8D5BA;
-  --color-app-cta: #D4AF37;
-  --color-app-text: #2D3436;
+  /* Modern Slate / Zinc dark theme */
+  --color-app-bg: #0f172a;
+  --color-app-surface: #18181b;
+  --color-app-card: #1e293b;
+  --color-app-border: #27272a;
+  --color-app-text: #f4f4f5;
+  --color-app-muted: #94a3b8;
+  --color-app-primary: #eab308;
+  --color-app-cta: #facc15;
 }
 
 @layer utilities {
   .glass-panel {
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(232, 180, 184, 0.2);
+    backdrop-filter: blur(24px);
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(51, 65, 85, 0.3);
+  }
+  .glow-hover:hover {
+    box-shadow: 0 0 30px rgba(234, 179, 8, 0.35);
+    border-color: rgba(234, 179, 8, 0.6);
+  }
+  .text-glow {
+    text-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
   }
 }
 
@@ -30,5 +40,5 @@
 }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0d0e0f; }
-::-webkit-scrollbar-thumb { background: #4f4632; border-radius: 10px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
