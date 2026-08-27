@@ -367,12 +367,27 @@ const App: React.FC = () => {
     );
     if (validFiles.length === 0) return;
 
-    const MAX_INLINE_SIZE = 15 * 1024 * 1024; // 15MB limit for inline analysis
+    const MAX_INLINE_SIZE = 15 * 1024 * 1024;
     const oversizedFiles = validFiles.filter((f) => f.size > MAX_INLINE_SIZE);
     if (oversizedFiles.length > 0) {
       setErrorMsg(`Tamanho excede o limite de 15MB: ${oversizedFiles.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`).join(', ')}.`);
       setStatus('error');
       return;
+    }
+
+    // PAYWALL: planilha com >100 linhas exige assinatura R$39,90/mês
+    for (const file of validFiles) {
+      try {
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '').length;
+        if (lines > 100) {
+          setErrorMsg('Planilha com mais de 100 linhas. Assine Pro (R$ 39,90/mês via Stripe) para acessar.');
+          setStatus('error');
+          return;
+        }
+      } catch {
+        // ignore text-read errors
+      }
     }
 
     setStatus('uploading');
@@ -1032,6 +1047,23 @@ const App: React.FC = () => {
       ) : ecosystemMode === 'indicators' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col min-h-[750px]">
           <AutomatedIndicatorsView />
+        </div>
+      ) : ecosystemMode === 'prospecting' ? (
+        <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col min-h-[750px] space-y-8">
+          <ClientProspectingView
+            onNavigateToCrm={() => setEcosystemMode('crm')}
+            onLeadAddedToCrm={fetchAppLeads}
+          />
+          <div className="rounded-3xl border-2 border-[#F59E0B]/40 bg-[#1e2020]/80 p-6 shadow-2xl backdrop-blur-xl">
+            <h2 className="text-xl font-bold text-[#F8FAFC] mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#F59E0B]" /> OpenSquad AI — Agentes Autônomos Ativos
+            </h2>
+            <OpenSquadView
+              leads={appLeads}
+              onLeadsUpdated={fetchAppLeads}
+              onNavigateToPipeline={() => setEcosystemMode('crm')}
+            />
+          </div>
         </div>
       ) : ecosystemMode === 'opensquad' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col min-h-[750px]">
