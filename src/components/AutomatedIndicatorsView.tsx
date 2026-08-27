@@ -9,9 +9,20 @@ import {
   Clock,
   ShieldAlert,
   ArrowUpRight,
+  ArrowDownRight,
   Activity,
   Layers
 } from 'lucide-react';
+
+// ... (helper function)
+const getTrendIndicator = (history: Array<{ value: number }>) => {
+  if (history.length < 2) return { icon: null, color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' };
+  const last = history[history.length - 1].value;
+  const prev = history[history.length - 2].value;
+  if (last > prev) return { icon: <ArrowUpRight className="w-3 h-3" />, color: 'text-green-400 bg-green-500/10 border-green-500/30' };
+  if (last < prev) return { icon: <ArrowDownRight className="w-3 h-3" />, color: 'text-red-400 bg-red-500/10 border-red-500/30' };
+  return { icon: null, color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' };
+};
 
 interface IndicatorItem {
   title: string;
@@ -120,9 +131,14 @@ export const AutomatedIndicatorsView: React.FC = () => {
                   <span className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
                     {ind.title}
                   </span>
-                  <span className="text-[10px] bg-[#0F172A] border border-[#334155] px-2.5 py-1 rounded-full text-[#F59E0B] font-mono">
-                    {ind.trend}
-                  </span>
+                  {(() => {
+                    const { icon, color } = getTrendIndicator(ind.history);
+                    return (
+                      <span className={`text-[10px] border px-2.5 py-1 rounded-full font-mono flex items-center gap-1 ${color}`}>
+                        {icon} {ind.trend}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex items-baseline gap-2">

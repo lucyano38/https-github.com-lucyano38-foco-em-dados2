@@ -41,6 +41,7 @@ import {
   ContratanteConfig,
 } from '../types';
 import { ContractModal } from './ContractModal';
+import { DraftContractModal } from './DraftContractModal';
 import { MrrForecastVisualization } from './MrrForecastVisualization';
 import { OpenSquadView } from './OpenSquadView';
 import { RedesignTunnelView } from './RedesignTunnelView';
@@ -109,6 +110,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
 
   // Contract Modal
   const [contractLead, setContractLead] = useState<Lead | null>(null);
+  const [draftContractLead, setDraftContractLead] = useState<Lead | null>(null);
 
   // Tunnel Share Modal
   const [tunnelShareLead, setTunnelShareLead] = useState<Lead | null>(null);
@@ -647,10 +649,11 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
                             exit={{ opacity: 0, scale: 0.9 }}
                             whileHover={{ y: -3, scale: 1.01, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08)' }}
                             whileTap={{ scale: 0.98 }}
+                            whileDrag={{ scale: 1.05, opacity: 0.9 }}
                             transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                             draggable
                             onDragStart={() => handleDragStart(l.slug)}
-                            className="bg-white p-3.5 rounded-2xl border border-neutral-200/80 shadow-xs cursor-grab active:cursor-grabbing space-y-2 transition-colors hover:border-amber-400/80"
+                            className="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col h-[210px] min-h-[210px] cursor-grab active:cursor-grabbing transition-colors hover:border-amber-400/50"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <h4 className="text-xs font-bold text-neutral-900 leading-snug">
@@ -729,6 +732,12 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
                                   className="px-2 py-0.5 text-neutral-600 hover:bg-neutral-100 rounded font-medium transition-colors"
                                 >
                                   Editar
+                                </button>
+                                <button
+                                  onClick={() => setDraftContractLead(l)}
+                                  className="px-2 py-0.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded font-semibold transition-colors"
+                                >
+                                  Draft
                                 </button>
                                 {l.status === 'fechado' && (
                                   <button
@@ -1354,6 +1363,14 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
             handleSaveLead({ slug: contractLead.slug, contratoStatus: st });
             setContractLead({ ...contractLead, contratoStatus: st });
           }}
+        />
+      )}
+
+      {/* Draft Contract Modal */}
+      {draftContractLead && (
+        <DraftContractModal
+          lead={draftContractLead}
+          onClose={() => setDraftContractLead(null)}
         />
       )}
 

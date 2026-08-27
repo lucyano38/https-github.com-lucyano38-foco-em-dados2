@@ -10,10 +10,11 @@ import * as XLSX from 'xlsx';
 import type {
   ActivityLog, AnalysisReport, ReportChart, ReportTable, UploadedFile,
 } from './types';
+import { initAuth, googleSignIn, getAccessToken, logout } from './lib/auth';
+import { SignInButton } from './components/SignInButton';
+import { GlobalSearchBar } from './components/GlobalSearchBar';
+import type { User } from 'firebase/auth';
 import {
-  LogIn,
-  LogOut,
-  User as UserIcon,
   Check,
   Sparkles,
   Presentation,
@@ -235,6 +236,22 @@ const App: React.FC = () => {
     fetchAppLeads();
   }, [ecosystemMode]);
   const [question, setQuestion] = useState('');
+  const [needsAuth, setNeedsAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    initAuth(
+      (user) => {
+        setUser(user);
+        setNeedsAuth(false);
+      },
+      () => {
+        setUser(null);
+        setNeedsAuth(true);
+      }
+    );
+  }, []);
 
   const [status, setStatus] = useState<Status>('idle');
   const [stage, setStage] = useState('');
@@ -268,7 +285,16 @@ const App: React.FC = () => {
   const examples = UPLOAD_EXAMPLES;
   const canRun = status !== 'running' && question.trim() !== '' && files.length > 0;
 
-  // Toggle Executive Audio Briefing (Native Brazilian Portuguese TTS)
+  const handleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      await googleSignIn();
+    } catch (err) {
+      console.error('Login failed:', err);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
   const toggleAudioSpeech = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       alert('Seu navegador não possui suporte a síntese de voz (TTS).');
@@ -878,6 +904,12 @@ const App: React.FC = () => {
       <nav className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl border-b border-[#4f4632]/40 shadow-[0_0_20px_rgba(250,189,0,0.1)]">
         <div className="flex justify-between items-center px-4 md:px-16 py-4 max-w-[1440px] mx-auto">
           <div className="flex items-center gap-4">
+            {needsAuth ? (
+              <SignInButton onClick={handleLogin} />
+            ) : (
+              <button onClick={logout} className="text-xs text-[#d4c5ab] hover:text-[#ffe4af] cursor-pointer">Sign out</button>
+            )}
+            <GlobalSearchBar />
             <button
               onClick={() => setShowLanding(true)}
               className="font-['Hanken_Grotesk'] text-xl md:text-2xl text-[#ffe4af] font-bold tracking-tight hover:underline cursor-pointer"
@@ -997,13 +1029,6 @@ const App: React.FC = () => {
           onBackToLanding={() => setShowLanding(true)}
           onOpenAppMode={(mode) => setEcosystemMode(mode)}
         />
-      ) : ecosystemMode === 'prospecting' ? (
-        <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col min-h-[750px]">
-          <ClientProspectingView
-            onNavigateToCrm={() => setEcosystemMode('crm')}
-            onLeadAddedToCrm={fetchAppLeads}
-          />
-        </div>
       ) : ecosystemMode === 'indicators' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col min-h-[750px]">
           <AutomatedIndicatorsView />
@@ -1014,6 +1039,8 @@ const App: React.FC = () => {
             leads={appLeads}
             onLeadsUpdated={fetchAppLeads}
             onNavigateToPipeline={() => setEcosystemMode('crm')}
+            onNavigateToCrm={() => setEcosystemMode('crm')}
+            onLeadAddedToCrm={fetchAppLeads}
           />
         </div>
       ) : ecosystemMode === 'crm' ? (

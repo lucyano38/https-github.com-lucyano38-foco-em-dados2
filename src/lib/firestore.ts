@@ -9,13 +9,14 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { AnalysisReport } from '../types';
+import { AnalysisReport, Lead } from '../types';
 
 // Initialize Firebase if not already initialized
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
 
 const REPORTS_COLLECTION = 'analysis_reports';
+const LEADS_COLLECTION = 'leads';
 
 export enum OperationType {
   CREATE = 'create',
@@ -154,5 +155,49 @@ export async function deleteReport(reportId: string): Promise<void> {
     }
   } catch (e) {
     console.error('Error deleting from localStorage:', e);
+  }
+}
+
+/**
+ * Saves a lead to Firebase Firestore.
+ */
+export async function saveLead(lead: Lead): Promise<void> {
+  try {
+    const docRef = doc(db, LEADS_COLLECTION, lead.slug);
+    await setDoc(docRef, { ...lead, updatedAt: Timestamp.now() });
+    console.log(`[Firebase] Lead ${lead.slug} successfully saved to Firestore.`);
+  } catch (err) {
+    console.error('[Firebase] Error saving lead to Firestore:', err);
+  }
+}
+
+/**
+ * Fetches all leads from Firebase Firestore.
+ */
+export async function getLeads(): Promise<Lead[]> {
+  try {
+    const colRef = collection(db, LEADS_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const leads: Lead[] = [];
+    snapshot.forEach((docSnap) => {
+      leads.push(docSnap.data() as Lead);
+    });
+    return leads;
+  } catch (err) {
+    console.error('[Firebase] Error fetching leads from Firestore:', err);
+    return [];
+  }
+}
+
+/**
+ * Deletes a lead by slug from Firebase Firestore.
+ */
+export async function deleteLead(slug: string): Promise<void> {
+  try {
+    const docRef = doc(db, LEADS_COLLECTION, slug);
+    await deleteDoc(docRef);
+    console.log(`[Firebase] Lead ${slug} deleted from Firestore.`);
+  } catch (err) {
+    console.error('[Firebase] Error deleting lead from Firestore:', err);
   }
 }

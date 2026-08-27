@@ -37,6 +37,12 @@ import {
   ChevronRight,
   Info,
   Maximize2,
+  Building2,
+  MapPin,
+  Mail,
+  Globe,
+  Instagram,
+  Linkedin,
 } from 'lucide-react';
 import {
   Lead,
@@ -54,6 +60,8 @@ interface OpenSquadViewProps {
   leads: Lead[];
   onLeadsUpdated?: () => void;
   onNavigateToPipeline?: () => void;
+  onNavigateToCrm?: () => void;
+  onLeadAddedToCrm?: (lead: any) => void;
 }
 
 const DEFAULT_AGENTS: SquadAgent[] = [
@@ -190,6 +198,8 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
   leads,
   onLeadsUpdated,
   onNavigateToPipeline,
+  onNavigateToCrm,
+  onLeadAddedToCrm,
 }) => {
   // State for Agents & Mission Settings
   const [agents, setAgents] = useState<SquadAgent[]>(DEFAULT_AGENTS);
@@ -205,6 +215,10 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
   const [importedSuccessCount, setImportedSuccessCount] = useState<number | null>(null);
   const [selectedAgentForDetails, setSelectedAgentForDetails] = useState<SquadAgent | null>(null);
   const [tunnelLead, setTunnelLead] = useState<Lead | null>(null);
+
+  // Prospecting State
+  const [prospectingLeads, setProspectingLeads] = useState<any[]>([]); // simplified type
+  const [isSearching, setIsSearching] = useState(false);
 
   // Settings & Theme Modal
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -534,6 +548,14 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
 
         {/* Action badges, Settings & CRM Quick Link */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => { /* Toggle prospecting section */ }}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold border border-emerald-200 transition"
+          >
+            <Search className="w-4 h-4" />
+            <span>Prospecção</span>
+          </button>
+
           <button
             onClick={() => setIsConfigModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#FFF5F5] text-[#2D3436] rounded-xl text-xs font-bold border border-[#E8B4B8]/30 transition"
