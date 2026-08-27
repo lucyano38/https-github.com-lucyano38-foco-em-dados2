@@ -1,3 +1,4 @@
+import { ErrorBoundary } from './components/ErrorBoundary';
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -962,6 +963,7 @@ const App: React.FC = () => {
       <CookieBanner />
 
       {/* RENDER MODES */}
+      <ErrorBoundary>
       {ecosystemMode === 'evolua_demo' ? (
         <EvoluaDemoDashboard
           onBackToLanding={() => setShowLanding(true)}
@@ -2799,6 +2801,7 @@ const ChartImage: React.FC<{ src: string; alt: string; className?: string }> = (
       <div className={`flex flex-col items-center justify-center p-6 bg-[#121414] rounded-2xl border border-dashed border-[#4f4632] text-[#d4c5ab]/60 text-xs text-center min-h-[140px] w-full ${className}`}>
         <span>📈 Chart image expired or unavailable</span>
       </div>
+    </ErrorBoundary>
     );
   }
   return <img src={src} alt={alt} className={className} onError={() => setError(true)} />;
