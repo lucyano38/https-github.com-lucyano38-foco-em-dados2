@@ -446,9 +446,9 @@ export const ClientProspectingView: React.FC<{
                   ) : (
                     <button
                       onClick={() => handleAddToCrm(lead)}
-                      className="w-full py-4 rounded-2xl font-display font-bold text-[#f4f4f5] font-display font-bold text-sm hover:bg-[#27272a] transition shadow-md cursor-pointer flex items-center justify-center gap-2 text-[#f4f4f5]"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#eab308] to-[#3b82f6] font-display font-bold text-sm hover:opacity-95 transition shadow-lg cursor-pointer flex items-center justify-center gap-2 text-[#0f172a]"
                     >
-                      <Plus className="w-4 h-4" /> Adicionar ao CRM
+                      <Sparkles className="w-4 h-4" /> Gerar Redesign & Enviar ao CRM
                     </button>
                   )}
                 </div>
