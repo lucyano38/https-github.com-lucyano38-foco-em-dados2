@@ -916,7 +916,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-[#0f172a] text-[#f4f4f5] font-sans flex flex-col pb-12">
       {/* TopNavBar - moderna estilo Landing */}
-      <nav className="fixed top-0 w-full z-50 bg-[#0f172a]/80 backdrop-blur-2xl border-b border-[#1e293b] shadow-[0_4px_20px_rgba(15,23,42,0.5)]">
+      <nav className="fixed top-0 w-full z-50 h-16 bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border-b border-[#334155] shadow-lg">
         <div className="flex justify-between items-center px-6 md:px-16 py-4 max-w-[1440px] mx-auto gap-4">
           {/* Esquerda: Logo + Badge */}
           <div className="flex items-center gap-2 shrink-0">
@@ -947,64 +947,12 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Direita: Abas de navegação */}
-          <div className="flex items-center gap-1 flex-wrap">
-            <button
-              onClick={() => setEcosystemMode('analytics')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                ecosystemMode === 'analytics'
-                  ? 'bg-[#eab308] text-[#0f172a] shadow-md font-bold'
-                  : 'text-[#94a3b8] hover:text-[#f8fafc] hover:bg-[#1e293b]'
-              }`}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">AI Analyst</span>
-            </button>
-            <button
-              onClick={() => setEcosystemMode('prospecting')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                ecosystemMode === 'prospecting'
-                  ? 'bg-[#eab308] text-[#0f172a] shadow-md font-bold'
-                  : 'text-[#94a3b8] hover:text-[#f8fafc] hover:bg-[#1e293b]'
-              }`}
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Prospecção</span>
-              <Users className="w-3 h-3 hidden lg:inline" />
-            </button>
-            <button
-              onClick={() => setEcosystemMode('crm')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                ecosystemMode === 'crm'
-                  ? 'bg-[#eab308] text-[#0f172a] shadow-md font-bold'
-                  : 'text-[#94a3b8] hover:text-[#f8fafc] hover:bg-[#1e293b]'
-              }`}
-            >
-              <Kanban className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">CRM</span>
-            </button>
-            <button
-              onClick={() => setEcosystemMode('indicators')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                ecosystemMode === 'indicators'
-                  ? 'bg-[#eab308] text-[#0f172a] shadow-md font-bold'
-                  : 'text-[#94a3b8] hover:text-[#f8fafc] hover:bg-[#1e293b]'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Indicadores</span>
-            </button>
-          </div>
-
-          {/* Auth / Perfil */}
+          {/* Direita: 3 abas principais + Sign in */}
           <div className="flex items-center gap-2 shrink-0">
-            {needsAuth ? (
-              <SignInButton onClick={handleLogin} />
-            ) : (
-              <button onClick={logout} className="text-xs text-[#94a3b8] hover:text-[#f8fafc] cursor-pointer px-3 py-1.5 rounded-lg hover:bg-[#1e293b] transition">
-                Sair
-              </button>
-            )}
+            <button onClick={() => setEcosystemMode('analytics')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='analytics'?'bg-[#eab308] text-[#0f172a]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Análise de Dados</button>
+            <button onClick={() => setEcosystemMode('prospecting')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='prospecting'?'bg-[#eab308] text-[#0f172a]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Prospecção & Redesign</button>
+            <button onClick={() => setEcosystemMode('crm')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${ecosystemMode==='crm'?'bg-[#eab308] text-[#0f172a]':'text-[#94a3b8] hover:text-[#f8fafc]'}`}>CRM Kanban</button>
+            <SignInButton onClick={handleLogin} />
           </div>
         </div>
       </nav>
