@@ -6,6 +6,7 @@ import { ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import type {
   ActivityLog, AnalysisReport, ReportChart, ReportTable, UploadedFile,
 } from './types';
@@ -36,7 +37,6 @@ import { EvoluaDemoDashboard } from './components/EvoluaDemoDashboard';
 import { ClientProspectingView } from './components/ClientProspectingView';
 import { AutomatedIndicatorsView } from './components/AutomatedIndicatorsView';
 import { CookieBanner } from './components/CookieBanner';
-import { useAuth } from './components/AuthProvider';
 
 
 
@@ -211,24 +211,10 @@ function environmentIdFromInteraction(interaction: any): string | null {
 }
 
 const App: React.FC = () => {
-  const { user, signInWithGoogle, signInWithGithub } = useAuth();
   const [showLanding, setShowLanding] = useState(true);
   const [ecosystemMode, setEcosystemMode] = useState<'analytics' | 'crm' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators'>('analytics');
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [appLeads, setAppLeads] = useState<any[]>([]);
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0F172A] text-[#F8FAFC] p-6 text-center">
-        <h1 className="text-4xl font-bold mb-8">Bem-vindo ao Foco em Dados</h1>
-        <p className="mb-8 text-neutral-400">Entre para acessar o ecossistema completo.</p>
-        <div className="flex gap-4">
-          <button onClick={signInWithGoogle} className="bg-white text-black px-6 py-3 rounded-lg font-bold">Login com Google</button>
-          <button onClick={signInWithGithub} className="bg-neutral-800 text-white px-6 py-3 rounded-lg font-bold">Login com GitHub</button>
-        </div>
-      </div>
-    );
-  }
 
   // Fetch leads for OpenSquad and CRM sync
   const fetchAppLeads = async () => {
@@ -1946,6 +1932,20 @@ const ReportView: React.FC<{
     URL.revokeObjectURL(url);
   };
 
+  const exportDashboardToExcel = () => {
+    if (!report.tables || report.tables.length === 0) return;
+
+    const workbook = XLSX.utils.book_new();
+
+    report.tables.forEach((table, index) => {
+      const sheetName = table.title ? table.title.substring(0, 31) : `Table ${index + 1}`;
+      const worksheet = XLSX.utils.aoa_to_sheet([table.columns, ...table.rows]);
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    });
+
+    XLSX.writeFile(workbook, `${(report.dataset_name || 'report').replace(/[^a-z0-9]/gi, '_')}.xlsx`);
+  };
+
   const exportDashboardToPDF = async () => {
     setIsExportingPdf(true);
     try {
@@ -2342,6 +2342,12 @@ const ReportView: React.FC<{
               className="flex items-center gap-2 rounded-xl bg-[#ffc107] hover:bg-[#fabd00] px-4 py-2.5 text-xs font-bold text-[#3f2e00] shadow-[0_0_20px_rgba(250,189,0,0.3)] transition hover:opacity-95 disabled:opacity-60 cursor-pointer"
             >
               {isExportingPdf ? 'Gerando PDF...' : 'Download PDF'}
+            </button>
+            <button
+              onClick={exportDashboardToExcel}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:opacity-95 cursor-pointer"
+            >
+              Excel (.xlsx)
             </button>
             <button
               onClick={downloadJson}
