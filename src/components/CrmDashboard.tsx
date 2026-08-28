@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Kanban,
   Users,
@@ -130,23 +130,20 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
     try {
       setLoading(true);
       const [leadsData, configRes] = await Promise.all([
-        fetchCrmLeadsFromFirestore(),
-        fetch('/api/config'),
+        fetchCrmLeadsFromFirestore().catch(() => [] as Lead[]),
+        fetch('/api/config').catch(() => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })),
       ]);
       if (Array.isArray(leadsData)) {
         setLeads(leadsData);
       }
-      if (configRes.ok) {
-        const ct = configRes.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-          const configData = await configRes.json();
-          if (configData) {
-            setConfig(configData);
-          }
-        }
+      const ct = (configRes.headers.get('content-type') || '').toLowerCase();
+      if (ct.includes('application/json')) {
+        const configData = await configRes.json().catch(() => null);
+        if (configData) setConfig(configData);
       }
     } catch (err) {
       console.error('Error fetching CRM data:', err);
+      setLeads([]);
     } finally {
       setLoading(false);
     }

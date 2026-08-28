@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Printer, X, Download, FileText, CheckCircle2, Shield, Mail, Copy, Check } from 'lucide-react';
 import { Lead, ContratanteConfig } from '../types';
 

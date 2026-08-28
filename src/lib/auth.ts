@@ -1,10 +1,23 @@
 
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
-// @ts-ignore
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  User,
+} from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+const ensureApp = () => {
+  try {
+    return getApps().length === 0 ? initializeApp(firebaseConfig as any) : getApps()[0];
+  } catch {
+    return initializeApp({ projectId: 'foco-em-dados-fallback' }) as FirebaseApp;
+  }
+};
+
+const app = ensureApp();
 const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
