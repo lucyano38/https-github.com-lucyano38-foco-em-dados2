@@ -383,6 +383,38 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
       </section>
 
+      {/* 4.5b Automação WhatsApp + IA Atendimento */}
+      <section className="py-24 px-6 max-w-[1440px] mx-auto border-t border-[#1E293B]">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-xs font-medium text-violet-400">
+            <MessageSquare className="w-3.5 h-3.5" /> Atendimento inteligente
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-[#F8FAFC] tracking-tight">
+            Atendimento via WhatsApp com <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B5CF6] to-[#D946EF]">IA</span>
+          </h2>
+          <p className="text-[#94A3B8] text-base md:text-lg max-w-2xl mx-auto">
+            Chatwoot + fazer.ai agents. Seu cliente envia uma mensagem e a IA responde, prospecta e fecha — sem você precisar estar online 24h.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="bg-[#1E293B] border border-[#334155] p-8 rounded-3xl shadow-xl hover:border-violet-500/40 transition">
+            <div className="w-12 h-12 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-5"><Bot className="w-6 h-6 text-violet-400" /></div>
+            <h3 className="text-xl font-bold text-[#F8FAFC] mb-2">Agente de Atendimento</h3>
+            <p className="text-sm text-[#94A3B8]">Conversas naturais via WhatsApp, com respostas instantâneas baseadas na base de conhecimento do seu negócio.</p>
+          </div>
+          <div className="bg-[#1E293B] border border-[#334155] p-8 rounded-3xl shadow-xl hover:border-violet-500/40 transition">
+            <div className="w-12 h-12 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-5"><Send className="w-6 h-6 text-violet-400" /></div>
+            <h3 className="text-xl font-bold text-[#F8FAFC] mb-2">Prospecção Automática</h3>
+            <p className="text-sm text-[#94A3B8]">A IA identifica oportunidades, envia mensagens persuasivas e programa reuniões — enquanto você dorme.</p>
+          </div>
+          <div className="bg-[#1E293B] border border-[#334155] p-8 rounded-3xl shadow-xl hover:border-violet-500/40 transition">
+            <div className="w-12 h-12 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-5"><FileText className="w-6 h-6 text-violet-400" /></div>
+            <h3 className="text-xl font-bold text-[#F8FAFC] mb-2">Contrato Automático</h3>
+            <p className="text-sm text-[#94A3B8]">Quando o cliente aceita, o sistema gera o contrato de prestação de serviço e envia para assinatura digital.</p>
+          </div>
+        </div>
+      </section>
+
       {/* 4.6 Auth separada */}
       <section className="py-20 px-6 max-w-[1440px] mx-auto border-t border-[#1E293B]">
         <div className="max-w-3xl mx-auto text-center space-y-6">
