@@ -30,7 +30,6 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "jszip": "^3.10.1",
-    "lightningcss-android-arm64": "^1.33.0",
     "lucide-react": "^0.546.0",
     "multer": "^2.2.0",
     "pako": "^2.1.0",
