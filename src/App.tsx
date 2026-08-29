@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
 import { Landing } from './components/Landing';
+import { ProspeccaoDashboard } from './components/ProspeccaoDashboard';
 import { EvoluaDemoDashboard } from './components/EvoluaDemoDashboard';
 import { UnifiedProspectView } from './components/UnifiedProspectView';
 import { AutomatedIndicatorsView } from './components/AutomatedIndicatorsView';
@@ -756,8 +757,8 @@ export const App: React.FC = () => {
           )}
         </main>
       ) : ecosystemMode === 'prospecting' ? (
-        <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
-          <UnifiedProspectView onNavigateToCrm={() => setEcosystemMode('crm')} onLeadAddedToCrm={fetchAppLeads} />
+        <div className="w-full flex-1 flex flex-col">
+          <ProspeccaoDashboard />
         </div>
       ) : ecosystemMode === 'opensquad' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">

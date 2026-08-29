@@ -1,3 +1,4 @@
+import { LoginModal } from "./LoginModal";
 import { BotaoMissaoUnificada } from './BotaoMissaoUnificada';
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
 ];
 
 export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -85,7 +87,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
               } else if (method) {
                 alert("Opção inválida. Use o acesso gratuito da landing.");
               }
-            }} className="text-sm font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition cursor-pointer">Entrar</button>
+            }} className="text-sm font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition cursor-pointer" onClick={() => setIsLoginOpen(true)}>Entrar</button>
             <button onClick={() => onStart('prospecting')} className="bg-amber-500 text-[#0F172A] px-5 py-2.5 rounded-xl font-bold hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-95 text-sm flex items-center gap-2">
               <Zap className="w-4 h-4 fill-[#0F172A]" /> Iniciar Missão Unificada
             </button>
@@ -343,6 +345,15 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
           </a>
         </div>
       </footer>
+      <LoginModal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+        onLoginProvider={(provider) => { 
+          setIsLoginOpen(false); 
+          alert(`Autenticação com ${provider} iniciada com sucesso!`); 
+          onStart('prospecting'); 
+        }} 
+      />
     </div>
   );
 };
