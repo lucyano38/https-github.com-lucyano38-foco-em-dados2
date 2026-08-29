@@ -76,9 +76,17 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
             ))}
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={() => onStart('analytics')} className="text-sm font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition cursor-pointer">Entrar</button>
+            <button onClick={() => {
+              const method = window.prompt("Escolha o método de login:\n1. Google\n2. GitHub\n(Digite 1 ou 2)");
+              if (method === '1' || method === '2') {
+                alert("Autenticação realizada com sucesso! Bem-vindo(a) ao Foco em Dados Pro.");
+                onStart('analytics');
+              } else if (method) {
+                alert("Opção inválida. Use o acesso gratuito da landing.");
+              }
+            }} className="text-sm font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition cursor-pointer">Entrar</button>
             <button onClick={() => onStart('prospecting')} className="bg-amber-500 text-[#0F172A] px-5 py-2.5 rounded-xl font-bold hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-95 text-sm flex items-center gap-2">
-              <Zap className="w-4 h-4 fill-[#0F172A]" /> Começar Agora
+              <Zap className="w-4 h-4 fill-[#0F172A]" /> Iniciar Missão Unificada
             </button>
           </div>
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-[#F8FAFC]" aria-label="Menu">
@@ -99,6 +107,19 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
 
       {/* HERO SECTION */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-32 pb-20 px-6 overflow-hidden">
+        {/* Video Background Animado */}
+        <div className="absolute inset-0 overflow-hidden z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-35 filter contrast-125"
+          >
+            <source src="/bg_anim_web.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/90 via-[#0F172A]/80 to-[#0F172A]" />
+        </div>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px]" />
           <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[100px]" />
