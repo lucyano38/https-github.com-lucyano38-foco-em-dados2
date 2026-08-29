@@ -342,7 +342,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
           <button
             onClick={runAiAudit}
             disabled={auditing}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-semibold rounded-xl shadow-xs transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-black text-xs font-semibold rounded-xl shadow-xs transition"
           >
             <Sparkles className={`w-3.5 h-3.5 ${auditing ? 'animate-spin' : 'text-amber-300'}`} />
             {auditing ? 'Auditando...' : 'Diagnóstico IA Gemini'}
@@ -969,11 +969,11 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
                     R$ {mrr.toLocaleString('pt-BR')}/mês
                   </div>
                 </div>
-                <div className="p-5 rounded-3xl bg-purple-50 border border-purple-200">
-                  <span className="text-xs font-bold text-purple-800 uppercase tracking-wide">
+                <div className="p-5 rounded-3xl bg-amber-50 border border-amber-200">
+                  <span className="text-xs font-bold text-amber-800 uppercase tracking-wide">
                     Projeção 12 Meses (LTV)
                   </span>
-                  <div className="text-2xl font-extrabold text-purple-900 mt-1">
+                  <div className="text-2xl font-extrabold text-amber-900 mt-1">
                     R$ {(revenueClosed + mrr * 12).toLocaleString('pt-BR')}
                   </div>
                 </div>

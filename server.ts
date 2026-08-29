@@ -1673,6 +1673,93 @@ for f in files:
   });
 
   /* ────────────────────────────────────────────────────────── */
+  /*  Proposal Generation Endpoint                             */
+  /* ────────────────────────────────────────────────────────── */
+  app.post("/api/gerar-proposta", async (req, res) => {
+    try {
+      const { clienteNome, clienteSite, clienteNicho } = req.body;
+
+      if (!clienteNome || !clienteNicho) {
+        return res.status(400).json({ 
+          error: "clienteNome e clienteNicho são obrigatórios" 
+        });
+      }
+
+      // Importação dinâmica do geminiAssistant
+      const { GoogleGenAI } = await import("@google/genai");
+      
+      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ 
+          error: "Configuração de IA não encontrada" 
+        });
+      }
+
+      const genAI = new GoogleGenAI({ apiKey });
+      
+      const prompt = `Você é um consultor de vendas especializado em redesign de sites e prospecção B2B.
+      
+      Crie uma proposta de abordagem personalizada para:
+      - Cliente: ${clienteNome}
+      - Site atual: ${clienteSite || 'Não informado'}
+      - Nicho: ${clienteNicho}
+      
+      A proposta deve conter:
+      1. Uma mensagem de abertura profissional e personalizada
+      2. 3-4 pontos de melhoria específicos para o site baseado no nicho
+      3. Um call-to-action claro para agendar uma reunião
+      4. Tom consultivo, não vendedor agressivo
+      
+      Responda em JSON com:
+      {
+        "mensagem": "texto da mensagem completa",
+        "pontosMelhoria": ["ponto 1", "ponto 2", "ponto 3"],
+        "cta": "texto do call-to-action",
+        "previewUrl": "https://focoemdados.com.br/preview/${encodeURIComponent(clienteNome || 'lead')}"
+      }`;
+
+      const response = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      let proposalData;
+      try {
+        // Tentar extrair JSON da resposta
+        const text = response.text || '';
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          proposalData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("JSON não encontrado na resposta");
+        }
+      } catch {
+        // Fallback se falhar o parsing
+        proposalData = {
+          mensagem: `Olá ${clienteNome}, analisamos seu site atual (${clienteSite || 'não informado'}) no nicho de ${clienteNicho}. Preparamos uma prévia de redesign moderno e responsivo para aumentar suas conversões.`,
+          pontosMelhoria: [
+            "Layout responsivo e mobile-first",
+            "Velocidade de carregamento otimizada",
+            "CTAs claros e posicionamento estratégico",
+            "SEO técnico e conteúdo para o nicho"
+          ],
+          cta: "Vamos agendar 15 min para mostrar a prévia?",
+          previewUrl: `https://focoemdados.com.br/preview/${encodeURIComponent(clienteNome || 'lead')}`
+        };
+      }
+
+      res.json({
+        status: "sucesso",
+        ...proposalData,
+        dataCriacao: new Date().toISOString()
+      });
+    } catch (err: any) {
+      console.error("[/api/gerar-proposta] Error:", err);
+      res.status(500).json({ error: "Erro ao gerar proposta: " + err.message });
+    }
+  });
+
+  /* ────────────────────────────────────────────────────────── */
   /*  Gemini Smart Features: Questions, Chat & Slide Deck      */
   /* ────────────────────────────────────────────────────────── */
   app.post("/api/suggest-questions", async (req, res) => {

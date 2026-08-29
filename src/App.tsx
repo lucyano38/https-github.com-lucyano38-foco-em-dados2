@@ -11,7 +11,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { CrmDashboard } from './components/CrmDashboard';
 import { SlideDeckModal } from './components/SlideDeckModal';
 import { GeminiChatSidebar } from './components/GeminiChatSidebar';
-import { ErrorBanner } from './components/ErrorBanner';
 import {
   Search,
   Building2,
@@ -452,7 +451,7 @@ function useNavigationSuggestions(question: string, setQuestion: (text: string) 
     setTimeout(() => runAnalysis(), 0);
   }, [setQuestion, runAnalysis]);
 
-  return { suggestedQuestions, loadingSuggestions, chooseSuggested };
+  return { suggestedQuestions, loadingSuggestions, chooseSuggested, fetchSuggestedQuestions };
 }
 
 function useComputedStats(leads: Lead[]) {
@@ -524,7 +523,7 @@ export const App: React.FC = () => {
   const { dragOver, onDragOver, onDragLeave, onDrop } = useDragDrop(addFiles);
   const { authError, setAuthError, handleLogin } = useAuthGuard();
   const { zoomedChart, openZoom, closeZoom } = useChartZoom();
-  const { suggestedQuestions, loadingSuggestions, chooseSuggested } = useNavigationSuggestions(question, setQuestion, runAnalysis);
+  const { suggestedQuestions, loadingSuggestions, chooseSuggested, fetchSuggestedQuestions } = useNavigationSuggestions(question, setQuestion, runAnalysis);
   const { mrrTotal, proposalCount, redesignedCount } = useComputedStats(useAppLeads().leads);
   const chartData = useChartData();
   const { environmentId, setEnvironmentId, config, configError, fetchConfig, handleSendCrmToAnalyst } = useEnvironmentConfig();

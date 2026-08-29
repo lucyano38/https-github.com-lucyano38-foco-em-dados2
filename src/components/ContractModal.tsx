@@ -101,7 +101,7 @@ ${contratante.cidadeUf || ''}`;
             <button
               onClick={() => setShowEmailDraft(!showEmailDraft)}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition cursor-pointer ${
-                showEmailDraft ? 'bg-amber-500 text-neutral-950 border-amber-400' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700'
+                showEmailDraft ? 'bg-amber-500 text-black border-amber-400' : 'bg-neutral-800 hover:bg-neutral-600 text-white border-neutral-700'
               }`}
             >
               <Mail className="w-4 h-4" />
@@ -163,7 +163,7 @@ ${contratante.cidadeUf || ''}`;
                 </span>
                 <button
                   onClick={handleCopyEmail}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-neutral-950 rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
                 >
                   {copiedEmail ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   {copiedEmail ? 'Copiado!' : 'Copiar Texto'}

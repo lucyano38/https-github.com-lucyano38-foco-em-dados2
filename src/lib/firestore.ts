@@ -27,10 +27,8 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-export interface SavedReport {
-  id: string;
-  report: AnalysisReport;
-}
+import { SavedReport as FirestoreSavedReport } from './lib/firestore';
+export type SavedReport = FirestoreSavedReport;
 
 /**
  * Saves an AnalysisReport to Firebase Firestore (with fallback to localStorage).

@@ -557,7 +557,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                               onClick={() => toggleEventSelection(opt.id)}
                               className={`p-3 rounded-xl border transition cursor-pointer flex items-start gap-2.5 ${
                                 isChecked
-                                  ? 'bg-emerald-50/70 border-emerald-400 text-neutral-900 ring-1 ring-emerald-400/30'
+                                  ? 'bg-emerald-50/70 border-emerald-400 text-emerald-950 ring-1 ring-emerald-400/30'
                                   : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
                               }`}
                             >
@@ -705,7 +705,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
 
                               <button
                                 onClick={() => handleDelete(wh.id)}
-                                className="p-1.5 rounded-xl text-neutral-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                                className="p-1.5 rounded-xl border border-transparent hover:border-red-200 hover:text-red-700 hover:bg-red-50 transition cursor-pointer"
                                 title="Excluir Webhook"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

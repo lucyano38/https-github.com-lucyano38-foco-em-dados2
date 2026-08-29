@@ -88,12 +88,14 @@ export interface Lead {
   telefone?: string;
   whatsapp?: string;
   siteAntigo?: string;
+  url_preview?: string;
   motivo?: string;
   status: LeadStatus;
   urlNova?: string;
   dataProposta?: string;
   valor?: number;
-  obs?: string;
+  mrr_manutencao?: number;
+  observacoes?: string;
   contratoStatus?: 'pendente' | 'enviado' | 'assinado';
   contratoEm?: string;
   manutencao?: number;
@@ -218,9 +220,11 @@ export interface CollabCard {
 }
 
 export interface SquadDeliverable {
+  id?: string;
   title: string;
   type: 'leads_list' | 'whatsapp_scripts' | 'redesign_audit' | 'pipeline_strategy' | 'contract_proposal';
   summary?: string;
+  content?: any;
   data: any;
 }
 
