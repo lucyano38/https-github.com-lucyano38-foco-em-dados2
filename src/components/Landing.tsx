@@ -116,6 +116,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
             playsInline
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full object-cover z-[-1]"
           >
+            <source src="/bg_anim_web_mobile.mp4" media="(max-width: 768px)" type="video/mp4" />
             <source src="/bg_anim_web.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-[#0F172A]/80 backdrop-blur-[1px]" />
