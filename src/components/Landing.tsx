@@ -116,7 +116,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
             playsInline
             className="absolute inset-0 w-full h-full object-cover opacity-35 filter contrast-125"
           >
-            <source src="/bg_anim_web.mp4" type="video/mp4" />
+            <source src="/bg.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/90 via-[#0F172A]/80 to-[#0F172A]" />
         </div>
