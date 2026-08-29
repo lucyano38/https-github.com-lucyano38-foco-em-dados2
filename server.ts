@@ -2452,3 +2452,207 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
 }
 
 startServer();
+
+  /* ────────────────────────────────────────────────────────── */
+  /*  n8n Webhook Integration Endpoint                         */
+  /* ────────────────────────────────────────────────────────── */
+  app.post("/api/n8n-webhook", async (req, res) => {
+    try {
+      const { clienteNome, clienteSite, clienteNicho } = req.body;
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+
+      if (!n8nWebhookUrl) {
+        return res.status(500).json({ error: "URL do Webhook do n8n não configurada nas variáveis de ambiente." });
+      }
+
+      const payload = {
+        clienteNome,
+        clienteSite,
+        clienteNicho,
+        timestamp: new Date().toISOString(),
+      };
+
+      const n8nResponse = await fetch(n8nWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!n8nResponse.ok) {
+        throw new Error(`Falha ao disparar automação no n8n: ${n8nResponse.statusText}`);
+      }
+
+      let n8nResult = {};
+      try {
+        n8nResult = await n8nResponse.json();
+      } catch {
+        n8nResult = { success: true };
+      }
+
+      return res.status(200).json({
+        status: "sucesso",
+        mensagem: "Webhook disparado para o n8n com sucesso!",
+        data: n8nResult,
+      });
+    } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message : "Erro interno ao conectar com o n8n.";
+      return res.status(500).json({ status: "erro", mensagem: errorMessage });
+    }
+  });
+
+  /* ────────────────────────────────────────────────────────── */
+  /*  Supabase Prospect Save Endpoint                          */
+  /* ────────────────────────────────────────────────────────── */
+  app.post("/api/salvar-prospeccao", async (req, res) => {
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        return res.status(500).json({ error: "Credenciais do Supabase não configuradas no servidor." });
+      }
+
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { nome, nicho, siteAtual, status } = req.body;
+
+      if (!nome || !nicho) {
+        return res.status(400).json({ error: "Nome e nicho são obrigatórios." });
+      }
+
+      const { data, error } = await supabase
+        .from("prospeccoes")
+        .insert([
+          { 
+            nome, 
+            nicho, 
+            site_atual: siteAtual || null, 
+            status: status || "novo",
+            criado_em: new Date().toISOString() 
+          }
+        ])
+        .select();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return res.status(200).json({
+        status: "sucesso",
+        mensagem: "Lead salvo com sucesso no Supabase!",
+        dados: data,
+      });
+    } catch (err: any) {
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar no banco.";
+      return res.status(500).json({ status: "erro", mensagem: errorMessage });
+    }
+  });
+
+  /* ────────────────────────────────────────────────────────── */
+  /*  Resend Email Dispatch Endpoint                           */
+  /* ────────────────────────────────────────────────────────── */
+  app.post("/api/enviar-proposta", async (req, res) => {
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+
+      if (!resendApiKey) {
+        return res.status(500).json({ error: "Chave de API do Resend não configurada no servidor." });
+      }
+
+      const { Resend } = await import("resend");
+      const resend = new Resend(resendApiKey);
+
+      const { destinatarioEmail, clienteNome, nicho, linkProposta } = req.body;
+
+      if (!destinatarioEmail || !clienteNome) {
+        return res.status(400).json({ error: "E-mail do destinatário e nome do cliente são obrigatórios." });
+      }
+
+      const { data, error } = await resend.emails.send({
+        from: "Foco em Dados <atendimento@focoemdados.com.br>",
+        to: [destinatarioEmail],
+        subject: `Proposta Exclusiva de Redesign para ${clienteNome}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 32px; border-radius: 12px;">
+            <h2 style="color: #38bdf8; margin-top: 0;">Olá, ${clienteNome}!</h2>
+            <p style="font-size: 16px; line-height: 1.5; color: #cbd5e1;">
+              Analisamos o seu posicionamento no nicho de <strong>${nicho}</strong> e preparamos uma proposta de transformação digital e alta conversão para o seu negócio.
+            </p>
+            <div style="margin: 32px 0;">
+              <a href="${linkProposta}" style="background-color: #f59e0b; color: #09090b; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                Visualizar Proposta Interativa
+              </a>
+            </div>
+            <p style="font-size: 14px; color: #94a3b8; border-top: 1px solid #1e293b; padding-top: 16px;">
+              Atenciosamente,<br/><strong>Equipe Foco em Dados</strong>
+            </p>
+          </div>
+        `,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return res.status(200).json({
+        status: "sucesso",
+        mensagem: "E-mail de proposta disparado com sucesso pelo Resend!",
+        data,
+      });
+    } catch (err: any) {
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao enviar o e-mail.";
+      return res.status(500).json({ status: "erro", mensagem: errorMessage });
+    }
+  });
+
+  /* ────────────────────────────────────────────────────────── */
+  /*  Supabase Prospect List Endpoint                          */
+  /* ────────────────────────────────────────────────────────── */
+  app.get("/api/listar-prospeccoes", async (req, res) => {
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        // Fallback simulado caso o Supabase não esteja configurado localmente ainda
+        return res.status(200).json({
+          status: "sucesso",
+          dados: [
+            { id: "1", nome: "Clínica Sorriso Perfeito", nicho: "Saúde e Odontologia", siteAtual: "sorrisoperfeito-antigo.com.br", status: "novo" },
+            { id: "2", nome: "Auto Peças Rodagem", nicho: "Automotivo", siteAtual: "rodagempecas.com", status: "contatado" },
+            { id: "3", nome: "Empório dos Doces Artesanais", nicho: "Confeitaria", siteAtual: "emporiodoces.com.br", status: "proposta_enviada" }
+          ]
+        });
+      }
+
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data, error } = await supabase
+        .from("prospeccoes")
+        .select("*")
+        .order("criado_em", { ascending: false });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Mapeia colunas do banco (ex: site_atual -> siteAtual) se necessário
+      const formatados = (data || []).map((item: any) => ({
+        id: String(item.id),
+        nome: item.nome,
+        nicho: item.nicho,
+        siteAtual: item.site_atual || item.siteAtual || "",
+        status: item.status || "novo"
+      }));
+
+      return res.status(200).json({
+        status: "sucesso",
+        dados: formatados,
+      });
+    } catch (err: any) {
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao listar do banco.";
+      return res.status(500).json({ status: "erro", mensagem: errorMessage });
+    }
+  });

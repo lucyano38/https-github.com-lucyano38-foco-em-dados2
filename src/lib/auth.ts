@@ -1,8 +1,8 @@
-
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import {
   getAuth,
   signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
   onAuthStateChanged,
   User,
@@ -21,7 +21,6 @@ const app = ensureApp();
 const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
-// Request Workspace scopes
 provider.addScope('https://www.googleapis.com/auth/spreadsheets');
 provider.addScope('https://www.googleapis.com/auth/drive.file');
 
@@ -42,7 +41,7 @@ export const initAuth = (
       }
     } else {
       cachedAccessToken = null;
-      if (onAuthFailure) onAuthFailure();
+        if (onAuthFailure) onAuthFailure();
     }
   });
 };
@@ -50,16 +49,26 @@ export const initAuth = (
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
   try {
     isSigningIn = true;
-    const result = await signInWithPopup(auth, provider);
+    let result;
+    try {
+      result = await signInWithPopup(auth, provider);
+    } catch (popupError: any) {
+      console.warn('Popup blocked or failed, attempting redirect signIn...', popupError);
+      // Fallback para redirect se o popup for bloqueado
+      await signInWithRedirect(auth, provider);
+      return null;
+    }
+
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (!credential?.accessToken) {
-      throw new Error('Failed to get access token from Firebase Auth');
+      throw new Error('Falha ao obter token de acesso do Google Auth.');
     }
 
     cachedAccessToken = credential.accessToken;
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error:', error);
+    alert('Erro no login com Google: ' + (error.message || error));
     throw error;
   } finally {
     isSigningIn = false;
