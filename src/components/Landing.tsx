@@ -107,17 +107,17 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
 
       {/* HERO SECTION */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-32 pb-20 px-6 overflow-hidden">
-        {/* Video Background Animado Exato */}
+        {/* Video Background Otimizado */}
         <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
           <video
             autoPlay
             muted
             loop
             playsInline
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full object-cover z-[-1]"
+            className="absolute inset-0 w-full h-full object-cover -z-10"
           >
-            <source src="/bg_anim_web_mobile.mp4" media="(max-width: 768px)" type="video/mp4" />
-            <source src="/bg_anim_web.mp4" type="video/mp4" />
+            <source src="/bg_anim_web.mp4" type="video/mp4" media="(min-width: 768px)" />
+            <source src="/bg_anim_web_mobile.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-[#0F172A]/80 backdrop-blur-[1px]" />
         </div>
