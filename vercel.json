@@ -4,17 +4,5 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "redirects": [
-    {
-      "source": "https://focoemdados.com.br/:path*",
-      "destination": "https://www.focoemdados.com.br/:path*",
-      "permanent": true
-    },
-    {
-      "source": "http://focoemdados.com.br/:path*",
-      "destination": "https://www.focoemdados.com.br/:path*",
-      "permanent": true
-    }
   ]
 }
