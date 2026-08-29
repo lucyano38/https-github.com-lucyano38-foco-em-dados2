@@ -7,12 +7,13 @@
   ],
   "redirects": [
     {
-      "source": "https://focoemdados.com.br/:path*",
-      "destination": "https://www.focoemdados.com.br/:path*",
-      "permanent": true
-    },
-    {
-      "source": "http://focoemdados.com.br/:path*",
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "focoemdados.com.br"
+        }
+      ],
       "destination": "https://www.focoemdados.com.br/:path*",
       "permanent": true
     }
