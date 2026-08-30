@@ -567,7 +567,7 @@ export const App: React.FC = () => {
     if (!email) return true; // fallback: se não temos email, não bloqueia aqui; o checkout vai resolver
 
     try {
-      const { verifySubscriptionByEmail } = await import('../lib/subscription');
+      const { verifySubscriptionByEmail } = await import('./lib/subscription');
       const sub = await verifySubscriptionByEmail(email);
       localStorage.setItem('foco_em_dados_pro', sub ? 'true' : 'false');
       return !!sub;
