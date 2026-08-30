@@ -590,7 +590,8 @@ export const App: React.FC = () => {
             'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Deseja assinar agora?',
           );
           if (irParaPlanos) {
-            onStart('checkout');
+            // Redireciona para o checkout sem depender de modo inexistente
+            window.location.href = '/#checkout';
           }
           return;
         }

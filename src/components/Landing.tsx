@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
+import { googleSignIn } from '../lib/auth';
+import { supabaseServiceRole } from '../lib/supabaseClient';
 
 interface LandingProps {
   onStart: (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => void;
@@ -8,7 +10,9 @@ interface LandingProps {
 
 export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [pendingMode, setPendingMode] = useState<string | null>(null);
 
   const handleCheckoutStripe = async () => {
     try {
@@ -28,6 +32,41 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
     } finally {
       setLoadingCheckout(false);
     }
+  };
+
+  const startMode = (mode: string) => {
+    if (typeof onStart === 'function') {
+      onStart(mode);
+    }
+  };
+
+  const handleLoginProvider = async (provider: 'google' | 'github') => {
+    if (provider !== 'google') {
+      setLoginError('Login com GitHub ainda não está disponível. Use o login com Google.');
+      return;
+    }
+    setLoginLoading(true);
+    setLoginError(null);
+    try {
+      const result = await googleSignIn();
+      const target = pendingMode;
+      setPendingMode(null);
+      setIsLoginOpen(false);
+      if (result?.user) {
+        if (target) startMode(target);
+      } else {
+        setLoginError('Falha ao autenticar com o Google.');
+      }
+    } catch (err: any) {
+      setLoginError(err?.message || 'Falha ao autenticar com o Google.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const requestProtectedMode = (mode: string) => {
+    setPendingMode(mode);
+    setIsLoginOpen(true);
   };
 
   return (
@@ -98,7 +137,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <button
-            onClick={() => onStart('prospecting')}
+            onClick={() => requestProtectedMode('prospecting')}
             className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Conhecer o Ecossistema</span>
@@ -122,17 +161,17 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div onClick={() => onStart('indicators')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
+          <div onClick={() => requestProtectedMode('indicators')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
             <h3 className="text-lg font-bold text-slate-100 mb-2">📊 Inteligência de Dados & BI</h3>
             <p className="text-xs text-slate-400 leading-relaxed">Painéis gerenciais automatizados e relatórios em PDF prontos para tomada de decisão executiva.</p>
           </div>
 
-          <div onClick={() => onStart('prospecting')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
+          <div onClick={() => requestProtectedMode('prospecting')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
             <h3 className="text-lg font-bold text-slate-100 mb-2">🎯 Prospecção B2B Ativa</h3>
             <p className="text-xs text-slate-400 leading-relaxed">Varredura de leads qualificados por nicho e região, organizados em CRM Kanban interativo.</p>
           </div>
 
-          <div onClick={() => onStart('opensquad')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
+          <div onClick={() => requestProtectedMode('opensquad')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
             <h3 className="text-lg font-bold text-slate-100 mb-2">🤖 Agentes Autônomos (OpenSquad)</h3>
             <p className="text-xs text-slate-400 leading-relaxed">Orquestração por IA para qualificar e responder contatos de forma humanizada e ágil.</p>
           </div>
@@ -187,12 +226,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       {/* Modal de Login */}
       <LoginModal
         isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onLoginProvider={(provider) => {
-          alert(`Autenticando via ${provider}...`);
+        onClose={() => {
           setIsLoginOpen(false);
-          onStart('prospecting');
+          setPendingMode(null);
         }}
+        onLoginProvider={handleLoginProvider}
+        loading={loginLoading}
+        error={loginError}
       />
     </div>
   );
