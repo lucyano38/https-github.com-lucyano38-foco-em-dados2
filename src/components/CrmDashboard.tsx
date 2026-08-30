@@ -316,9 +316,9 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-neutral-100 text-neutral-900 overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col h-full bg-[#010102] text-[#f7f8f8] overflow-hidden font-sans">
       {/* Top Header Controls */}
-      <div className="bg-white border-b border-serenity-rose/20 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
+      <div className="bg-[#0f1011] border-b border-white/[0.08] px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-[0_1px_0_rgba(255,255,255,0.05)]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-serenity-rose to-serenity-gold text-white flex items-center justify-center shadow-xs">
             <Kanban className="w-5 h-5" />

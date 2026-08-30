@@ -50,6 +50,13 @@
   }
   h1 { font-weight: 600; }
   h2, h3, h4 { font-weight: 500; }
+  /* Global surface tokens used by internal pages */
+  :root {
+    --surface-0: var(--color-app-bg);
+    --surface-1: var(--color-app-surface);
+    --surface-2: var(--color-app-card);
+    --surface-3: var(--color-app-elevated);
+  }
 }
 
 @layer utilities {
