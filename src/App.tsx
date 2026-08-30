@@ -583,18 +583,12 @@ export const App: React.FC = () => {
 
   const handleStart = useCallback(
     async (mode: string) => {
-      if (mode !== 'indicators') {
-        const allowed = await ensureProAccess();
-        if (!allowed) {
-          const irParaPlanos = window.confirm(
-            'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Deseja assinar agora?',
-          );
-          if (irParaPlanos) {
-            // Redireciona para o checkout sem depender de modo inexistente
-            window.location.href = '/#checkout';
-          }
-          return;
-        }
+      const allowed = await ensureProAccess();
+      if (!allowed) {
+        window.alert(
+          'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Faça login e assine para continuar.'
+        );
+        return;
       }
 
       setEcosystemMode(mode);

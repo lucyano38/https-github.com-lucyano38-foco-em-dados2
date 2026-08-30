@@ -19,9 +19,11 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   const handleCheckoutStripe = async () => {
     try {
       setLoadingCheckout(true);
+      const email = localStorage.getItem('foco_em_dados_user_email') || undefined;
       const response = await fetch('/api/criar-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
       const text = await response.text();
       let data: any = {};
@@ -47,12 +49,8 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   };
 
   const handleLoginProvider = async (provider: 'google' | 'github') => {
-    if (provider === 'github') {
-      setLoginError('Login com GitHub ainda não está disponível no momento.');
-      return;
-    }
     if (provider !== 'google') {
-      setLoginError('Opção de login indisponível.');
+      setLoginError('Login com GitHub ainda não está disponível. Use o login com Google.');
       return;
     }
     setLoginLoading(true);

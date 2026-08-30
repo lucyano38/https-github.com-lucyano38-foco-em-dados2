@@ -2729,7 +2729,7 @@ startServer();
         apiVersion: "2025-02-27.acacia",
       });
 
-      const { email } = req.body;
+      const { email } = req.body || {};
       const origin = req.headers.origin || "https://www.focoemdados.com.br";
 
       const session = await stripe.checkout.sessions.create({
@@ -2749,14 +2749,14 @@ startServer();
           },
         ],
         mode: "subscription",
-        customer_email: email || "atendimento@focoemdados.com.br",
+        customer_email: typeof email === "string" && email.trim() ? email.trim() : "atendimento@focoemdados.com.br",
         success_url: origin + "/prospeccao?pagamento=sucesso",
         cancel_url: origin + "/?pagamento=cancelado",
       });
 
       return res.status(200).json({ url: session.url, urlCheckout: session.url });
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao criar sessão de pagamento.";
-      return res.status(500).json({ error: errorMessage });
+      return res.status(400).json({ error: errorMessage });
     }
   });
