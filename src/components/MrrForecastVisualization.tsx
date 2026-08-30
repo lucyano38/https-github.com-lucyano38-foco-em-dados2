@@ -605,7 +605,7 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
   }, []);
 
   return (
-    <div className="bg-white rounded-3xl border border-neutral-200/90 shadow-sm overflow-hidden flex flex-col space-y-6 p-6">
+    <div className="bg-white/[0.04] rounded-3xl border border-white/[0.08] shadow-sm overflow-hidden flex flex-col space-y-6 p-6">
       {/* ─── HEADER & VALUE PROPOSITION ─── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-neutral-100 pb-5">
         <div className="flex items-start gap-3.5">
@@ -614,7 +614,7 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-neutral-900 tracking-tight font-sans">
+              <h2 className="text-base font-bold text-[#f7f8f8] tracking-tight font-sans">
                 Previsão de Receita Recorrente Mensal (MRR Forecast)
               </h2>
               <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1 font-mono">
@@ -622,7 +622,7 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
                 Motor D3.js Preditivo
               </span>
             </div>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-[#8a8f98] mt-0.5">
               Projeção estatística ponderada por estágio de funil, velocidade de conversão e taxa de retenção mensal.
             </p>
           </div>
@@ -630,13 +630,13 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
 
         {/* View Mode Switcher Pills */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="bg-neutral-100 p-1 rounded-xl flex items-center border border-neutral-200/70 text-xs">
+          <div className="bg-white/[0.04] p-1 rounded-xl flex items-center border border-white/[0.08] text-xs">
             <button
               onClick={() => setDisplayMode('scenario-curves')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
                 displayMode === 'scenario-curves'
-                  ? 'bg-white text-blue-700 shadow-2xs'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white/[0.04] text-blue-700 shadow-2xs'
+                  : 'text-[#8a8f98] hover:text-[#f7f8f8]'
               }`}
             >
               <LineChartIcon className="w-3.5 h-3.5" />
@@ -646,8 +646,8 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
               onClick={() => setDisplayMode('waterfall-composition')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
                 displayMode === 'waterfall-composition'
-                  ? 'bg-white text-blue-700 shadow-2xs'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white/[0.04] text-blue-700 shadow-2xs'
+                  : 'text-[#8a8f98] hover:text-[#f7f8f8]'
               }`}
             >
               <BarChart2 className="w-3.5 h-3.5" />
@@ -657,8 +657,8 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
               onClick={() => setDisplayMode('arr-runrate')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
                 displayMode === 'arr-runrate'
-                  ? 'bg-white text-indigo-700 shadow-2xs'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white/[0.04] text-indigo-700 shadow-2xs'
+                  : 'text-[#8a8f98] hover:text-[#f7f8f8]'
               }`}
             >
               <DollarSign className="w-3.5 h-3.5" />
@@ -667,12 +667,12 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
           </div>
 
           {/* Horizon Dropdown */}
-          <div className="flex items-center gap-1.5 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-200/70 text-xs font-semibold text-neutral-700">
-            <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+          <div className="flex items-center gap-1.5 bg-white/[0.04] px-3 py-1.5 rounded-xl border border-white/[0.08] text-xs font-semibold text-[#d4d6e0]">
+            <Calendar className="w-3.5 h-3.5 text-[#8a8f98]" />
             <select
               value={horizon}
               onChange={(e) => setHorizon(Number(e.target.value) as ForecastHorizon)}
-              className="bg-transparent font-bold text-neutral-900 focus:outline-none cursor-pointer"
+              className="bg-transparent font-bold text-[#f7f8f8] focus:outline-none cursor-pointer"
             >
               <option value={6}>6 Meses</option>
               <option value={12}>12 Meses (1 Ano)</option>
@@ -685,15 +685,15 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
 
       {/* ─── KPI METRIC SUMMARY CARDS ─── */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-        <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 shadow-2xs">
-          <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#0f1011] border border-white/[0.08] shadow-2xs">
+          <div className="text-[11px] font-semibold text-[#8a8f98] uppercase tracking-wide flex items-center justify-between">
             <span>MRR Atual</span>
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           </div>
-          <div className="text-xl font-extrabold text-neutral-900 mt-1">
+          <div className="text-xl font-extrabold text-[#f7f8f8] mt-1">
             R$ {currentMrr.toLocaleString('pt-BR')}/mês
           </div>
-          <div className="text-[10px] text-neutral-500 mt-1">
+          <div className="text-[10px] text-[#8a8f98] mt-1">
             {currentClosedClients} {currentClosedClients === 1 ? 'cliente ativo' : 'clientes ativos'}
           </div>
         </div>
@@ -753,11 +753,11 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
       </div>
 
       {/* ─── D3 CHART CANVAS & TOOLTIP CONTAINER ─── */}
-      <div className="relative bg-white rounded-2xl border border-neutral-200/80 p-3 pt-4" ref={containerRef}>
+      <div className="relative bg-white/[0.04] rounded-2xl border border-white/[0.08]/80 p-3 pt-4" ref={containerRef}>
         {/* Scenario Legend & Filters */}
         <div className="flex items-center justify-between px-3 pb-2 text-xs flex-wrap gap-2 border-b border-neutral-100">
           <div className="flex items-center gap-3">
-            <span className="text-neutral-500 font-medium">Séries:</span>
+            <span className="text-[#8a8f98] font-medium">Séries:</span>
             <button
               onClick={() => setActiveScenarioFilter(activeScenarioFilter === 'base' ? 'all' : 'base')}
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition font-semibold ${
@@ -864,7 +864,7 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
       </div>
 
       {/* ─── SIMULATION & SENSITIVITY CONTROLS PANEL ─── */}
-      <div className="bg-neutral-50 rounded-2xl p-5 border border-neutral-200/80 space-y-4">
+      <div className="bg-[#0f1011] rounded-2xl p-5 border border-white/[0.08]/80 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 text-xs font-bold text-neutral-800">
             <Sliders className="w-4 h-4 text-blue-600" />
@@ -876,7 +876,7 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
               setConversionMultiplier(100);
               setTicketOverride(defaultMaintenanceTicket);
             }}
-            className="text-[11px] text-neutral-500 hover:text-neutral-800 flex items-center gap-1 font-semibold transition"
+            className="text-[11px] text-[#8a8f98] hover:text-neutral-800 flex items-center gap-1 font-semibold transition"
           >
             <RefreshCw className="w-3 h-3" />
             Restaurar Padrões
@@ -887,8 +887,8 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
           {/* Churn Rate Slider */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-neutral-700">Taxa Mensal de Cancelamento (Churn)</span>
-              <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded-md border border-neutral-200">
+              <span className="font-semibold text-[#d4d6e0]">Taxa Mensal de Cancelamento (Churn)</span>
+              <span className="font-bold text-[#f7f8f8] bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.08]">
                 {churnRate}% ao mês
               </span>
             </div>
@@ -911,8 +911,8 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
           {/* Conversion Multiplier */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-neutral-700">Força de Conversão do Funil</span>
-              <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded-md border border-neutral-200">
+              <span className="font-semibold text-[#d4d6e0]">Força de Conversão do Funil</span>
+              <span className="font-bold text-[#f7f8f8] bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.08]">
                 {conversionMultiplier}% da meta
               </span>
             </div>
@@ -935,8 +935,8 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
           {/* Ticket de Manutenção Médio */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-neutral-700">Ticket de Manutenção Padrão</span>
-              <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded-md border border-neutral-200">
+              <span className="font-semibold text-[#d4d6e0]">Ticket de Manutenção Padrão</span>
+              <span className="font-bold text-[#f7f8f8] bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.08]">
                 R$ {ticketOverride}/mês
               </span>
             </div>
@@ -970,7 +970,7 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
 
         <button
           onClick={() => setShowDealsList(!showDealsList)}
-          className="text-xs font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs"
+          className="text-xs font-semibold text-[#d4d6e0] bg-white/[0.04] hover:bg-[#0f1011] border border-white/[0.08] px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs"
         >
           <Layers className="w-3.5 h-3.5 text-amber-600" />
           {showDealsList ? 'Ocultar Oportunidades do Pipeline' : `Ver Oportunidades no Pipeline (${dealContributions.length})`}
@@ -984,19 +984,19 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden rounded-2xl border border-neutral-200"
+            className="overflow-hidden rounded-2xl border border-white/[0.08]"
           >
-            <div className="p-3.5 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+            <div className="p-3.5 bg-[#0f1011] border-b border-white/[0.08] flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-800">
                 Detalhamento Mensal da Projeção de MRR & ARR
               </span>
-              <span className="text-[11px] text-neutral-500 font-mono">
+              <span className="text-[11px] text-[#8a8f98] font-mono">
                 Horizonte: {horizon} Meses
               </span>
             </div>
             <div className="overflow-x-auto max-h-72">
               <table className="w-full text-xs text-left">
-                <thead className="bg-neutral-100 text-neutral-600 font-semibold sticky top-0">
+                <thead className="bg-white/[0.04] text-[#8a8f98] font-semibold sticky top-0">
                   <tr>
                     <th className="p-3">Período</th>
                     <th className="p-3">MRR Ponderado</th>
@@ -1008,17 +1008,17 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
                     <th className="p-3">Contratos Ativos</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100 bg-white">
+                <tbody className="divide-y divide-neutral-100 bg-white/[0.04]">
                   {forecastData.map((row) => (
-                    <tr key={row.monthIndex} className="hover:bg-neutral-50/70">
-                      <td className="p-3 font-semibold text-neutral-900">{row.monthLabel}</td>
+                    <tr key={row.monthIndex} className="hover:bg-[#0f1011]/70">
+                      <td className="p-3 font-semibold text-[#f7f8f8]">{row.monthLabel}</td>
                       <td className="p-3 font-bold text-blue-700">R$ {row.mrrBase.toLocaleString('pt-BR')}/mês</td>
                       <td className="p-3 text-emerald-700">R$ {row.mrrOptimistic.toLocaleString('pt-BR')}</td>
                       <td className="p-3 text-amber-700">R$ {row.mrrConservative.toLocaleString('pt-BR')}</td>
                       <td className="p-3 text-emerald-600">+{row.pipelineAddedMrr > 0 ? `R$ ${row.pipelineAddedMrr}` : '—'}</td>
                       <td className="p-3 text-rose-500">-{row.churnMrr > 0 ? `R$ ${row.churnMrr}` : '—'}</td>
                       <td className="p-3 font-bold text-indigo-900">R$ {row.arrBase.toLocaleString('pt-BR')}</td>
-                      <td className="p-3 text-neutral-600">~{row.clientsBase}</td>
+                      <td className="p-3 text-[#8a8f98]">~{row.clientsBase}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1035,19 +1035,19 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden rounded-2xl border border-neutral-200"
+            className="overflow-hidden rounded-2xl border border-white/[0.08]"
           >
-            <div className="p-3.5 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+            <div className="p-3.5 bg-[#0f1011] border-b border-white/[0.08] flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-800">
                 Oportunidades em Aberto Contribuindo para a Previsão
               </span>
-              <span className="text-[11px] text-neutral-500">
+              <span className="text-[11px] text-[#8a8f98]">
                 Ordenado pelo impacto ponderado em MRR
               </span>
             </div>
             <div className="overflow-x-auto max-h-64">
               <table className="w-full text-xs text-left">
-                <thead className="bg-neutral-100 text-neutral-600 font-semibold sticky top-0">
+                <thead className="bg-white/[0.04] text-[#8a8f98] font-semibold sticky top-0">
                   <tr>
                     <th className="p-3">Lead / Empresa</th>
                     <th className="p-3">Nicho</th>
@@ -1057,17 +1057,17 @@ export const MrrForecastVisualization: React.FC<MrrForecastProps> = ({
                     <th className="p-3">Impacto Ponderado MRR</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100 bg-white">
+                <tbody className="divide-y divide-neutral-100 bg-white/[0.04]">
                   {dealContributions.map((deal, idx) => (
-                    <tr key={idx} className="hover:bg-neutral-50/70">
-                      <td className="p-3 font-bold text-neutral-900">{deal.lead.nome}</td>
-                      <td className="p-3 text-neutral-600">{deal.lead.nicho}</td>
+                    <tr key={idx} className="hover:bg-[#0f1011]/70">
+                      <td className="p-3 font-bold text-[#f7f8f8]">{deal.lead.nome}</td>
+                      <td className="p-3 text-[#8a8f98]">{deal.lead.nicho}</td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-700 border border-neutral-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/[0.04] text-[#d4d6e0] border border-white/[0.08]">
                           {deal.statusCfg.label}
                         </span>
                       </td>
-                      <td className="p-3 font-mono font-semibold text-neutral-700">
+                      <td className="p-3 font-mono font-semibold text-[#d4d6e0]">
                         {Math.round(deal.prob * 100)}%
                       </td>
                       <td className="p-3 text-blue-700 font-medium">

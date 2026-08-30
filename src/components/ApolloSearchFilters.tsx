@@ -61,7 +61,7 @@ export const ApolloSearchFilters: React.FC<ApolloSearchFiltersProps> = ({ onSear
           <select
             value={nicho}
             onChange={(e) => setNicho(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:border-amber-500 outline-none cursor-pointer"
+            className="w-full bg-[#010102] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-[#f7f8f8] focus:border-[#d4a574] outline-none cursor-pointer"
           >
             {NICHOS_POPULARES.map((n) => (
               <option key={n} value={n}>{n}</option>
@@ -79,7 +79,7 @@ export const ApolloSearchFilters: React.FC<ApolloSearchFiltersProps> = ({ onSear
             value={cidade}
             onChange={(e) => setCidade(e.target.value)}
             placeholder="Ex: Curitiba - PR"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:border-amber-500 outline-none"
+            className="w-full bg-[#010102] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-[#f7f8f8] focus:border-[#d4a574] outline-none"
             required
           />
         </div>

@@ -319,7 +319,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
-        className="bg-white rounded-3xl border border-neutral-200/90 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-neutral-900"
+        className="bg-white/[0.04] rounded-3xl border border-white/[0.08] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-[#f7f8f8]"
       >
         {/* Modal Header */}
         <div className="p-6 border-b border-neutral-100 flex items-center justify-between bg-neutral-900 text-white">
@@ -349,7 +349,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
         </div>
 
         {/* Sub-nav Tabs */}
-        <div className="px-6 py-2.5 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+        <div className="px-6 py-2.5 bg-[#0f1011] border-b border-white/[0.08] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
@@ -358,8 +358,8 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'endpoints'
-                  ? 'bg-white text-neutral-900 shadow-2xs border border-neutral-200'
-                  : 'text-neutral-500 hover:text-neutral-900'
+                  ? 'bg-white/[0.04] text-[#f7f8f8] shadow-[0_1px_0_rgba(255,255,255,0.05)] border border-white/[0.08]'
+                  : 'text-[#8a8f98] hover:text-[#f7f8f8]'
               }`}
             >
               <WebhookIcon className="w-3.5 h-3.5 text-emerald-600" />
@@ -374,8 +374,8 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'logs'
-                  ? 'bg-white text-neutral-900 shadow-2xs border border-neutral-200'
-                  : 'text-neutral-500 hover:text-neutral-900'
+                  ? 'bg-white/[0.04] text-[#f7f8f8] shadow-[0_1px_0_rgba(255,255,255,0.05)] border border-white/[0.08]'
+                  : 'text-[#8a8f98] hover:text-[#f7f8f8]'
               }`}
             >
               <Activity className="w-3.5 h-3.5 text-blue-600" />
@@ -389,8 +389,8 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'docs'
-                  ? 'bg-white text-neutral-900 shadow-2xs border border-neutral-200'
-                  : 'text-neutral-500 hover:text-neutral-900'
+                  ? 'bg-white/[0.04] text-[#f7f8f8] shadow-[0_1px_0_rgba(255,255,255,0.05)] border border-white/[0.08]'
+                  : 'text-[#8a8f98] hover:text-[#f7f8f8]'
               }`}
             >
               <Code className="w-3.5 h-3.5 text-purple-600" />
@@ -401,7 +401,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
           {!isEditing && activeTab === 'endpoints' && (
             <button
               onClick={handleOpenCreate}
-              className="px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-[0_1px_0_rgba(255,255,255,0.05)] transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Novo Webhook
@@ -417,8 +417,8 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
               {isEditing ? (
                 /* EDIT / CREATE FORM */
                 <form onSubmit={handleSave} className="space-y-4">
-                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 space-y-4">
-                    <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+                  <div className="bg-[#0f1011] p-4 rounded-2xl border border-white/[0.08] space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-neutral-800">
                           {editingId ? 'Editar Webhook' : 'Cadastrar Novo Webhook de Notificação'}
@@ -428,13 +428,13 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                       {/* Presets Button */}
                       {!editingId && (
                         <div className="flex items-center gap-1">
-                          <span className="text-[11px] font-semibold text-neutral-500 mr-1">Modelos rápidos:</span>
+                          <span className="text-[11px] font-semibold text-[#8a8f98] mr-1">Modelos rápidos:</span>
                           {PRESETS.map((p) => (
                             <button
                               key={p.name}
                               type="button"
                               onClick={() => applyPreset(p)}
-                              className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition cursor-pointer"
+                              className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-white/[0.04] border border-white/[0.08] text-[#d4d6e0] hover:bg-white/[0.04] transition cursor-pointer"
                             >
                               {p.name.split(' ')[0]}
                             </button>
@@ -445,7 +445,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">
+                        <label className="block text-xs font-bold text-[#d4d6e0] mb-1">
                           Nome do Destinatário / Integração
                         </label>
                         <input
@@ -454,12 +454,12 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Ex: n8n - Disparo no WhatsApp e Planilha"
-                          className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs text-neutral-900 focus:outline-hidden focus:ring-2 focus:ring-neutral-900 bg-white"
+                          className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs text-[#f7f8f8] focus:outline-hidden focus:ring-2 focus:ring-neutral-900 bg-white/[0.04]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">
+                        <label className="block text-xs font-bold text-[#d4d6e0] mb-1">
                           Segredo de Assinatura (HMAC SHA-256) • Opcional
                         </label>
                         <input
@@ -467,21 +467,21 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                           value={secret}
                           onChange={(e) => setSecret(e.target.value)}
                           placeholder="Chave secreta para validação no cabeçalho X-Webhook-Signature"
-                          className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs text-neutral-900 focus:outline-hidden focus:ring-2 focus:ring-neutral-900 bg-white"
+                          className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs text-[#f7f8f8] focus:outline-hidden focus:ring-2 focus:ring-neutral-900 bg-white/[0.04]"
                         />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-neutral-700">
+                        <label className="block text-xs font-bold text-[#d4d6e0]">
                           URL de Destino (Endpoint POST)
                         </label>
                         <button
                           type="button"
                           onClick={handleTestFormUrl}
                           disabled={testingFormUrl || !url.trim()}
-                          className="px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50 shadow-2xs"
+                          className="px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50 shadow-[0_1px_0_rgba(255,255,255,0.05)]"
                           title="Envia um ping simulado e valida se o servidor responde com HTTP 200"
                         >
                           <Play className={`w-3 h-3 text-emerald-600 ${testingFormUrl ? 'animate-spin' : ''}`} />
@@ -494,7 +494,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="https://sua-empresa.com/api/webhook ou https://webhook.site/..."
-                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs text-neutral-900 focus:outline-hidden focus:ring-2 focus:ring-neutral-900 bg-white font-mono"
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 text-xs text-[#f7f8f8] focus:outline-hidden focus:ring-2 focus:ring-neutral-900 bg-white/[0.04] font-mono"
                       />
                     </div>
 
@@ -525,18 +525,18 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                           <button
                             type="button"
                             onClick={() => setTestResult(null)}
-                            className="text-neutral-500 hover:text-neutral-900 font-bold p-1 cursor-pointer"
+                            className="text-[#8a8f98] hover:text-[#f7f8f8] font-bold p-1 cursor-pointer"
                           >
                             ✕
                           </button>
                         </div>
                         {testResult.error && (
-                          <p className="text-[11px] font-mono bg-white/70 p-1.5 rounded-lg border border-red-200 text-red-800">
+                          <p className="text-[11px] font-mono bg-white/[0.04]/70 p-1.5 rounded-lg border border-red-200 text-red-800">
                             {testResult.error}
                           </p>
                         )}
                         {testResult.responseBody && (
-                          <pre className="text-[10px] font-mono bg-white/80 p-2 rounded-xl border border-neutral-200 text-neutral-800 overflow-x-auto max-h-20">
+                          <pre className="text-[10px] font-mono bg-white/[0.04]/80 p-2 rounded-xl border border-white/[0.08] text-neutral-800 overflow-x-auto max-h-20">
                             {testResult.responseBody}
                           </pre>
                         )}
@@ -545,7 +545,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
 
                     {/* Event Subscriptions */}
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-2">
+                      <label className="block text-xs font-bold text-[#d4d6e0] mb-2">
                         Eventos que acionam este webhook:
                       </label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -558,7 +558,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                               className={`p-3 rounded-xl border transition cursor-pointer flex items-start gap-2.5 ${
                                 isChecked
                                   ? 'bg-emerald-50/70 border-emerald-400 text-emerald-950 ring-1 ring-emerald-400/30'
-                                  : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
+                                  : 'bg-white/[0.04] border-white/[0.08] text-[#8a8f98] hover:border-neutral-300'
                               }`}
                             >
                               <input
@@ -569,7 +569,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                               />
                               <div>
                                 <p className="text-xs font-bold text-neutral-800">{opt.label}</p>
-                                <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">{opt.desc}</p>
+                                <p className="text-[11px] text-[#8a8f98] leading-tight mt-0.5">{opt.desc}</p>
                               </div>
                             </div>
                           );
@@ -578,7 +578,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                     </div>
 
                     {/* Active toggle */}
-                    <div className="flex items-center justify-between pt-2 border-t border-neutral-200">
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-neutral-800">Status do Webhook:</span>
                         <button
@@ -587,7 +587,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                           className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                             isActive
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : 'bg-neutral-200 text-neutral-600'
+                              : 'bg-neutral-200 text-[#8a8f98]'
                           }`}
                         >
                           {isActive ? 'Ativo (Disparando)' : 'Pausado'}
@@ -600,7 +600,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 hover:bg-neutral-100 cursor-pointer"
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-[#8a8f98] hover:bg-white/[0.04] cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -617,10 +617,10 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                 /* ENDPOINTS LIST */
                 <div className="space-y-3">
                   {webhooks.length === 0 ? (
-                    <div className="text-center py-12 bg-neutral-50 rounded-2xl border border-dashed border-neutral-300 p-6 space-y-3">
+                    <div className="text-center py-12 bg-[#0f1011] rounded-2xl border border-dashed border-neutral-300 p-6 space-y-3">
                       <WebhookIcon className="w-8 h-8 text-neutral-400 mx-auto" />
-                      <h4 className="text-xs font-bold text-neutral-700">Nenhum webhook cadastrado</h4>
-                      <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
+                      <h4 className="text-xs font-bold text-[#d4d6e0]">Nenhum webhook cadastrado</h4>
+                      <p className="text-[11px] text-[#8a8f98] max-w-sm mx-auto">
                         Adicione a URL do seu sistema de automação (n8n, Make, Zapier ou Bot de WhatsApp) para receber notificações a cada mudança de status no pipeline.
                       </p>
                       <button
@@ -639,7 +639,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                       return (
                         <div
                           key={wh.id}
-                          className="bg-white rounded-2xl border border-neutral-200/90 p-4 shadow-2xs hover:border-neutral-300 transition space-y-3"
+                          className="bg-white/[0.04] rounded-2xl border border-white/[0.08] p-4 shadow-[0_1px_0_rgba(255,255,255,0.05)] hover:border-neutral-300 transition space-y-3"
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex items-center gap-2.5">
@@ -651,7 +651,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                               />
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h4 className="text-xs font-bold text-neutral-900">{wh.name}</h4>
+                                  <h4 className="text-xs font-bold text-[#f7f8f8]">{wh.name}</h4>
                                   {hasSecret && (
                                     <span
                                       className="px-1.5 py-0.5 rounded-md text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-mono flex items-center gap-1"
@@ -665,13 +665,13 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                                     className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                                       wh.active
                                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : 'bg-neutral-100 text-neutral-600'
+                                        : 'bg-white/[0.04] text-[#8a8f98]'
                                     }`}
                                   >
                                     {wh.active ? 'Ativo' : 'Pausado'}
                                   </span>
                                 </div>
-                                <p className="text-[11px] font-mono text-neutral-500 truncate max-w-lg mt-0.5">
+                                <p className="text-[11px] font-mono text-[#8a8f98] truncate max-w-lg mt-0.5">
                                   {wh.url}
                                 </p>
                               </div>
@@ -682,7 +682,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                               <button
                                 onClick={() => handleTestWebhook(wh.id)}
                                 disabled={isTesting}
-                                className="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-neutral-200 text-neutral-800 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
                                 title="Dispara um payload de teste sintético"
                               >
                                 <Play className={`w-3 h-3 text-emerald-600 ${isTesting ? 'animate-spin' : ''}`} />
@@ -691,14 +691,14 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
 
                               <button
                                 onClick={() => handleOpenEdit(wh)}
-                                className="px-2.5 py-1.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border border-neutral-200 text-xs font-semibold transition cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-xl bg-[#0f1011] hover:bg-white/[0.04] text-[#d4d6e0] border border-white/[0.08] text-xs font-semibold transition cursor-pointer"
                               >
                                 Editar
                               </button>
 
                               <button
                                 onClick={() => handleToggleActive(wh)}
-                                className="px-2.5 py-1.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border border-neutral-200 text-xs font-semibold transition cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-xl bg-[#0f1011] hover:bg-white/[0.04] text-[#d4d6e0] border border-white/[0.08] text-xs font-semibold transition cursor-pointer"
                               >
                                 {wh.active ? 'Pausar' : 'Ativar'}
                               </button>
@@ -714,13 +714,13 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                           </div>
 
                           {/* Event Badges & Delivery Stats */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 text-[11px] text-[#8a8f98]">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-semibold text-neutral-600">Eventos:</span>
+                              <span className="font-semibold text-[#8a8f98]">Eventos:</span>
                               {wh.events.map((ev) => (
                                 <span
                                   key={ev}
-                                  className="px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 font-mono text-[10px]"
+                                  className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[#d4d6e0] font-mono text-[10px]"
                                 >
                                   {ev}
                                 </span>
@@ -729,7 +729,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
 
                             <div className="flex items-center gap-3">
                               {wh.lastTriggered && (
-                                <span className="flex items-center gap-1 text-neutral-500">
+                                <span className="flex items-center gap-1 text-[#8a8f98]">
                                   <Clock className="w-3 h-3" />
                                   Último: {new Date(wh.lastTriggered).toLocaleTimeString('pt-BR')}
                                 </span>
@@ -781,22 +781,22 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                         </div>
                         <button
                           onClick={() => setTestResult(null)}
-                          className="text-neutral-500 hover:text-neutral-900 font-bold p-1 cursor-pointer"
+                          className="text-[#8a8f98] hover:text-[#f7f8f8] font-bold p-1 cursor-pointer"
                         >
                           ✕
                         </button>
                       </div>
 
                       {testResult.error && (
-                        <p className="text-[11px] font-mono bg-white/70 p-2 rounded-xl border border-red-200 text-red-800">
+                        <p className="text-[11px] font-mono bg-white/[0.04]/70 p-2 rounded-xl border border-red-200 text-red-800">
                           {testResult.error}
                         </p>
                       )}
 
                       {testResult.responseBody && (
                         <div>
-                          <p className="text-[11px] font-semibold text-neutral-700">Resposta do Servidor:</p>
-                          <pre className="text-[10px] font-mono bg-white/80 p-2 rounded-xl border border-neutral-200 text-neutral-800 overflow-x-auto max-h-24">
+                          <p className="text-[11px] font-semibold text-[#d4d6e0]">Resposta do Servidor:</p>
+                          <pre className="text-[10px] font-mono bg-white/[0.04]/80 p-2 rounded-xl border border-white/[0.08] text-neutral-800 overflow-x-auto max-h-24">
                             {testResult.responseBody}
                           </pre>
                         </div>
@@ -812,13 +812,13 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
           {activeTab === 'logs' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-[#8a8f98]">
                   Histórico em tempo real das requisições disparadas pelo CRM:
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={fetchLogs}
-                    className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-700 flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-neutral-200 text-[#d4d6e0] flex items-center gap-1 cursor-pointer"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Atualizar
@@ -835,7 +835,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
               </div>
 
               {logs.length === 0 ? (
-                <div className="text-center py-10 bg-neutral-50 rounded-2xl border border-neutral-200 text-neutral-500 text-xs">
+                <div className="text-center py-10 bg-[#0f1011] rounded-2xl border border-white/[0.08] text-[#8a8f98] text-xs">
                   Nenhum log de disparo registrado ainda. Os disparos ocorrerão automaticamente conforme o pipeline for atualizado.
                 </div>
               ) : (
@@ -843,7 +843,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                   {logs.map((log) => (
                     <div
                       key={log.id}
-                      className="p-3 bg-white rounded-xl border border-neutral-200 text-xs space-y-1.5 shadow-2xs"
+                      className="p-3 bg-white/[0.04] rounded-xl border border-white/[0.08] text-xs space-y-1.5 shadow-[0_1px_0_rgba(255,255,255,0.05)]"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -856,8 +856,8 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                           >
                             HTTP {log.responseStatus || 'ERRO'}
                           </span>
-                          <span className="font-bold text-neutral-900">{log.webhookName}</span>
-                          <span className="font-mono text-[10px] px-1.5 py-0.5 bg-neutral-100 rounded-md text-neutral-600">
+                          <span className="font-bold text-[#f7f8f8]">{log.webhookName}</span>
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 bg-white/[0.04] rounded-md text-[#8a8f98]">
                             {log.event}
                           </span>
                         </div>
@@ -866,7 +866,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
                         </span>
                       </div>
 
-                      <p className="text-[11px] font-mono text-neutral-500 truncate">{log.targetUrl}</p>
+                      <p className="text-[11px] font-mono text-[#8a8f98] truncate">{log.targetUrl}</p>
 
                       {log.error && (
                         <p className="text-[11px] text-red-600 bg-red-50 p-1.5 rounded-lg font-mono">
@@ -908,19 +908,19 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
               </div>
 
               {/* Headers Reference */}
-              <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 space-y-2">
-                <h4 className="font-bold text-neutral-900">Cabeçalhos HTTP (Headers) enviados:</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-neutral-700">
-                  <div className="bg-white p-2 rounded-xl border border-neutral-200">
+              <div className="bg-[#0f1011] p-4 rounded-2xl border border-white/[0.08] space-y-2">
+                <h4 className="font-bold text-[#f7f8f8]">Cabeçalhos HTTP (Headers) enviados:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-[#d4d6e0]">
+                  <div className="bg-white/[0.04] p-2 rounded-xl border border-white/[0.08]">
                     <b>X-Webhook-Event:</b> status_changed
                   </div>
-                  <div className="bg-white p-2 rounded-xl border border-neutral-200">
+                  <div className="bg-white/[0.04] p-2 rounded-xl border border-white/[0.08]">
                     <b>X-Webhook-Delivery:</b> del-172398...
                   </div>
-                  <div className="bg-white p-2 rounded-xl border border-neutral-200">
+                  <div className="bg-white/[0.04] p-2 rounded-xl border border-white/[0.08]">
                     <b>X-Webhook-Timestamp:</b> ISO 8601
                   </div>
-                  <div className="bg-white p-2 rounded-xl border border-neutral-200">
+                  <div className="bg-white/[0.04] p-2 rounded-xl border border-white/[0.08]">
                     <b>X-Webhook-Signature:</b> sha256=... (HMAC)
                   </div>
                 </div>
@@ -930,7 +930,7 @@ export const WebhookManagerModal: React.FC<WebhookManagerModalProps> = ({ isOpen
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between text-xs text-neutral-500">
+        <div className="p-4 bg-[#0f1011] border-t border-white/[0.08] flex items-center justify-between text-xs text-[#8a8f98]">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span>Webhooks integrados com garantia de entrega em segundo plano (non-blocking).</span>
