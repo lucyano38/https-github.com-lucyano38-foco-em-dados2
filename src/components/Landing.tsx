@@ -21,10 +21,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('O sistema de checkout será ativado em breve. Estamos construindo a plataforma!');
+        window.location.href = 'https://buy.stripe.com/focoemdados-pro';
       }
     } catch {
-      alert('Ambiente em desenvolvimento. Em breve disponível para vendas.');
+      window.location.href = 'https://buy.stripe.com/focoemdados-pro';
     } finally {
       setLoadingCheckout(false);
     }
@@ -55,13 +55,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             <span className="text-slate-950 font-extrabold text-sm">⚡</span>
           </div>
           <span className="font-bold text-lg tracking-tight text-slate-100">Foco em Dados</span>
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">BETA</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">PRO</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm text-slate-300 font-medium">
           <a href="#recursos" className="hover:text-amber-400 transition-colors">Ecossistema</a>
           <a href="#automacao" className="hover:text-amber-400 transition-colors">Automação & WhatsApp</a>
-          <a href="#planos" className="hover:text-amber-400 transition-colors">Planos</a>
+          <a href="#planos" className="hover:text-amber-400 transition-colors">Planos (R$ 39,90)</a>
         </div>
 
         <div className="flex items-center gap-3">
@@ -76,14 +76,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             disabled={loadingCheckout}
             className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
-            {loadingCheckout ? 'Carregando...' : 'Garantir Acesso Antecipado'}
+            {loadingCheckout ? 'Carregando...' : 'Assinar Acesso'}
           </button>
         </div>
       </nav>
 
       {/* HERO SECTION */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-20 text-center flex flex-col items-center">
-        
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 shadow-md mb-6">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
           <span className="text-xs font-medium text-slate-300">O Sistema Operacional de Vendas Inteligentes & Dados B2B</span>
@@ -170,7 +169,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       {/* SEÇÃO DE PLANOS */}
       <section id="planos" className="relative z-10 max-w-4xl mx-auto px-6 py-16 border-t border-slate-800/80 text-center">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Construindo o Futuro com Você</h2>
-        <p className="text-xs sm:text-sm text-slate-400 mb-8">Estamos estruturando cada módulo com calma e solidez. O acesso completo PRO custará R$ 39,90/mês.</p>
+        <p className="text-xs sm:text-sm text-slate-400 mb-8">Acesso completo PRO por apenas R$ 39,90/mês.</p>
         <div className="inline-block bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
           <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Acesso PRO</span>
           <div className="text-3xl font-extrabold text-slate-100 my-2">R$ 39,90 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
