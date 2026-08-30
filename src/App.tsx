@@ -1,3 +1,4 @@
+import { OpenSquadView } from "./components/OpenSquadView";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -641,6 +642,7 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => setEcosystemMode('analysis')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Análise</button>
             <button onClick={() => setEcosystemMode('prospecting')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'prospecting' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Prospecção & Redesign</button>
+            <button onClick={() => setEcosystemMode('opensquad')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'opensquad' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>OpenSquad AI</button>
             <button onClick={() => setEcosystemMode('crm')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>CRM Kanban</button>
             <button onClick={handleLogin} className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#4f4632] bg-[#121414] text-[#ffe4af] hover:bg-[#292a2a] cursor-pointer">Entrar</button>
           </div>
@@ -761,8 +763,8 @@ export const App: React.FC = () => {
           <ProspeccaoDashboard />
         </div>
       ) : ecosystemMode === 'opensquad' ? (
-        <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
-          <div className="text-sm font-semibold text-[#ffe4af]">OpenSquad já está embutido na aba Prospecção & Redesign.</div>
+        <div className="w-full flex-1 flex flex-col">
+          <OpenSquadView />
         </div>
       ) : ecosystemMode === 'indicators' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
