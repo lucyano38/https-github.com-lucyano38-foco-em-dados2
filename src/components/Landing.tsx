@@ -23,8 +23,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      const data = await response.json();
-      if (data.url) {
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+      if (data?.url) {
         window.location.href = data.url;
       } else {
         window.location.href = 'https://buy.stripe.com/focoemdados-pro';
@@ -41,14 +47,20 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   };
 
   const handleLoginProvider = async (provider: 'google' | 'github') => {
-    if (provider !== 'google') {
-      setLoginError('Login com GitHub ainda não está disponível. Use o login com Google.');
-      return;
-    }
     setLoginLoading(true);
     setLoginError(null);
     try {
-      const result = await googleSignIn();
+      let result: { user: any; accessToken: string } | null = null;
+      if (provider === 'google') {
+        result = await googleSignIn();
+      } else if (provider === 'github') {
+        result = await githubSignIn();
+      } else {
+        setLoginError('Opção de login indisponível.');
+        setLoginLoading(false);
+        return;
+      }
+
       const target = pendingMode;
       setPendingMode(null);
       if (result?.user) {
@@ -59,10 +71,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           startMode(target);
         }
       } else {
-        setLoginError('Falha ao autenticar com o Google.');
+        setLoginError('Falha ao autenticar.');
       }
     } catch (err: any) {
-      setLoginError(err?.message || 'Falha ao autenticar com o Google.');
+      setLoginError(err?.message || 'Falha ao autenticar.');
       setIsLoginOpen(true);
     } finally {
       setLoginLoading(false);
