@@ -415,11 +415,15 @@ function useLandingGate() {
   return { showLanding, setShowLanding };
 }
 
-function useAuthGuard() {
-  const handleLogin = useCallback(async () => {
+export function useAuthGuard(): {
+  handleLogin: () => void;
+  setIsLoginOpen: React.Dispatch<React.SetStateAction<boolean>>;
+} {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const handleLogin = useCallback(() => {
     setIsLoginOpen(true);
   }, []);
-  return { handleLogin };
+  return { handleLogin, setIsLoginOpen };
 }
 
 function useChartZoom() {
@@ -550,12 +554,52 @@ export const App: React.FC = () => {
     runAnalysis();
   }, [runAnalysis, selectedFilesForUpload, datasetName]);
 
+  const [userEmail, setUserEmail] = useState(() => localStorage.getItem('foco_em_dados_user_email') || '');
+
+  // Verifica assinatura no Supabase antes de liberar o ecossistema completo
+  const ensureProAccess = useCallback(async () => {
+    const isAutenticado = localStorage.getItem('foco_em_dados_auth') === 'true';
+    if (!isAutenticado) {
+      setIsLoginOpen(true);
+      return false;
+    }
+    const email = localStorage.getItem('foco_em_dados_user_email') || '';
+    if (!email) return true; // fallback: se não temos email, não bloqueia aqui; o checkout vai resolver
+
+    try {
+      const { verifySubscriptionByEmail } = await import('../lib/subscription');
+      const sub = await verifySubscriptionByEmail(email);
+      localStorage.setItem('foco_em_dados_pro', sub ? 'true' : 'false');
+      return !!sub;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Atualiza o e-mail do usuário a partir do login modal/localStorage
+  const refreshUserEmail = useCallback(() => {
+    setUserEmail(localStorage.getItem('foco_em_dados_user_email') || '');
+  }, []);
+
   const handleStart = useCallback(
-    (mode: string) => {
+    async (mode: string) => {
+      if (mode !== 'indicators') {
+        const allowed = await ensureProAccess();
+        if (!allowed) {
+          const irParaPlanos = window.confirm(
+            'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Deseja assinar agora?',
+          );
+          if (irParaPlanos) {
+            handleCheckoutStripe();
+          }
+          return;
+        }
+      }
+
       setEcosystemMode(mode);
       setShowLanding(false);
     },
-    [setShowLanding]
+    [ensureProAccess, handleCheckoutStripe],
   );
 
   const handleSelectMessage = useCallback(
@@ -598,10 +642,7 @@ export const App: React.FC = () => {
   if (showLanding) {
     return (
       <Landing
-        onStart={(mode) => {
-          setEcosystemMode(mode);
-          setShowLanding(false);
-        }}
+        onStart={handleStart}
         onUploadFile={handleUploadFile}
       />
     );
