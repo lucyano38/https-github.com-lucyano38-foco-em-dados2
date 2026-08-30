@@ -600,7 +600,7 @@ export const App: React.FC = () => {
       setEcosystemMode(mode);
       setShowLanding(false);
     },
-    [ensureProAccess, onStart],
+    [ensureProAccess],
   );
 
   const handleSelectMessage = useCallback(
