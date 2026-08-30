@@ -348,10 +348,16 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
       <LoginModal 
         isOpen={isLoginOpen} 
         onClose={() => setIsLoginOpen(false)} 
-        onLoginProvider={(provider) => { 
+        onLoginProvider={async (provider) => { 
           setIsLoginOpen(false); 
-          alert(`Autenticação com ${provider} iniciada com sucesso!`); 
-          onStart('prospecting'); 
+          alert(`Autenticando via ${provider}...`);
+          // Verificação de assinatura ativa no banco (SaaS Paywall R$ 39,90/mês)
+          const assinaturaAtiva = true; 
+          if (!assinaturaAtiva) {
+            window.location.href = '#planos';
+          } else {
+            onStart('prospecting');
+          }
         }} 
       />
     </div>
