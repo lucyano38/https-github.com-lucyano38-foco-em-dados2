@@ -289,7 +289,7 @@ export const ClientProspectingView: React.FC<{
                 setSelectedNiche(e.target.value);
                 setCustomNiche('');
               }}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             >
               {COMMON_NICHES.map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -308,7 +308,7 @@ export const ClientProspectingView: React.FC<{
                 setSelectedCnae(e.target.value);
                 setCustomCnae('');
               }}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             >
               {COMMON_CNAES.map((c) => (
                 <option key={c.code} value={c.code}>{c.code} - {c.desc}</option>
@@ -327,7 +327,7 @@ export const ClientProspectingView: React.FC<{
               placeholder="Ex: São Paulo - SP"
               value={cityInput}
               onChange={(e) => setCityInput(e.target.value)}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             />
           </div>
 
@@ -341,7 +341,7 @@ export const ClientProspectingView: React.FC<{
               placeholder="Ex: 5"
               value={Math.round(parseInt(radius) / 1000)}
               onChange={(e) => setRadius((parseInt(e.target.value) * 1000).toString())}
-              className="w-full bg-serenity-cream border border-serenity-rose/30 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             />
           </div>
 
@@ -406,15 +406,15 @@ export const ClientProspectingView: React.FC<{
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#facc15] bg-serenity-cream px-3 py-1 rounded-full border border-serenity-rose/30">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#facc15] bg-white/[0.04] px-3 py-1 rounded-full border border-white/[0.08]">
                         CNAE: {lead.cnaeCode || activeCnae}
                       </span>
                       <h3 className="text-xl font-display text-white font-semibold mt-3">
                         {lead.name}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-serenity-cream px-3 py-1 rounded-full text-xs font-semibold text-white">
-                      <Star className="w-4 h-4 text-serenity-gold fill-serenity-gold" />
+                    <div className="flex items-center gap-1.5 bg-white/[0.04] px-3 py-1 rounded-full text-xs font-semibold text-white">
+                      <Star className="w-4 h-4 text-[#d4a574] fill-serenity-gold" />
                       <span>{lead.rating}</span>
                     </div>
                   </div>

@@ -36,18 +36,18 @@ export const ApolloSearchFilters: React.FC<ApolloSearchFiltersProps> = ({ onSear
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl mb-8">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 shadow-[0_1px_0_rgba(255,255,255,0.05)] mb-8">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/[0.08]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#d4a574]">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100">Busca Avançada de Leads B2B (Estilo Apollo)</h2>
-            <p className="text-xs text-slate-400">Filtre por nicho, cidade e raio de distância com inteligência artificial.</p>
+            <h2 className="text-base font-bold text-[#f7f8f8]">Busca Avançada de Leads B2B</h2>
+            <p className="text-xs text-[#8a8f98]">Filtre por nicho, cidade e raio de distância com inteligência artificial.</p>
           </div>
         </div>
-        <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+        <span className="text-[11px] font-mono text-[#d4d6e0] bg-white/[0.04] px-3 py-1 rounded-full border border-white/[0.08]">
           Base Ativa: 14.892+ Empresas
         </span>
       </div>
