@@ -29,9 +29,9 @@ export const ProspectList: React.FC<ProspectListProps> = ({
 
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto p-6">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 tracking-tight">Prospecção & Redesign B2B</h2>
+          <h2 className="text-xl font-bold text-[#f7f8f8] tracking-tight">Prospecção & Redesign B2B</h2>
           <p className="text-xs text-slate-400 mt-1">Leads qualificados e automação de propostas via IA (Gemini).</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl font-medium">
@@ -47,7 +47,7 @@ export const ProspectList: React.FC<ProspectListProps> = ({
       )}
 
       {leads.length === 0 ? (
-        <div className="text-center py-12 bg-slate-950/40 border border-slate-900 rounded-2xl text-slate-500 text-xs">
+        <div className="text-center py-12 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-[#8a8f98] text-xs">
           Nenhum lead encontrado na base no momento.
         </div>
       ) : (
@@ -64,8 +64,8 @@ export const ProspectList: React.FC<ProspectListProps> = ({
       )}
 
       {isLoading && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl flex items-center gap-4 text-slate-100 text-sm font-medium">
+        <div className="fixed inset-0 bg-[#010102]/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-slate-900 border border-white/[0.08] p-6 rounded-2xl shadow-2xl flex items-center gap-4 text-[#f7f8f8] text-sm font-medium">
             <Sparkles className="w-5 h-5 text-amber-400 animate-spin" />
             <span>Agente Hermes analisando site e gerando proposta comercial...</span>
           </div>

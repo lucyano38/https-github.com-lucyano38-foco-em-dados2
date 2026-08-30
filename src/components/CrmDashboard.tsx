@@ -60,13 +60,13 @@ const STATUS_CONFIG: Record<
   LeadStatus,
   { label: string; color: string; bg: string; border: string }
 > = {
-  novo: { label: 'Novo Lead', color: 'text-serenity-charcoal', bg: 'bg-serenity-cream', border: 'border-serenity-charcoal/20' },
-  redesenhado: { label: 'Redesenhado', color: 'text-serenity-rose', bg: 'bg-serenity-rose/10', border: 'border-serenity-rose/30' },
-  publicado: { label: 'Publicado', color: 'text-serenity-sage', bg: 'bg-serenity-sage/10', border: 'border-serenity-sage/30' },
-  proposta: { label: 'Proposta Enviada', color: 'text-serenity-gold', bg: 'bg-serenity-gold/10', border: 'border-serenity-gold/30' },
-  respondeu: { label: 'Respondeu', color: 'text-serenity-charcoal', bg: 'bg-serenity-cream', border: 'border-serenity-charcoal/20' },
-  fechado: { label: 'Fechado', color: 'text-serenity-sage', bg: 'bg-serenity-sage/10', border: 'border-serenity-sage/30' },
-  descartado: { label: 'Descartado', color: 'text-serenity-charcoal', bg: 'bg-neutral-100', border: 'border-neutral-300' },
+  novo: { label: 'Novo Lead', color: 'text-[#f7f8f8]', bg: 'bg-white/[0.04]', border: 'border-white/[0.08]/20' },
+  redesenhado: { label: 'Redesenhado', color: 'text-[#d4a574]', bg: 'bg-[#d4a574]/10', border: 'border-white/[0.08]' },
+  publicado: { label: 'Publicado', color: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+  proposta: { label: 'Proposta Enviada', color: 'text-[#d4a574]', bg: 'bg-white/[0.04]', border: 'border-white/[0.08]' },
+  respondeu: { label: 'Respondeu', color: 'text-[#f7f8f8]', bg: 'bg-white/[0.04]', border: 'border-white/[0.08]/20' },
+  fechado: { label: 'Fechado', color: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+  descartado: { label: 'Descartado', color: 'text-[#f7f8f8]', bg: 'bg-neutral-100', border: 'border-neutral-300' },
 };
 
 const KANBAN_COLUMNS: LeadStatus[] = [
@@ -388,7 +388,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
       {/* Main App Layout: Sidebar Tabs + View Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Navigation Sidebar */}
-        <aside className="w-60 bg-serenity-charcoal text-serenity-cream/80 p-3.5 flex flex-col justify-between shrink-0 border-r border-serenity-charcoal">
+        <aside className="w-60 bg-[#0f1011] text-[#d4d6e0] p-3.5 flex flex-col justify-between shrink-0 border-r border-white/[0.08]">
           <nav className="space-y-1">
             {[
               { id: 'geral', label: 'Visão Geral & Funil', icon: LayoutGrid, count: null },
@@ -414,8 +414,8 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onSendToDataAnalyst 
                     active
                       ? 'bg-serenity-gold text-white font-semibold shadow-xs'
                       : item.highlight
-                      ? 'bg-serenity-gold/20 text-serenity-gold hover:bg-serenity-gold/30 border border-serenity-gold/20'
-                      : 'text-serenity-cream/70 hover:bg-serenity-cream/10 hover:text-white'
+                      ? 'bg-white/[0.04] text-[#d4a574] hover:bg-serenity-gold/30 border border-white/[0.08]'
+                      : 'text-[#d4d6e0]/70 hover:bg-white/[0.04]/10 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
