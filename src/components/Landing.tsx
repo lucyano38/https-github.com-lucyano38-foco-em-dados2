@@ -34,7 +34,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
     }
   };
 
-  const startMode = (mode: string) => {
+  const startMode = (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => {
     if (typeof onStart === 'function') {
       onStart(mode);
     }
