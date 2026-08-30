@@ -96,12 +96,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           muted
           playsInline
           poster="/bg.jpg"
-          className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105"
+          className="absolute inset-0 w-full h-full object-cover opacity-90 scale-105"
         >
           <source src="/bg.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
         </video>
-        <div className="absolute inset-0 bg-[#010102]/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-[#010102]/50 backdrop-blur-[2px]" />
       </div>
 
       {/* NAVBAR */}
