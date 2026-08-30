@@ -590,7 +590,7 @@ export const App: React.FC = () => {
             'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Deseja assinar agora?',
           );
           if (irParaPlanos) {
-            handleCheckoutStripe();
+            onStart('checkout');
           }
           return;
         }
@@ -599,7 +599,7 @@ export const App: React.FC = () => {
       setEcosystemMode(mode);
       setShowLanding(false);
     },
-    [ensureProAccess, handleCheckoutStripe],
+    [ensureProAccess, onStart],
   );
 
   const handleSelectMessage = useCallback(
