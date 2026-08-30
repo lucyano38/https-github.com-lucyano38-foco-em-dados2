@@ -560,11 +560,10 @@ export const App: React.FC = () => {
   const ensureProAccess = useCallback(async () => {
     const isAutenticado = localStorage.getItem('foco_em_dados_auth') === 'true';
     if (!isAutenticado) {
-      setIsLoginOpen(true);
       return false;
     }
     const email = localStorage.getItem('foco_em_dados_user_email') || '';
-    if (!email) return true; // fallback: se não temos email, não bloqueia aqui; o checkout vai resolver
+    if (!email) return false;
 
     try {
       const { verifySubscriptionByEmail } = await import('./lib/subscription');
@@ -572,6 +571,7 @@ export const App: React.FC = () => {
       localStorage.setItem('foco_em_dados_pro', sub ? 'true' : 'false');
       return !!sub;
     } catch {
+      localStorage.setItem('foco_em_dados_pro', 'false');
       return false;
     }
   }, []);

@@ -50,14 +50,19 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       const result = await googleSignIn();
       const target = pendingMode;
       setPendingMode(null);
-      setIsLoginOpen(false);
       if (result?.user) {
-        if (target) startMode(target);
+        localStorage.setItem('foco_em_dados_auth', 'true');
+        localStorage.setItem('foco_em_dados_user_email', (result.user.email || '').trim());
+        setIsLoginOpen(false);
+        if (target) {
+          startMode(target);
+        }
       } else {
         setLoginError('Falha ao autenticar com o Google.');
       }
     } catch (err: any) {
       setLoginError(err?.message || 'Falha ao autenticar com o Google.');
+      setIsLoginOpen(true);
     } finally {
       setLoginLoading(false);
     }
@@ -78,12 +83,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           loop 
           muted 
           playsInline 
-          className="absolute inset-0 w-full h-full object-cover opacity-35 scale-105"
+          poster="/bg.jpg"
+          className="absolute inset-0 w-full h-full object-cover opacity-65 scale-105"
         >
           <source src="/bg.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
         </video>
-        <div className="absolute inset-0 bg-slate-950/92" />
+        <div className="absolute inset-0 bg-slate-950/75" />
       </div>
 
       {/* NAVBAR SUPERIOR */}
