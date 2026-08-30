@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
-import { googleSignIn } from '../lib/auth';
+import { googleSignIn, githubSignIn } from '../lib/auth';
 import { supabaseServiceRole } from '../lib/supabaseClient';
 
 interface LandingProps {
@@ -47,20 +47,18 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   };
 
   const handleLoginProvider = async (provider: 'google' | 'github') => {
+    if (provider === 'github') {
+      setLoginError('Login com GitHub ainda não está disponível no momento.');
+      return;
+    }
+    if (provider !== 'google') {
+      setLoginError('Opção de login indisponível.');
+      return;
+    }
     setLoginLoading(true);
     setLoginError(null);
     try {
-      let result: { user: any; accessToken: string } | null = null;
-      if (provider === 'google') {
-        result = await googleSignIn();
-      } else if (provider === 'github') {
-        result = await githubSignIn();
-      } else {
-        setLoginError('Opção de login indisponível.');
-        setLoginLoading(false);
-        return;
-      }
-
+      const result = await googleSignIn();
       const target = pendingMode;
       setPendingMode(null);
       if (result?.user) {
@@ -71,10 +69,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           startMode(target);
         }
       } else {
-        setLoginError('Falha ao autenticar.');
+        setLoginError('Falha ao autenticar com o Google.');
       }
     } catch (err: any) {
-      setLoginError(err?.message || 'Falha ao autenticar.');
+      setLoginError(err?.message || 'Falha ao autenticar com o Google.');
       setIsLoginOpen(true);
     } finally {
       setLoginLoading(false);

@@ -5,6 +5,22 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "headers": [
+    {
+      "source": "/bg.mp4",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" },
+        { "key": "Content-Type", "value": "video/mp4" }
+      ]
+    },
+    {
+      "source": "/bg.jpg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" },
+        { "key": "Content-Type", "value": "image/jpeg" }
+      ]
+    }
+  ],
   "redirects": [
     {
       "source": "/:path*",
