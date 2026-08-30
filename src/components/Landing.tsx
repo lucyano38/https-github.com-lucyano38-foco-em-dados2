@@ -1,86 +1,14 @@
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
-import { HermesDemoBox } from './HermesDemoBox';
-import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, Workflow } from 'lucide-react';
-import { googleSignIn } from '../lib/auth';
 
 interface LandingProps {
   onStart: (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => void;
   onUploadFile?: () => void;
 }
 
-const AUTOMATION_CARDS = [
-  {
-    title: 'Webhooks Inteligentes',
-    description: 'Conecte Supabase, Stripe, Resend e n8n com triggers automáticos por evento.',
-  },
-  {
-    title: 'Automação de Prospecção',
-    description: 'Sequências de WhatsApp, e-mails e follow-ups sem intervenção manual.',
-  },
-  {
-    title: 'Fluxos de CRM',
-    description: 'Movimentação de etapas, alertas de contratos e lembretes automáticos.',
-  },
-];
-
-export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
+export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-
-  const handleLoginProvider = async (provider: 'google' | 'github') => {
-    if (provider !== 'google') {
-      setLoginError('Login com GitHub ainda não está disponível. Use o login com Google.');
-      return;
-    }
-
-    setLoginLoading(true);
-    setLoginError(null);
-    try {
-      const result = await googleSignIn();
-      if (result?.user) {
-        localStorage.setItem('foco_em_dados_auth', 'true');
-        localStorage.setItem('foco_em_dados_provider', provider);
-        localStorage.setItem('foco_em_dados_user_email', result.user.email || '');
-        setIsLoginOpen(false);
-        return;
-      }
-      setLoginError('Login não concluído. Tente novamente.');
-    } catch (err: any) {
-      setLoginError(err?.message || 'Erro no login.');
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const handleTesteGratuito = () => {
-    onUploadFile?.();
-  };
-
-  // Verificação rigorosa de Paywall e Autenticação
-  const handleAcessoProtegido = (targetMode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => {
-    const isAutenticado = localStorage.getItem('foco_em_dados_auth') === 'true';
-    const isAssinantePro = localStorage.getItem('foco_em_dados_pro') === 'true';
-
-    if (!isAutenticado) {
-      // Barreira 1: Exige Login
-      setIsLoginOpen(true);
-      return;
-    }
-
-    if (!isAssinantePro) {
-      // Barreira 2: Exige Assinatura R$ 39,90
-      const irParaPlanos = window.confirm('O ecossistema completo exige o plano PRO (R$ 39,90/mês). Deseja assinar agora?');
-      if (irParaPlanos) {
-        handleCheckoutStripe();
-      }
-      return;
-    }
-
-    onStart(targetMode);
-  };
 
   const handleCheckoutStripe = async () => {
     try {
@@ -90,13 +18,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await response.json();
-      if (data.url || data.urlCheckout) {
-        window.location.href = data.url || data.urlCheckout;
+      if (data.url) {
+        window.location.href = data.url;
       } else {
-        window.location.href = 'https://buy.stripe.com/focoemdados-pro';
+        alert('O sistema de checkout será ativado em breve. Estamos construindo a plataforma!');
       }
     } catch {
-      window.location.href = 'https://buy.stripe.com/focoemdados-pro';
+      alert('Ambiente em desenvolvimento. Em breve disponível para vendas.');
     } finally {
       setLoadingCheckout(false);
     }
@@ -105,40 +33,35 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-x-hidden font-sans">
       
-      {/* ================================================= */}
-      {/* BACKGROUND COM VÍDEO ANIMADO RESPONSIVO           */}
-      {/* ================================================= */}
+      {/* BACKGROUND COM VÍDEO ANIMADO E OVERLAY SÓLIDO */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <video 
           autoPlay 
           loop 
           muted 
           playsInline 
-          poster="/bg.jpg"
-          className="absolute inset-0 w-full h-full object-cover -z-10 opacity-85"
+          className="absolute inset-0 w-full h-full object-cover opacity-35 scale-105"
         >
-          <source src="/bg_anim_web.mp4" type="video/mp4" media="(min-width: 768px)" />
-          <source src="/bg_anim_web_mobile.mp4" type="video/mp4" />
+          <source src="/bg.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/30 to-slate-950" />
+        <div className="absolute inset-0 bg-slate-950/92" />
       </div>
 
-      {/* NAVBAR */}
+      {/* NAVBAR SUPERIOR */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-7xl mx-auto border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <Zap className="w-4 h-4 text-slate-950 fill-slate-950" />
+            <span className="text-slate-950 font-extrabold text-sm">⚡</span>
           </div>
           <span className="font-bold text-lg tracking-tight text-slate-100">Foco em Dados</span>
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">PRO</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">BETA</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm text-slate-300 font-medium">
-          <a href="#recursos" className="hover:text-amber-400 transition-colors">Recursos</a>
-          <a href="#planos" className="hover:text-amber-400 transition-colors">Planos (R$ 39,90)</a>
-          <a href="#automacao" className="hover:text-amber-400 transition-colors">Automação</a>
-          <a href="#faq" className="hover:text-amber-400 transition-colors">FAQ</a>
+          <a href="#recursos" className="hover:text-amber-400 transition-colors">Ecossistema</a>
+          <a href="#automacao" className="hover:text-amber-400 transition-colors">Automação & WhatsApp</a>
+          <a href="#planos" className="hover:text-amber-400 transition-colors">Planos</a>
         </div>
 
         <div className="flex items-center gap-3">
@@ -153,152 +76,112 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
             disabled={loadingCheckout}
             className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
-            {loadingCheckout ? 'Carregando...' : 'Assinar Acesso'}
+            {loadingCheckout ? 'Carregando...' : 'Garantir Acesso Antecipado'}
           </button>
         </div>
       </nav>
 
       {/* HERO SECTION */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-20 pb-24 text-center flex flex-col items-center">
+      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-20 text-center flex flex-col items-center">
+        
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 shadow-md mb-6">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-medium text-slate-300">Plataforma Oficial de Inteligência de Dados & Automação B2B</span>
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-xs font-medium text-slate-300">O Sistema Operacional de Vendas Inteligentes & Dados B2B</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-100 mb-8 leading-[1.1]">
-          Decisões baseadas em <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">dados precisos</span> e prospecção em escala.
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-100 mb-6 leading-tight">
+          Prospecção automatizada e <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">vendas via WhatsApp</span> em escala.
         </h1>
 
         <p className="text-sm sm:text-base text-slate-300 max-w-2xl mb-10 font-normal leading-relaxed">
-          Unifique seus relatórios de BI, automatize a captação de leads qualificados em qualquer cidade e acelere suas vendas com agentes inteligentes.
+          Unifique inteligência comercial, relatórios executivos em BI e agentes autônomos para qualificar clientes e acelerar o seu faturamento.
         </p>
 
-        {/* Botão Blindado com Paywall e Automação */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <button
-            onClick={() => handleAcessoProtegido('prospecting')}
-            className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-xl shadow-amber-500/25 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer"
+            onClick={() => onStart('prospecting')}
+            className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>Iniciar Missão Unificada (R$ 39,90)</span>
+            <span>Conhecer o Ecossistema</span>
             <span>→</span>
           </button>
 
-          <button
-            onClick={() => handleAcessoProtegido('evolua_demo')}
-            className="w-full sm:w-auto px-8 py-4 bg-slate-900/80 hover:bg-slate-800 text-slate-200 font-semibold text-sm rounded-xl transition-all border border-slate-800 flex items-center justify-center gap-2 cursor-pointer"
+          <a
+            href="#automacao"
+            className="w-full sm:w-auto px-8 py-4 bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-sm rounded-xl transition-all border border-slate-800 flex items-center justify-center gap-2"
           >
-            <PlayCircle className="w-4 h-4 text-amber-400" />
-            <span>Ver Demonstração BI</span>
-          </button>
+            <span>Ver Automação WhatsApp</span>
+          </a>
         </div>
-
-        <p className="mt-6 text-xs text-slate-500 font-medium">
-          🔒 Acesso restrito a assinantes autenticados • Pagamento seguro via Stripe.
-        </p>
       </section>
 
-      {/* DEMONSTRAÇÃO INTERATIVA DO AGENTE HERMES */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 py-12">
-        <HermesDemoBox onUpgradeClick={handleCheckoutStripe} />
-      </section>
-
-      {/* RECURSOS */}
+      {/* SEÇÃO DE RECURSOS */}
       <section id="recursos" className="relative z-10 max-w-7xl mx-auto px-6 py-16 border-t border-slate-800/80">
         <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Construído para Líderes Orientados a Dados</h2>
-          <p className="text-xs sm:text-sm text-slate-400">Soluções sob medida para cada papel estratégico da sua organização.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Construído para Operações de Alta Performance</h2>
+          <p className="text-xs sm:text-sm text-slate-400">Ferramentas de ponta unificadas em um único painel inteligente.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div onClick={() => handleAcessoProtegido('indicators')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
-            <h3 className="text-lg font-bold text-slate-100 mb-2">Diretores e Sócios</h3>
-            <p className="text-xs text-slate-400 leading-relaxed mb-4">Visão consolidada de faturamento, margens e previsibilidade de receita com relatórios executivos prontos em PDF.</p>
-            <span className="text-xs font-semibold text-amber-400">Ver Indicadores Executivos →</span>
+          <div onClick={() => onStart('indicators')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">📊 Inteligência de Dados & BI</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">Painéis gerenciais automatizados e relatórios em PDF prontos para tomada de decisão executiva.</p>
           </div>
 
-          <div onClick={() => handleAcessoProtegido('prospecting')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
-            <h3 className="text-lg font-bold text-slate-100 mb-2">Marketing e Vendas</h3>
-            <p className="text-xs text-slate-400 leading-relaxed mb-4">Prospecção ativa por nicho e cidade com enriquecimento de dados e pipeline CRM Kanban totalmente automatizado.</p>
-            <span className="text-xs font-semibold text-amber-400">Explorar Prospecção B2B →</span>
+          <div onClick={() => onStart('prospecting')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">🎯 Prospecção B2B Ativa</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">Varredura de leads qualificados por nicho e região, organizados em CRM Kanban interativo.</p>
           </div>
 
-          <div onClick={() => handleAcessoProtegido('analytics')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
-            <h3 className="text-lg font-bold text-slate-100 mb-2">Operações e BI</h3>
-            <p className="text-xs text-slate-400 leading-relaxed mb-4">Conexão com APIs públicas e corporativas, processamento de planilhas e agentes autônomos OpenSquad para auditoria técnica.</p>
-            <span className="text-xs font-semibold text-amber-400">Acessar AI Data Analyst →</span>
+          <div onClick={() => onStart('opensquad')} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition cursor-pointer">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">🤖 Agentes Autônomos (OpenSquad)</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">Orquestração por IA para qualificar e responder contatos de forma humanizada e ágil.</p>
           </div>
         </div>
       </section>
 
-      {/* AUTOMAÇÃO */}
+      {/* SEÇÃO DE AUTOMAÇÃO WHATSAPP */}
       <section id="automacao" className="relative z-10 max-w-7xl mx-auto px-6 py-16 border-t border-slate-800/80">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Automação que trabalha por você</h2>
-          <p className="text-xs sm:text-sm text-slate-400">Conecte ferramentas, elimine tarefas repetitivas e escale sem aumentar headcount.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {AUTOMATION_CARDS.map((card) => (
-            <div key={card.title} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition">
-              <div className="flex items-center gap-2 mb-3 text-amber-400">
-                <Workflow className="w-4 h-4" />
-                <h3 className="text-sm font-bold text-slate-100">{card.title}</h3>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">{card.description}</p>
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Omnichannel</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mt-4 mb-4">Vendas no WhatsApp sem esforço manual</h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6">
+              Integre disparos inteligentes, gerencie conversas e automatize a qualificação de clientes diretamente nos canais de mensagens mais usados do mercado.
+            </p>
+            <ul className="text-xs text-slate-300 space-y-2">
+              <li>✓ Mensagens customizadas por nicho</li>
+              <li>✓ Fluxos de conversação guiados por IA</li>
+              <li>✓ Sincronização em tempo real com o CRM</li>
+            </ul>
+          </div>
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 font-mono text-xs text-slate-300 space-y-3">
+            <div className="text-amber-400 font-bold border-b border-slate-800 pb-2">Simulação de Disparo Automatizado</div>
+            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <span className="text-slate-500">10:42 - </span> Lead capturado: <span className="text-slate-100">Clínica Exemplo</span>
             </div>
-          ))}
-        </div>
-        <div className="mt-10 text-center">
-          <button
-            onClick={() => handleAcessoProtegido('crm')}
-            className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
-          >
-            Usar Automação no CRM
-          </button>
+            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <span className="text-emerald-400">WhatsApp Dispatch:</span> Abordagem enviada com sucesso 🚀
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* PLANOS */}
-      <section id="planos" className="relative z-10 max-w-5xl mx-auto px-6 py-16 border-t border-slate-800/80">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Planos Transparentes e Acessíveis</h2>
-          <p className="text-xs sm:text-sm text-slate-400">Escolha o plano ideal para acelerar os seus resultados.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">FREE (Planilha)</span>
-            <div className="text-3xl font-extrabold text-slate-100 my-2">R$ 0 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
-            <p className="text-xs text-slate-400 mb-6">Até 100 linhas por planilha (único recurso gratuito).</p>
-            <ul className="text-xs text-slate-300 space-y-3 mb-8">
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Upload de planilhas até 100 linhas</li>
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Dashboard executivo básico</li>
-            </ul>
-            <button onClick={() => onStart('analytics')} className="w-full py-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl cursor-pointer hover:bg-slate-700 transition">
-              Testar Envio Grátis
-            </button>
-          </div>
-
-          <div className="bg-slate-900 border-2 border-amber-500 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
-              Recomendado
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">PRO (Missão Unificada)</span>
-            <div className="text-4xl font-extrabold text-slate-100 my-2">R$ 39,90 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
-            <p className="text-xs text-amber-300/80 mb-6">Acesso total ao ecossistema • Cobrança via Stripe</p>
-            <ul className="text-xs text-slate-200 space-y-3 mb-8">
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Prospecção B2B Ilimitada</li>
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> CRM Kanban Automatizado</li>
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Agentes IA (Hermes + OpenSquad)</li>
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Disparos de propostas via Resend</li>
-            </ul>
-            <button
-              onClick={handleCheckoutStripe}
-              disabled={loadingCheckout}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
-            >
-              {loadingCheckout ? 'Processando...' : 'Assinar Acesso PRO (R$ 39,90)'}
-            </button>
-          </div>
+      {/* SEÇÃO DE PLANOS */}
+      <section id="planos" className="relative z-10 max-w-4xl mx-auto px-6 py-16 border-t border-slate-800/80 text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Construindo o Futuro com Você</h2>
+        <p className="text-xs sm:text-sm text-slate-400 mb-8">Estamos estruturando cada módulo com calma e solidez. O acesso completo PRO custará R$ 39,90/mês.</p>
+        <div className="inline-block bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
+          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Acesso PRO</span>
+          <div className="text-3xl font-extrabold text-slate-100 my-2">R$ 39,90 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
+          <p className="text-xs text-slate-400 mb-6">Acesso antecipado ao painel e ferramentas de automação.</p>
+          <button
+            onClick={handleCheckoutStripe}
+            disabled={loadingCheckout}
+            className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
+          >
+            {loadingCheckout ? 'Processando...' : 'Assinar Acesso PRO (R$ 39,90)'}
+          </button>
         </div>
       </section>
 
@@ -306,9 +189,11 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onLoginProvider={handleLoginProvider}
-        loading={loginLoading}
-        error={loginError}
+        onLoginProvider={(provider) => {
+          alert(`Autenticando via ${provider}...`);
+          setIsLoginOpen(false);
+          onStart('prospecting');
+        }}
       />
     </div>
   );
