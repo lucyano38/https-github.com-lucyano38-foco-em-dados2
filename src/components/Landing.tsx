@@ -62,9 +62,26 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
     }
   }, [onUploadFile, onStart]);
 
-  return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] font-['Inter',sans-serif] selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
-      {/* NAV */}
+    return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden font-sans">
+      {/* ================================================= */}
+      {/* BACKGROUND COM VÍDEO ANIMADO E CAMADAS DE DESTAQUE  */}
+      {/* ================================================= */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105 transform transition-transform duration-1000"
+        >
+          <source src="/bg.mp4" type="video/mp4" />
+          Seu navegador não suporta vídeos em segundo plano.
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,119,6,0.15),rgba(255,255,255,0))]" />
+      </div>
+{/* NAV */}
       <nav className="fixed top-0 w-full z-50 bg-[#0F172A]/80 backdrop-blur-xl border-b border-[#1E293B]">
         <div className="flex justify-between items-center px-6 md:px-16 py-4 max-w-[1440px] mx-auto">
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2 cursor-pointer" aria-label="Foco em Dados">
