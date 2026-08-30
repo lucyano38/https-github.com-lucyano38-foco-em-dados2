@@ -172,9 +172,9 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
   const [planSteps, setPlanSteps] = useState<Array<{ id: string; agentRole: SquadAgentRole; agentName: string; title: string; description: string; status: 'pending' | 'in_progress' | 'completed' }>>([
     { id: 's1', agentRole: 'pm', agentName: 'Alexandre', title: 'Decomposição & Metas', description: 'Definir ICP e parâmetros', status: 'pending' },
     { id: 's2', agentRole: 'hunter', agentName: 'Bia', title: 'Scouting & Enriquecimento', description: 'Mapear empresas no nicho', status: 'pending' },
-    { id: 's3', agentRole: 'redesigner', agentName: 'Lucas', title: 'Auditoria de UI/UX', description: 'Diagnosticar gargalos mobile', status: 'pending' },
-    { id: 's4', agentRole: 'copywriter', agentName: 'Camila', title: 'Redação de Scripts', description: 'Criar abordagens de WhatsApp', status: 'pending' },
-    { id: 's5', agentRole: 'qa', agentName: 'Gabriel', title: 'Auditoria de Risco & MRR', description: 'Validar ticket e planos', status: 'pending' },
+    { id: 's3', agentRole: 'redesigner', agentName: 'Lucas', title: 'Auditoria/Redesign', description: 'Diagnosticar sites e propor novos layouts', status: 'pending' },
+    { id: 's4', agentRole: 'copywriter', agentName: 'Camila', title: 'Mensagens & Contratos', description: 'Gerar scripts e minuta de contrato', status: 'pending' },
+    { id: 's5', agentRole: 'qa', agentName: 'Gabriel', title: 'Viabilidade & Fechamento', description: 'Validar ticket e planos', status: 'pending' },
   ]);
   const [messages, setMessages] = useState<SquadMessage[]>([
     {
@@ -435,47 +435,47 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
   );
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-8 p-4 md:p-8 font-sans bg-[#0f172a] text-[#f4f4f5]">
+    <div className="max-w-[1440px] mx-auto space-y-8 p-4 md:p-8 font-sans bg-[#010102] text-[#f7f8f8]">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#ffe4af]">Prospectar Clientes + OpenSquad AI</h1>
-          <p className="text-sm text-[#d4c5ab] mt-1">Uma missão unificada: buscar leads, auditar sites, propor redesigns, gerar mensagens e minuta de contrato.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#f7f8f8]">Prospectar Clientes + OpenSquad AI</h1>
+          <p className="text-sm text-[#8a8f98] mt-1">Uma missão unificada: buscar leads, auditar sites, propor redesigns, gerar mensagens e minuta de contrato.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onNavigateToCrm?.()} className="px-4 py-2.5 rounded-xl border border-[#4f4632] bg-[#121414] text-[#ffe4af] hover:bg-[#292a2a] text-xs font-semibold cursor-pointer">Abrir CRM</button>
-          <button onClick={() => setIsConfigModalOpen(true)} className="px-4 py-2.5 rounded-xl bg-[#1e2020] border border-[#334155] text-[#f4f4f5] hover:bg-[#292a2a] text-xs font-semibold cursor-pointer flex items-center gap-2"><Settings className="w-4 h-4" /> Config</button>
+          <button onClick={() => onNavigateToCrm?.()} className="px-4 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] text-[#d4d6e0] hover:bg-white/[0.06] text-xs font-semibold cursor-pointer">Abrir CRM</button>
+          <button onClick={() => setIsConfigModalOpen(true)} className="px-4 py-2.5 rounded-xl bg-[#0f1011] border border-white/[0.08] text-[#f7f8f8] hover:bg-[#191a1b] text-xs font-semibold cursor-pointer flex items-center gap-2"><Settings className="w-4 h-4" /> Config</button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-3xl border border-[#334155] bg-[#1e293b] p-6 shadow-xl">
+          <div className="rounded-3xl border border-white/[0.08] bg-[#0f1011] p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-semibold text-[#ffe4af]">Missão Ativa</div>
-              <span className="text-xs text-[#d4c5ab]">{selectedCard.title}</span>
+              <div className="text-sm font-semibold text-[#d4d6e0]">Missão Ativa</div>
+              <span className="text-xs text-[#8a8f98]">{selectedCard.title}</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-[#d4c5ab] mb-1 block">Nicho / CNAE</label>
-                <select value={activeNicheDisplay} onChange={(e) => { setNiche(e.target.value); setSelectedCnae(e.target.value); setCustomCnae(''); }} className="w-full rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]">
+                <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Nicho / CNAE</label>
+                <select value={activeNicheDisplay} onChange={(e) => { setNiche(e.target.value); setSelectedCnae(e.target.value); setCustomCnae(''); }} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]">
                   {COMMON_NICHES.map((n) => <option key={n} value={n}>{n}</option>)}
                   {COMMON_CNAES.map((c) => <option key={c.code} value={c.code}>{c.code} - {c.desc}</option>)}
                 </select>
-                <input value={customCnae} onChange={(e) => setCustomCnae(e.target.value)} placeholder="Ou digite um CNAE/nicho customizado" className="mt-2 w-full rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]" />
+                <input value={customCnae} onChange={(e) => setCustomCnae(e.target.value)} placeholder="Ou digite um CNAE/nicho customizado" className="mt-2 w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#d4c5ab] mb-1 block">Cidade</label>
-                <input value={city} onChange={(e) => setCity(e.target.value)} className="w-full rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]" />
-                <label className="text-xs font-semibold text-[#d4c5ab] mt-2 mb-1 block">Raio (metros)</label>
-                <input value={radius} onChange={(e) => setRadius(e.target.value)} className="w-full rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]" />
+                <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Cidade</label>
+                <input value={city} onChange={(e) => setCity(e.target.value)} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
+                <label className="text-xs font-semibold text-[#8a8f98] mt-2 mb-1 block">Raio (metros)</label>
+                <input value={radius} onChange={(e) => setRadius(e.target.value)} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#d4c5ab] mb-1 block">Ticket alvo (R$)</label>
-                <input type="number" value={ticketTarget} onChange={(e) => setTicketTarget(Number(e.target.value))} className="w-full rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]" />
+                <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Ticket alvo (R$)</label>
+                <input type="number" value={ticketTarget} onChange={(e) => setTicketTarget(Number(e.target.value))} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#d4c5ab] mb-1 block">Foco da abordagem</label>
-                <input value={focus} onChange={(e) => setFocus(e.target.value)} className="w-full rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]" />
+                <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Foco da abordagem</label>
+                <input value={focus} onChange={(e) => setFocus(e.target.value)} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -485,19 +485,19 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
                 { key: 'linkedin', label: 'LinkedIn' },
                 { key: 'cnae', label: 'CNAE' },
               ].map((s) => (
-                <button key={s.key} onClick={() => setSources((prev) => ({ ...prev, [s.key]: !prev[s.key] }))} className={`px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${sources[s.key as keyof typeof sources] ? 'bg-[#ffc107] text-[#3f2e00] border-[#ffc107]' : 'bg-[#121414] text-[#d4c5ab] border-[#4f4632]'}`}>{s.label}</button>
+                <button key={s.key} onClick={() => setSources((prev) => ({ ...prev, [s.key]: !prev[s.key] }))} className={`px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${sources[s.key as keyof typeof sources] ? 'bg-[#d4a574] text-[#1c1917] border-[#d4a574]' : 'bg-white/[0.04] text-[#d4d6e0] border-white/[0.08]'}`}>{s.label}</button>
               ))}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <button onClick={runUnifiedMission} disabled={isRunning} className="px-5 py-3 rounded-xl bg-[#ffc107] text-[#3f2e00] text-xs font-bold hover:bg-[#fabd00] shadow-[0_0_20px_rgba(250,189,0,0.3)] disabled:opacity-50 cursor-pointer flex items-center gap-2"><Sparkles className="w-4 h-4" /> {isRunning ? 'Executando missão...' : 'Iniciar Missão Unificada'}</button>
+              <button onClick={runUnifiedMission} disabled={isRunning} className="px-5 py-3 rounded-xl bg-[#d4a574] hover:bg-[#e2b98a] text-[#1c1917] text-xs font-bold shadow-[0_0_20px_rgba(212,165,116,0.25)] disabled:opacity-50 cursor-pointer flex items-center gap-2"><Sparkles className="w-4 h-4" /> {isRunning ? 'Executando missão...' : 'Iniciar Missão Unificada'}</button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#334155] bg-[#1e293b] p-6 shadow-xl">
+          <div className="rounded-3xl border border-white/[0.08] bg-[#0f1011] p-6 shadow-xl">
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex border-b border-[#4f4632]/40">
+              <div className="flex border-b border-white/[0.08]">
                 {tabs.map((tab) => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-xs font-semibold rounded-t-xl cursor-pointer ${activeTab === tab.id ? 'bg-[#ffe4af] text-[#3f2e00]' : 'text-[#d4c5ab] hover:text-[#ffe4af]'}`}><div className="flex items-center gap-1.5">{tab.label}</div></button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-xs font-semibold rounded-t-xl cursor-pointer ${activeTab === tab.id ? 'bg-white/[0.06] text-[#f7f8f8]' : 'text-[#8a8f98] hover:text-[#d4d6e0]'}`}><div className="flex items-center gap-1.5">{tab.label}</div></button>
                 ))}
               </div>
             </div>
@@ -505,17 +505,17 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
             {activeTab === 'prospect' && (
               <div className="space-y-3">
                 {prospectingLeads.length === 0 && (
-                  <div className="text-xs text-[#d4c5ab]">Nenhum lead buscado ainda. Execute “Iniciar Missão Unificada”.</div>
+                  <div className="text-xs text-[#8a8f98]">Nenhum lead buscado ainda. Execute “Iniciar Missão Unificada”.</div>
                 )}
                 {prospectingLeads.map((lead) => (
-                  <div key={lead.id} className="flex items-center justify-between rounded-2xl border border-[#4f4632]/50 bg-[#121414] px-4 py-3">
+                  <div key={lead.id} className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-[#010102] px-4 py-3">
                     <div>
-                      <div className="text-sm font-semibold text-[#ffe4af]">{lead.name}</div>
-                      <div className="text-xs text-[#d4c5ab]">{lead.category} • {lead.city} • {lead.websiteStatus}</div>
+                      <div className="text-sm font-semibold text-[#f7f8f8]">{lead.name}</div>
+                      <div className="text-xs text-[#8a8f98]">{lead.category} • {lead.city} • {lead.websiteStatus}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleAddToCrm(lead)} className="px-3 py-2 rounded-xl bg-[#ffc107] text-[#3f2e00] text-xs font-bold cursor-pointer">Adicionar ao CRM</button>
-                      <a href={lead.website || '#'} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-xl border border-[#4f4632] text-[#ffe4af] text-xs font-semibold hover:bg-[#292a2a]">Site</a>
+                      <button onClick={() => handleAddToCrm(lead)} className="px-3 py-2 rounded-xl bg-[#d4a574] hover:bg-[#e2b98a] text-[#1c1917] text-xs font-bold cursor-pointer">Adicionar ao CRM</button>
+                      <a href={lead.website || '#'} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-xl border border-white/[0.08] text-[#d4d6e0] text-xs font-semibold hover:bg-white/[0.06]">Site</a>
                     </div>
                   </div>
                 ))}
@@ -525,16 +525,16 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
             {activeTab === 'agents' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {agents.map((agent) => (
-                  <div key={agent.id} onClick={() => setSelectedAgentForDetails(agent)} className="rounded-2xl border border-[#4f4632]/50 bg-[#121414] p-4 cursor-pointer hover:border-[#ffc107]/60 transition">
+                  <div key={agent.id} onClick={() => setSelectedAgentForDetails(agent)} className="rounded-2xl border border-white/[0.08] bg-[#0f1011] p-4 cursor-pointer hover:border-white/[0.12] transition">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{agent.avatar}</span>
                       <div>
-                        <div className="text-sm font-semibold text-[#ffe4af]">{agent.name}</div>
-                        <div className="text-[11px] text-[#d4c5ab] uppercase tracking-wider">{agent.role}</div>
+                        <div className="text-sm font-semibold text-[#f7f8f8]">{agent.name}</div>
+                        <div className="text-[11px] text-[#8a8f98] uppercase tracking-wider">{agent.role}</div>
                       </div>
                       <span className={`ml-auto text-[10px] px-2 py-1 rounded-full border ${agent.status === 'working' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>{agent.status}</span>
                     </div>
-                    <p className="mt-2 text-xs text-[#d4c5ab]">{agent.description}</p>
+                    <p className="mt-2 text-xs text-[#8a8f98]">{agent.description}</p>
                   </div>
                 ))}
               </div>
@@ -544,26 +544,26 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
               <div className="space-y-3">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex items-start gap-2 ${msg.agentId === 'user' ? 'flex-row-reverse' : ''}`}>
-                    <div className={`px-3 py-2 rounded-2xl text-xs leading-relaxed border ${msg.agentId === 'user' ? 'bg-[#ffc107] text-[#3f2e00] border-[#ffc107]' : 'bg-[#121414] text-[#e3e2e2] border-[#4f4632]/50'}`}>
+                    <div className={`px-3 py-2 rounded-2xl text-xs leading-relaxed border ${msg.agentId === 'user' ? 'bg-[#d4a574] text-[#1c1917] border-[#d4a574]' : 'bg-[#0f1011] text-[#f7f8f8] border-white/[0.08]'}`}>
                       <div className="font-semibold text-[11px] mb-1">{msg.agentName}</div>
                       <div className="prose prose-xs max-w-none">{msg.content}</div>
                     </div>
                   </div>
                 ))}
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                  <input value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} placeholder="Instrua o squad..." className="flex-1 rounded-xl bg-[#121414] border border-[#4f4632] px-3 py-2 text-xs text-[#f4f4f5]" />
-                  <button type="submit" disabled={isRunning || !inputMessage.trim()} className="px-3 py-2 rounded-xl bg-[#ffc107] text-[#3f2e00] text-xs font-bold disabled:opacity-40 cursor-pointer">Enviar</button>
+                  <input value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} placeholder="Instrua o squad..." className="flex-1 rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
+                  <button type="submit" disabled={isRunning || !inputMessage.trim()} className="px-3 py-2 rounded-xl bg-[#d4a574] hover:bg-[#e2b98a] text-[#1c1917] text-xs font-bold disabled:opacity-40 cursor-pointer">Enviar</button>
                 </form>
               </div>
             )}
 
             {activeTab === 'deliverables' && (
               <div className="space-y-3">
-                {deliverables.length === 0 && <div className="text-xs text-[#d4c5ab]">Nenhum entregável ainda. Execute uma missão para gerar leads, mensagens e contratos.</div>}
+                {deliverables.length === 0 && <div className="text-xs text-[#8a8f98]">Nenhum entregável ainda. Execute uma missão para gerar leads, mensagens e contratos.</div>}
                 {deliverables.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-[#4f4632]/50 bg-[#121414] p-4">
-                    <div className="text-sm font-semibold text-[#ffe4af] mb-1">{item.title}</div>
-                    <pre className="text-[11px] text-[#d4c5ab] whitespace-pre-wrap">{typeof item.content === 'string' ? item.content : JSON.stringify(item.content, null, 2)}</pre>
+                  <div key={item.id} className="rounded-2xl border border-white/[0.08] bg-[#0f1011] p-4">
+                    <div className="text-sm font-semibold text-[#f7f8f8] mb-1">{item.title}</div>
+                    <pre className="text-[11px] text-[#8a8f98] whitespace-pre-wrap">{typeof item.content === 'string' ? item.content : JSON.stringify(item.content, null, 2)}</pre>
                   </div>
                 ))}
               </div>
@@ -572,15 +572,15 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-[#334155] bg-[#1e293b] p-6 shadow-xl">
-            <div className="text-sm font-semibold text-[#ffe4af] mb-3">Status dos Agentes</div>
+          <div className="rounded-3xl border border-white/[0.08] bg-[#0f1011] p-6 shadow-xl">
+            <div className="text-sm font-semibold text-[#d4d6e0] mb-3">Status dos Agentes</div>
             <div className="space-y-3">
               {agents.map((agent) => (
                 <div key={agent.id} className="flex items-center gap-3">
                   <span className="text-xl">{agent.avatar}</span>
                   <div className="flex-1">
-                    <div className="text-xs font-semibold text-[#f4f4f5]">{agent.name}</div>
-                    <div className="text-[11px] text-[#d4c5ab]">{agent.role.toUpperCase()}</div>
+                    <div className="text-xs font-semibold text-[#f7f8f8]">{agent.name}</div>
+                    <div className="text-[11px] text-[#8a8f98] uppercase tracking-wider">{agent.role}</div>
                   </div>
                   <span className={`text-[10px] px-2 py-1 rounded-full border ${agent.status === 'working' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>{agent.status}</span>
                 </div>
@@ -588,17 +588,17 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#334155] bg-[#1e293b] p-6 shadow-xl">
-            <div className="text-sm font-semibold text-[#ffe4af] mb-3">Plano da Missão</div>
+          <div className="rounded-3xl border border-white/[0.08] bg-[#0f1011] p-6 shadow-xl">
+            <div className="text-sm font-semibold text-[#d4d6e0] mb-3">Plano da Missão</div>
             <div className="space-y-3">
               {planSteps.map((step) => (
                 <div key={step.id} className="flex items-center gap-3">
                   <div className={`h-2 w-2 rounded-full ${step.status === 'completed' ? 'bg-emerald-400' : step.status === 'in_progress' ? 'bg-amber-400 animate-pulse' : 'bg-neutral-500'}`} />
                   <div className="flex-1">
-                    <div className="text-xs font-semibold text-[#f4f4f5]">{step.title}</div>
-                    <div className="text-[11px] text-[#d4c5ab]">{step.description}</div>
+                    <div className="text-xs font-semibold text-[#f7f8f8]">{step.title}</div>
+                    <div className="text-[11px] text-[#8a8f98]">{step.description}</div>
                   </div>
-                  <span className="text-[10px] text-[#d4c5ab]">{step.agentName}</span>
+                  <span className="text-[10px] text-[#8a8f98]">{step.agentName}</span>
                 </div>
               ))}
             </div>
