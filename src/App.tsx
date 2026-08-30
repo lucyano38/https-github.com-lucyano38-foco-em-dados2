@@ -100,7 +100,8 @@ function useAppLeads() {
         return;
       }
       const response = await fetch('/api/leads');
-      const data = await response.json();
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : [];
       const mapped = Array.isArray(data)
         ? data.map((item: any) => ({
             slug: item.slug,

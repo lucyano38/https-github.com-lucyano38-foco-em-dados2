@@ -1,12 +1,27 @@
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
 import { HermesDemoBox } from './HermesDemoBox';
-import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle } from 'lucide-react';
+import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, Workflow } from 'lucide-react';
 
 interface LandingProps {
   onStart: (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => void;
   onUploadFile?: () => void;
 }
+
+const AUTOMATION_CARDS = [
+  {
+    title: 'Webhooks Inteligentes',
+    description: 'Conecte Supabase, Stripe, Resend e n8n com triggers automáticos por evento.',
+  },
+  {
+    title: 'Automação de Prospecção',
+    description: 'Sequências de WhatsApp, e-mails e follow-ups sem intervenção manual.',
+  },
+  {
+    title: 'Fluxos de CRM',
+    description: 'Movimentação de etapas, alertas de contratos e lembretes automáticos.',
+  },
+];
 
 export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -68,13 +83,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
           muted 
           playsInline 
           poster="/bg.jpg"
-          className="absolute inset-0 w-full h-full object-cover -z-10 opacity-50"
+          className="absolute inset-0 w-full h-full object-cover -z-10 opacity-85"
         >
           <source src="/bg_anim_web.mp4" type="video/mp4" media="(min-width: 768px)" />
           <source src="/bg_anim_web_mobile.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/70 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/30 to-slate-950" />
       </div>
 
       {/* NAVBAR */}
@@ -180,6 +195,33 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
             <p className="text-xs text-slate-400 leading-relaxed mb-4">Conexão com APIs públicas e corporativas, processamento de planilhas e agentes autônomos OpenSquad para auditoria técnica.</p>
             <span className="text-xs font-semibold text-amber-400">Acessar AI Data Analyst →</span>
           </div>
+        </div>
+      </section>
+
+      {/* AUTOMAÇÃO */}
+      <section id="automacao" className="relative z-10 max-w-7xl mx-auto px-6 py-16 border-t border-slate-800/80">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3">Automação que trabalha por você</h2>
+          <p className="text-xs sm:text-sm text-slate-400">Conecte ferramentas, elimine tarefas repetitivas e escale sem aumentar headcount.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {AUTOMATION_CARDS.map((card) => (
+            <div key={card.title} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition">
+              <div className="flex items-center gap-2 mb-3 text-amber-400">
+                <Workflow className="w-4 h-4" />
+                <h3 className="text-sm font-bold text-slate-100">{card.title}</h3>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">{card.description}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 text-center">
+          <button
+            onClick={() => handleAcessoProtegido('crm')}
+            className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
+          >
+            Usar Automação no CRM
+          </button>
         </div>
       </section>
 
