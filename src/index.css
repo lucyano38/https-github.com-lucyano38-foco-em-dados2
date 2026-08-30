@@ -1,21 +1,35 @@
 @import "tailwindcss";
 
-/* IMPECCABLE: tokens humanos — não preto puro, não cinza frio puro */
+/* DESIGN BASE — referência Linear/Stripe mantendo identidade Foco em Dados */
 @theme {
   --font-display: "Cormorant Garamond", "EB Garamond", serif;
-  --font-sans: "Inter", "Geist", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", "Geist", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Superfície: zinc com micro-subtom sépia/quente */
-  --color-app-bg: #0a0908;           /* sépia profundo, não preto puro */
-  --color-app-surface: #18181b;      /* zinc enriquecido */
-  --color-app-card: #1f1d1a;         /* mais quente que zinc puro */
-  --color-app-border: rgba(255,255,255,0.08);
-  --color-app-text: #f5f1e8;         /* off-white com tom papel */
-  --color-app-muted: #a1a1aa;
-  --color-app-primary: #d4a574;      /* dourado Champagne (não amarelo neon) */
+  /* Surface system: escuridão como meio nativo, sem preto puro */
+  --color-app-bg: #010102;             /* canvas quase preto */
+  --color-app-surface: #0f1011;        /* painel/header */
+  --color-app-card: #191a1b;           /* superfície elevada */
+  --color-app-elevated: #28282c;       /* hover/flutuante */
+  --color-app-border: rgba(255,255,255,0.05);
+  --color-app-border-standard: rgba(255,255,255,0.08);
+
+  /* Text system */
+  --color-app-text: #f7f8f8;
+  --color-app-text-secondary: #d0d6e0;
+  --color-app-text-muted: #8a8f98;
+  --color-app-text-subtle: #62666d;
+
+  /* Brand */
+  --color-app-primary: #d4a574;
+  --color-app-primary-hover: #e2b98a;
   --color-app-cta: #c89556;
   --color-app-ink: #1c1917;
+
+  /* Status */
+  --color-app-success: #10b981;
+  --color-app-warning: #eab308;
+  --color-app-danger: #ef4444;
 }
 
 @layer base {
@@ -28,36 +42,39 @@
     text-rendering: optimizeLegibility;
     line-height: 1.6;
   }
-  h1,h2,h3 {
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
     letter-spacing: -0.018em;
     line-height: 1.15;
-    color: #f5f1e8;
+    color: var(--color-app-text);
   }
   h1 { font-weight: 600; }
-  h2,h3 { font-weight: 500; }
+  h2, h3, h4 { font-weight: 500; }
 }
 
 @layer utilities {
   .glass-panel {
     backdrop-filter: blur(12px) saturate(140%);
     -webkit-backdrop-filter: blur(12px) saturate(140%);
-    background: rgba(24, 24, 24, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(15, 16, 17, 0.7);
+    border: 1px solid var(--color-app-border-standard);
   }
+
   .card-tactile {
-    background: linear-gradient(180deg, #1f1d1a 0%, #18181b 100%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, var(--color-app-card) 0%, var(--color-app-surface) 100%);
+    border: 1px solid var(--color-app-border-standard);
     border-radius: 14px;
     transition: all 0.2s ease-in-out;
   }
   .card-tactile:hover {
     border-color: rgba(212, 165, 116, 0.25);
     transform: translateY(-1px);
+    background: linear-gradient(180deg, #1f1d1a 0%, #191a1b 100%);
   }
+
   .btn-primary {
-    background: linear-gradient(180deg, #d4a574 0%, #c89556 100%);
-    color: #1c1917;
+    background: linear-gradient(180deg, var(--color-app-primary) 0%, var(--color-app-cta) 100%);
+    color: var(--color-app-ink);
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     padding: 0.625rem 1.25rem;
@@ -68,23 +85,25 @@
   }
   .btn-primary:hover { filter: brightness(1.05); }
   .btn-primary:active { transform: translateY(0.5px); }
+
   .btn-ghost {
-    background: transparent;
-    color: #d4d4d8;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--color-app-text-secondary);
+    border: 1px solid var(--color-app-border-standard);
     border-radius: 10px;
     padding: 0.5rem 1rem;
     transition: all 0.2s ease-in-out;
   }
   .btn-ghost:hover {
-    color: #f5f1e8;
+    color: var(--color-app-text);
     border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.04);
   }
+
   .input-human {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #f5f1e8;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-app-border-standard);
+    color: var(--color-app-text);
     border-radius: 10px;
     padding: 0.625rem 0.875rem;
     transition: all 0.2s ease-in-out;
@@ -92,7 +111,16 @@
   .input-human:focus {
     outline: none;
     border-color: rgba(212, 165, 116, 0.5);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .surface-ghost {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--color-app-border-standard);
+  }
+  .surface-ghost-hover:hover {
     background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
   }
 }
 
@@ -100,5 +128,5 @@
 .animate-float { animation: float 6s ease-in-out infinite; }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0a0908; }
+::-webkit-scrollbar-track { background: var(--color-app-bg); }
 ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
