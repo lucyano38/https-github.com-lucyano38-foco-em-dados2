@@ -20,18 +20,5 @@
         { "key": "Content-Type", "value": "image/jpeg" }
       ]
     }
-  ],
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "focoemdados.com.br"
-        }
-      ],
-      "destination": "https://www.focoemdados.com.br/:path*",
-      "permanent": true
-    }
   ]
 }
