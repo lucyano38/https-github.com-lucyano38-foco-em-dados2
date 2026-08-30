@@ -27,24 +27,13 @@ provider.addScope('https://www.googleapis.com/auth/drive.file');
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
 
-export const initAuth = (
-  onAuthSuccess?: (user: User, token: string) => void,
-  onAuthFailure?: () => void
-) => {
-  return onAuthStateChanged(auth, async (user: User | null) => {
-    if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!isSigningIn) {
-        cachedAccessToken = null;
-        if (onAuthFailure) onAuthFailure();
-      }
-    } else {
-      cachedAccessToken = null;
-        if (onAuthFailure) onAuthFailure();
-    }
-  });
-};
+export const initAuth = () => onAuthStateChanged(auth, async (user: User | null) => {
+  if (user) {
+    cachedAccessToken = null;
+  } else {
+    cachedAccessToken = null;
+  }
+});
 
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
   try {

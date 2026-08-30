@@ -55,6 +55,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
     }
   };
 
+  const handleTesteGratuito = () => {
+    onUploadFile?.();
+  };
+
   // Verificação rigorosa de Paywall e Autenticação
   const handleAcessoProtegido = (targetMode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => {
     const isAutenticado = localStorage.getItem('foco_em_dados_auth') === 'true';
@@ -66,7 +70,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
       return;
     }
 
-    if (!isAssinantePro && targetMode !== 'indicators') {
+    if (!isAssinantePro) {
       // Barreira 2: Exige Assinatura R$ 39,90
       const irParaPlanos = window.confirm('O ecossistema completo exige o plano PRO (R$ 39,90/mês). Deseja assinar agora?');
       if (irParaPlanos) {
