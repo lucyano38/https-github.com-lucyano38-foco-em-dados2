@@ -416,15 +416,10 @@ function useLandingGate() {
 }
 
 function useAuthGuard() {
-  const [authError, setAuthError] = useState<string | null>(null);
   const handleLogin = useCallback(async () => {
-    try {
-      setAuthError('Login indisponível neste ambiente. Use o acesso local do app.');
-    } catch (err: any) {
-      setAuthError(err.message || 'Erro no login.');
-    }
+    setIsLoginOpen(true);
   }, []);
-  return { authError, setAuthError, handleLogin };
+  return { handleLogin };
 }
 
 function useChartZoom() {
@@ -524,7 +519,7 @@ export const App: React.FC = () => {
   const { viewedMessageId, selectMessage, activeMessageIdRef } = useViewedMessage();
   const { saveReportToFirestore } = useReportSaver();
   const { dragOver, onDragOver, onDragLeave, onDrop } = useDragDrop(addFiles);
-  const { authError, setAuthError, handleLogin } = useAuthGuard();
+  const { handleLogin } = useAuthGuard();
   const { zoomedChart, openZoom, closeZoom } = useChartZoom();
   const { suggestedQuestions, loadingSuggestions, chooseSuggested, fetchSuggestedQuestions } = useNavigationSuggestions(question, setQuestion, runAnalysis);
   const { mrrTotal, proposalCount, redesignedCount } = useComputedStats(useAppLeads().leads);

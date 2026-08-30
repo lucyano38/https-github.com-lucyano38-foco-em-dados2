@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
 import { HermesDemoBox } from './HermesDemoBox';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, Workflow } from 'lucide-react';
+import { googleSignIn } from '../lib/auth';
 
 interface LandingProps {
   onStart: (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => void;
@@ -26,6 +27,33 @@ const AUTOMATION_CARDS = [
 export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const handleLoginProvider = async (provider: 'google' | 'github') => {
+    if (provider !== 'google') {
+      setLoginError('Login com GitHub ainda não está disponível. Use o login com Google.');
+      return;
+    }
+
+    setLoginLoading(true);
+    setLoginError(null);
+    try {
+      const result = await googleSignIn();
+      if (result?.user) {
+        localStorage.setItem('foco_em_dados_auth', 'true');
+        localStorage.setItem('foco_em_dados_provider', provider);
+        localStorage.setItem('foco_em_dados_user_email', result.user.email || '');
+        setIsLoginOpen(false);
+        return;
+      }
+      setLoginError('Login não concluído. Tente novamente.');
+    } catch (err: any) {
+      setLoginError(err?.message || 'Erro no login.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
 
   // Verificação rigorosa de Paywall e Autenticação
   const handleAcessoProtegido = (targetMode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => {
@@ -274,20 +302,9 @@ export const Landing: React.FC<LandingProps> = ({ onStart, onUploadFile }) => {
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onLoginProvider={async (provider) => {
-          setIsLoginOpen(false);
-          alert(`Autenticando via ${provider}...`);
-          // Simula login bem-sucedido e grava autenticação
-          localStorage.setItem('foco_em_dados_auth', 'true');
-          // Se for assinante ou após teste, libera
-          const assinou = window.confirm('Deseja ativar o acesso Pro de assinante (R$ 39,90)? [OK = Sim / Cancelar = Testar Free]');
-          if (assinou) {
-            localStorage.setItem('foco_em_dados_pro', 'true');
-            handleCheckoutStripe();
-          } else {
-            onStart('prospecting');
-          }
-        }}
+        onLoginProvider={handleLoginProvider}
+        loading={loginLoading}
+        error={loginError}
       />
     </div>
   );

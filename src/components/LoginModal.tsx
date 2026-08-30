@@ -4,12 +4,16 @@ export interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginProvider: (provider: 'google' | 'github') => void;
+  loading?: boolean;
+  error?: string | null;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
   onLoginProvider,
+  loading = false,
+  error = null,
 }) => {
   if (!isOpen) return null;
 
@@ -33,18 +37,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           Escolha uma das opções abaixo para entrar com segurança no Foco em Dados.
         </p>
 
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-900/40 border border-red-700/60 text-red-200 text-xs">
+            {error}
+          </div>
+        )}
+
         {/* Opções de Login */}
         <div className="space-y-3">
           <button
             onClick={() => onLoginProvider('google')}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm transition-all border border-slate-700/60 cursor-pointer shadow-md"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm transition-all border border-slate-700/60 cursor-pointer shadow-md disabled:opacity-50"
           >
-            <span>Continuar com Google</span>
+            <span>{loading ? 'Entrando...' : 'Continuar com Google'}</span>
           </button>
 
           <button
             onClick={() => onLoginProvider('github')}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm transition-all border border-slate-700/60 cursor-pointer shadow-md"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm transition-all border border-slate-700/60 cursor-pointer shadow-md disabled:opacity-50"
           >
             <span>Continuar com GitHub</span>
           </button>
