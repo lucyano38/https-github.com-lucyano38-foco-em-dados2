@@ -9,6 +9,7 @@ interface LandingProps {
 }
 
 export const Landing: React.FC<LandingProps> = ({ onStart }) => {
+  const safeOnStart = typeof onStart === 'function' ? onStart : () => {};
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -35,9 +36,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   };
 
   const startMode = (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => {
-    if (typeof onStart === 'function') {
-      onStart(mode);
-    }
+    safeOnStart(mode);
   };
 
   const handleLoginProvider = async (provider: 'google' | 'github') => {
