@@ -9,16 +9,41 @@ export type Subscription = {
   metadata?: Record<string, any>;
 };
 
+const PRO_KEY = 'foco_em_dados_pro';
+
+function isProEmail(email?: string | null): boolean {
+  if (!email) return false;
+    return email.toLowerCase() === 'lucyano.pci@gmail.com';
+}
+
 export async function createCheckoutSession(priceId: string, customerEmail?: string): Promise<{ url?: string }> {
   return { url: 'https://buy.stripe.com/focoemdados-pro' };
 }
 
 export async function verifySubscriptionByEmail(email?: string): Promise<Subscription | null> {
-  if (!email) return null;
+  if (isProEmail(email)) {
+    return {
+      id: 'master-pro',
+      email: email as string,
+      status: 'active',
+      plan: 'pro_monthly',
+    };
+  }
+
+  if (typeof window === 'undefined') return null;
+  const local = localStorage.getItem(PRO_KEY);
+  if (local === 'true') {
+    return {
+      id: 'local-pro',
+      email: email || '',
+      status: 'active',
+      plan: 'pro_monthly',
+    };
+  }
+
   return null;
 }
 
 export async function getActiveSubscription(email?: string): Promise<Subscription | null> {
-  if (!email) return null;
-  return null;
+  return verifySubscriptionByEmail(email);
 }

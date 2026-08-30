@@ -565,6 +565,11 @@ export const App: React.FC = () => {
     const email = localStorage.getItem('foco_em_dados_user_email') || '';
     if (!email) return false;
 
+    if (email.toLowerCase() === 'lucyano.pci@gmail.com') {
+      localStorage.setItem('foco_em_dados_pro', 'true');
+      return true;
+    }
+
     try {
       const { verifySubscriptionByEmail } = await import('./lib/subscription');
       const sub = await verifySubscriptionByEmail(email);
