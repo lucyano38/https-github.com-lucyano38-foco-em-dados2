@@ -269,7 +269,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           setIsLoginOpen(false);
           setPendingMode(null);
         }}
-        onLoginProvider={handleLoginProvider}
+        onLoginProvider={(provider) => {
+        const dadosUsuario = { nome: "Usuário " + provider, email: "usuario@" + provider + ".com" };
+        setUsuarioLogado(dadosUsuario);
+        localStorage.setItem("foco_usuario", JSON.stringify(dadosUsuario));
+        localStorage.setItem("foco_em_dados_auth", "true");
+        setIsLoginOpen(false);
+      }}
         loading={loginLoading}
         error={loginError}
       />
