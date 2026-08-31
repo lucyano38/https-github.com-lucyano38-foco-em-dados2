@@ -6,7 +6,7 @@ import { ApolloSearchFilters, SearchFilters } from './ApolloSearchFilters';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
+const supabase = createClient(supabaseUrl || 'https://ioijbixifvbosythznhh.supabase.co', supabaseAnonKey || 'placeholder');
 
 export const ProspeccaoDashboard: React.FC = () => {
   const [verificando, setVerificando] = useState(true);

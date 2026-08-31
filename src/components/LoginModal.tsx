@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // Inicialize o cliente do Supabase com as chaves públicas/anon
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
+const supabase = createClient(supabaseUrl || 'https://ioijbixifvbosythznhh.supabase.co', supabaseAnonKey || 'placeholder');
 
 export interface LoginModalProps {
   isOpen: boolean;
