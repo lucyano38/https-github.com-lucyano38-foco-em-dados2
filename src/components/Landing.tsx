@@ -95,7 +95,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           muted
           playsInline
           poster="/bg.jpg"
-          className="absolute inset-0 w-full h-full object-cover opacity-100 scale-105"
+          className="absolute inset-0 w-full h-full object-cover opacity-70 scale-105"
         >
           <source src="/bg.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
@@ -126,7 +126,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           <button
             onClick={handleCheckoutStripe}
             disabled={loadingCheckout}
-            className="px-4 py-2 bg-[#d4a574] hover:bg-[#e2b98a] text-[#010102] font-semibold text-xs rounded-lg transition-all shadow-[0_0_15px_rgba(212,165,116,0.20)] active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 bg-[#d4a574] hover:bg-[#e2b98a] text-[#010102] font-semibold text-xs rounded-lg transition-all shadow-[0_0_15px_rgba(212,165,116,0.20)] active:scale-95 disabled:opacity-70 cursor-pointer"
           >
             {loadingCheckout ? 'Processando...' : 'Assinar Acesso'}
           </button>
@@ -229,7 +229,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           <button
             onClick={handleCheckoutStripe}
             disabled={loadingCheckout}
-            className="px-6 py-3 bg-[#d4a574] hover:bg-[#e2b98a] text-[#010102] font-semibold text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(212,165,116,0.25)] cursor-pointer disabled:opacity-50"
+            className="px-6 py-3 bg-[#d4a574] hover:bg-[#e2b98a] text-[#010102] font-semibold text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(212,165,116,0.25)] cursor-pointer disabled:opacity-70"
           >
             {loadingCheckout ? 'Processando...' : 'Assinar Acesso PRO (R$ 39,90)'}
           </button>
