@@ -253,13 +253,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           <span className="text-[11px] font-semibold text-[#d4a574] uppercase tracking-wider">Acesso PRO</span>
           <div className="text-3xl font-semibold text-[#f7f8f8] my-2">R$ 39,90 <span className="text-xs text-[#8a8f98] font-normal">/mês</span></div>
           <p className="text-xs text-[#8a8f98] mb-6">Acesso antecipado ao painel e ferramentas de automação.</p>
-          <button
-            onClick={handleCheckoutStripe}
-            disabled={loadingCheckout}
-            className="px-6 py-3 bg-[#d4a574] hover:bg-[#e2b98a] text-[#010102] font-semibold text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(212,165,116,0.25)] cursor-pointer disabled:opacity-70"
-          >
-            {loadingCheckout ? 'Processando...' : 'Assinar Acesso PRO (R$ 39,90)'}
-          </button>
+          <div className="my-4 flex justify-center">
+              <stripe-buy-button
+                buy-button-id="buy_btn_1UAWP9FP2uFvAXtTgAUmQYzv"
+                publishable-key="pk_live_51SYO3jFP2uFvAXtTYha0OZkQY7HqCGwr0RJxSwnOJUFG2baIpsM2iBb6YTX9nxcImqm2NMeUkEldCvmJwXmBzrvt00fUihvp4W"
+              ></stripe-buy-button>
+            </div>
         </div>
       </section>
 
