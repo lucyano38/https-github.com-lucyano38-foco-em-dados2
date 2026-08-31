@@ -15,6 +15,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [pendingMode, setPendingMode] = useState<string | null>(null);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState<{ nome: string; email: string } | null>(() => {
+    try {
+      const u = localStorage.getItem('foco_usuario');
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const handleCheckoutStripe = async () => {
     try {
@@ -120,9 +128,28 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => setIsLoginOpen(true)} className="px-3 py-2 text-xs font-medium text-[#d0d6e0] hover:text-[#f7f8f8] transition-colors cursor-pointer">
-            Entrar
-          </button>
+          {usuarioLogado ? (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-amber-400 font-medium">Olá, {usuarioLogado.nome}</span>
+              <button
+                onClick={() => {
+                  setUsuarioLogado(null);
+                  localStorage.removeItem('foco_usuario');
+                  localStorage.removeItem('foco_em_dados_auth');
+                }}
+                className="text-xs text-slate-400 hover:text-slate-200 cursor-pointer underline"
+              >
+                Sair
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsLoginOpen(true)}
+              className="text-xs font-semibold text-slate-300 hover:text-slate-100 transition-colors px-3 py-2 cursor-pointer"
+            >
+              Entrar
+            </button>
+          )}
           <button
             onClick={handleCheckoutStripe}
             disabled={loadingCheckout}
