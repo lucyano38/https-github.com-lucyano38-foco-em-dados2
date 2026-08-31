@@ -43,10 +43,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       if (data?.url) {
         window.location.href = data.url;
       } else {
-        window.location.href = 'https://buy.stripe.com/focoemdados-pro';
+        window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03';
       }
     } catch {
-      window.location.href = 'https://buy.stripe.com/focoemdados-pro';
+      window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03';
     } finally {
       setLoadingCheckout(false);
     }
