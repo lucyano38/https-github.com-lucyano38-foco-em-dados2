@@ -2718,10 +2718,51 @@ startServer();
   /* ────────────────────────────────────────────────────────── */
   /*  Stripe Checkout Alias (/api/criar-checkout)              */
   /* ────────────────────────────────────────────────────────── */
+  
+  /* ────────────────────────────────────────────────────────── */
+  /*  Stripe Checkout Session (Exact Match)                    */
+  /* ────────────────────────────────────────────────────────── */
   app.post("/api/criar-checkout", async (req, res) => {
     res.setHeader("Content-Type", "application/json");
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Método não permitido" });
+    }
+    try {
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+        apiVersion: "2025-02-27.acacia",
+      });
+
+      const origin = req.headers.origin || "https://www.focoemdados.com.br";
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "brl",
+              product_data: {
+                name: "Foco em Dados - Acesso Total PRO",
+                description: "Sistema Operacional de Vendas & IA B2B",
+              },
+              unit_amount: 3990,
+              recurring: { interval: "month" },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: origin + "/prospeccao?status=sucesso",
+        cancel_url: origin + "/?status=cancelado",
+      });
+
+      return res.status(200).json({ url: session.url, urlCheckout: session.url });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao conectar com o Stripe.";
+      return res.status(500).json({ error: errorMessage });
+    }
+  });
+
     }
     try {
       const Stripe = (await import("stripe")).default;
