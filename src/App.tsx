@@ -41,6 +41,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { Lead, UploadedFile, AnalysisReport, ActivityLog, SavedReport, ContratanteConfig, HostgatorConfig } from './types';
+import { MASTER_EMAIL } from './lib/roles';
 
 /* --------------------------- Landing --------------------------- */
 const SITE_TITLE = 'Foco em Dados';
@@ -56,18 +57,6 @@ const DEFAULT_PROMPTS = [
   'Liste os descartados e os motivos',
   'Quais contratos estão pendentes?',
   'Qual o valor médio por status do lead?',
-];
-
-const NICHOS = [
-  'Restaurantes',
-  'Clínicas Médicas',
-  'Academias',
-  'Imobiliárias',
-  'Escritórios de Advocacia',
-  'E-commerce',
-  'Empresas de Tecnologia',
-  'Oficinas',
-  'Escolas e Cursos',
 ];
 
 const STATUSES: Lead['status'][] = [
@@ -526,10 +515,10 @@ export const App: React.FC = () => {
   const { handleLogin } = useAuthGuard();
   const { zoomedChart, openZoom, closeZoom } = useChartZoom();
   const { suggestedQuestions, loadingSuggestions, chooseSuggested, fetchSuggestedQuestions } = useNavigationSuggestions(question, setQuestion, runAnalysis);
-  const { mrrTotal, proposalCount, redesignedCount } = useComputedStats(useAppLeads().leads);
   const chartData = useChartData();
   const { environmentId, setEnvironmentId, config, configError, fetchConfig, handleSendCrmToAnalyst } = useEnvironmentConfig();
   const { leads, loading, fetchAppLeads, addLead, moveLead } = useAppLeads();
+  const { mrrTotal, proposalCount, redesignedCount } = useComputedStats(leads);
   const [selectedFilesForUpload, setSelectedFilesForUpload] = useState<File[]>([]);
 
   const handleUploadFile = useCallback(async () => {
@@ -565,7 +554,7 @@ export const App: React.FC = () => {
     const email = localStorage.getItem('foco_em_dados_user_email') || '';
     if (!email) return false;
 
-    if (email.toLowerCase() === 'lucyano.pci@gmail.com') {
+    if (email.toLowerCase() === MASTER_EMAIL.toLowerCase()) {
       localStorage.setItem('foco_em_dados_pro', 'true');
       return true;
     }

@@ -1,6 +1,4 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import {
-  getAuth,
   signInWithPopup,
   signInWithRedirect,
   GoogleAuthProvider,
@@ -8,18 +6,7 @@ import {
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
-import firebaseConfig from '../../firebase-applet-config.json';
-
-const ensureApp = () => {
-  try {
-    return getApps().length === 0 ? initializeApp(firebaseConfig as any) : getApps()[0];
-  } catch {
-    return initializeApp({ projectId: 'foco-em-dados-fallback' }) as FirebaseApp;
-  }
-};
-
-const app = ensureApp();
-const auth = getAuth(app);
+import { auth } from './firebase';
 
 const provider = new GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/spreadsheets');
@@ -32,12 +19,8 @@ githubProvider.addScope('user:email');
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
 
-export const initAuth = () => onAuthStateChanged(auth, async (user: User | null) => {
-  if (user) {
-    cachedAccessToken = null;
-  } else {
-    cachedAccessToken = null;
-  }
+export const initAuth = () => onAuthStateChanged(auth, async (_user: User | null) => {
+  cachedAccessToken = null;
 });
 
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {

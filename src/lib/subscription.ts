@@ -1,3 +1,5 @@
+import { MASTER_EMAIL } from './roles';
+
 export type Subscription = {
   id: string;
   user_id?: string;
@@ -13,11 +15,7 @@ const PRO_KEY = 'foco_em_dados_pro';
 
 function isProEmail(email?: string | null): boolean {
   if (!email) return false;
-    return email.toLowerCase() === 'lucyano.pci@gmail.com';
-}
-
-export async function createCheckoutSession(priceId: string, customerEmail?: string): Promise<{ url?: string }> {
-  return { url: 'https://buy.stripe.com/focoemdados-pro' };
+  return email.toLowerCase() === MASTER_EMAIL.toLowerCase();
 }
 
 export async function verifySubscriptionByEmail(email?: string): Promise<Subscription | null> {
@@ -42,8 +40,4 @@ export async function verifySubscriptionByEmail(email?: string): Promise<Subscri
   }
 
   return null;
-}
-
-export async function getActiveSubscription(email?: string): Promise<Subscription | null> {
-  return verifySubscriptionByEmail(email);
 }

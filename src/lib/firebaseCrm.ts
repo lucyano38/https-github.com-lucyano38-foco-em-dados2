@@ -1,20 +1,13 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  getDoc,
-  Timestamp 
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc,
+  Timestamp,
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
-import { Lead } from '../types'; // or wherever Lead is defined
-
-// Initialize Firebase if not already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
+import { db } from './firebase';
+import { Lead } from '../types';
 
 const LEADS_COLLECTION = 'crm_leads';
 

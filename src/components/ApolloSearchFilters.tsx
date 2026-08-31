@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, MapPin, Briefcase, Navigation, Sparkles } from 'lucide-react';
+import { NICHOS as NICHOS_POPULARES } from '../lib/constants';
 
 export interface SearchFilters {
   nicho: string;
@@ -12,17 +13,6 @@ export interface ApolloSearchFiltersProps {
   onSearch: (filters: SearchFilters) => void;
   isLoading: boolean;
 }
-
-const NICHOS_POPULARES = [
-  'Restaurantes e Gastronomia',
-  'Clínicas Médicas e Odontológicas',
-  'Academias e Personal Trainers',
-  'Imobiliárias e Construtoras',
-  'Escritórios de Advocacia',
-  'E-commerce e Lojas Virtuais',
-  'Oficinas Mecânicas e Automotivo',
-  'Escolas e Cursos'
-];
 
 export const ApolloSearchFilters: React.FC<ApolloSearchFiltersProps> = ({ onSearch, isLoading }) => {
   const [nicho, setNicho] = useState(NICHOS_POPULARES[0]);

@@ -1,19 +1,15 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  Timestamp 
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc,
+  Timestamp,
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { db } from './firebase';
 import { AnalysisReport, Lead } from '../types';
 
-// Initialize Firebase if not already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
+export { db };
 
 const REPORTS_COLLECTION = 'analysis_reports';
 const LEADS_COLLECTION = 'leads';
@@ -27,8 +23,10 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-import { SavedReport as FirestoreSavedReport } from './lib/firestore';
-export type SavedReport = FirestoreSavedReport;
+export interface SavedReport {
+  id: string;
+  report: AnalysisReport;
+}
 
 /**
  * Saves an AnalysisReport to Firebase Firestore (with fallback to localStorage).
@@ -75,7 +73,7 @@ export async function getReports(): Promise<SavedReport[]> {
   try {
     const colRef = collection(db, REPORTS_COLLECTION);
     const snapshot = await getDocs(colRef);
-    
+
     if (snapshot.empty) {
       const local = localStorage.getItem('saved_reports');
       if (local) {
@@ -114,7 +112,7 @@ export async function getReports(): Promise<SavedReport[]> {
     return reports.sort((a, b) => {
       const dateA = a.report.generated_at || '';
       const dateB = b.report.generated_at || '';
-      return dateB.localeCompare(dateA); // Descending
+      return dateB.localeCompare(dateA);
     });
   } catch (err) {
     console.error('[Firebase] Error fetching reports from Firestore, falling back to localStorage:', err);
