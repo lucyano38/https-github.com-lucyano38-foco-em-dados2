@@ -174,19 +174,19 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div onClick={() => requestProtectedMode('indicators')} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 hover:bg-white/[0.05] hover:border-white/[0.12] transition cursor-pointer">
-            <h3 className="text-base font-semibold text-[#f7f8f8] mb-2">📊 Inteligência de Dados & BI</h3>
-            <p className="text-xs text-[#8a8f98] leading-relaxed">Painéis gerenciais automatizados e relatórios em PDF prontos para tomada de decisão executiva.</p>
+          <div onClick={() => requestProtectedMode('indicators')} className="bg-slate-900/95 border border-slate-700 rounded-2xl p-6 hover:border-amber-500/50 transition cursor-pointer shadow-xl">
+            <h3 className="text-base font-semibold text-white mb-2">📊 Inteligência de Dados & BI</h3>
+            <p className="text-xs text-slate-200 leading-relaxed">Painéis gerenciais automatizados e relatórios em PDF prontos para tomada de decisão executiva.</p>
           </div>
 
-          <div onClick={() => requestProtectedMode('prospecting')} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 hover:bg-white/[0.05] hover:border-white/[0.12] transition cursor-pointer">
-            <h3 className="text-base font-semibold text-[#f7f8f8] mb-2">🎯 Prospecção B2B Ativa</h3>
-            <p className="text-xs text-[#8a8f98] leading-relaxed">Varredura de leads qualificados por nicho e região, organizados em CRM Kanban interativo.</p>
+          <div onClick={() => requestProtectedMode('prospecting')} className="bg-slate-900/95 border border-slate-700 rounded-2xl p-6 hover:border-amber-500/50 transition cursor-pointer shadow-xl">
+            <h3 className="text-base font-semibold text-white mb-2">🎯 Prospecção B2B Ativa</h3>
+            <p className="text-xs text-slate-200 leading-relaxed">Varredura de leads qualificados por nicho e região, organizados em CRM Kanban interativo.</p>
           </div>
 
-          <div onClick={() => requestProtectedMode('opensquad')} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 hover:bg-white/[0.05] hover:border-white/[0.12] transition cursor-pointer">
-            <h3 className="text-base font-semibold text-[#f7f8f8] mb-2">🤖 Agentes Autônomos (OpenSquad)</h3>
-            <p className="text-xs text-[#8a8f98] leading-relaxed">Orquestração por IA para qualificar e responder contatos de forma humanizada e ágil.</p>
+          <div onClick={() => requestProtectedMode('opensquad')} className="bg-slate-900/95 border border-slate-700 rounded-2xl p-6 hover:border-amber-500/50 transition cursor-pointer shadow-xl">
+            <h3 className="text-base font-semibold text-white mb-2">🤖 Agentes Autônomos (OpenSquad)</h3>
+            <p className="text-xs text-slate-200 leading-relaxed">Orquestração por IA para qualificar e responder contatos de forma humanizada e ágil.</p>
           </div>
         </div>
       </section>
