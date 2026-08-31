@@ -49,14 +49,15 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   };
 
   const handleLoginProvider = async (provider: 'google' | 'github') => {
-    if (provider !== 'google') {
-      setLoginError('Login com GitHub ainda não está disponível. Use o login com Google.');
+    if (provider !== 'google' && provider !== 'github') {
+      setLoginError('Opção de login indisponível.');
       return;
     }
     setLoginLoading(true);
     setLoginError(null);
     try {
-      const result = await googleSignIn();
+      const result =
+        provider === 'google' ? await googleSignIn() : await githubSignIn();
       const target = pendingMode;
       setPendingMode(null);
       if (result?.user) {
@@ -67,10 +68,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           startMode(target);
         }
       } else {
-        setLoginError('Falha ao autenticar com o Google.');
+        setLoginError('Falha ao autenticar.');
       }
     } catch (err: any) {
-      setLoginError(err?.message || 'Falha ao autenticar com o Google.');
+      setLoginError(err?.message || 'Falha ao autenticar.');
       setIsLoginOpen(true);
     } finally {
       setLoginLoading(false);
