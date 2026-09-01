@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { signInWithSocial, signUpOrSignInWithEmail } from '../lib/auth';
 
 export interface LoginModalProps {
   isOpen: boolean;
@@ -9,6 +9,7 @@ export interface LoginModalProps {
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [isEmailMode, setIsEmailMode] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,51 +17,38 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleOAuth = async (provider: 'google' | 'github' | 'azure') => {
+  const handleSocialLogin = async (provider: 'google' | 'github' | 'microsoft') => {
     try {
       setErrorMsg(null);
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/prospeccao`,
-        },
-      });
-      if (error) throw error;
+      const user = await signInWithSocial(provider);
+      localStorage.setItem('foco_em_dados_auth', 'true');
+      localStorage.setItem('foco_usuario', JSON.stringify({ nome: user.displayName || user.email?.split('@')[0] || 'Usuário', email: user.email }));
+      onClose();
+      window.location.href = '/prospeccao';
     } catch (err: any) {
-      setErrorMsg('Erro na autenticação: ' + err.message);
+      setErrorMsg('Erro no login social: ' + (err.message || err));
       setLoading(false);
     }
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMsg('Preencha e-mail e senha.');
+      setErrorMsg('Informe e-mail e senha.');
       return;
     }
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        const signUpRes = await supabase.auth.signUp({ email, password });
-        if (signUpRes.error) throw signUpRes.error;
-        data = signUpRes.data;
-        alert('Cadastro realizado com sucesso! Verifique seu e-mail se necessário.');
-      }
-
-      if (data?.session || data?.user) {
-        localStorage.setItem('foco_em_dados_auth', 'true');
-        localStorage.setItem('foco_usuario', JSON.stringify({ nome: email.split('@')[0], email }));
-        onClose();
-        window.location.href = '/prospeccao';
-      }
+      const user = await signUpOrSignInWithEmail(email, password, isSignUp);
+      localStorage.setItem('foco_em_dados_auth', 'true');
+      localStorage.setItem('foco_usuario', JSON.stringify({ nome: email.split('@')[0], email: user.email }));
+      onClose();
+      window.location.href = '/prospeccao';
     } catch (err: any) {
       setErrorMsg(err.message || 'Erro ao autenticar com e-mail.');
-    } finally {
       setLoading(false);
     }
   };
@@ -70,8 +58,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200 text-slate-100">
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-sm font-semibold" aria-label="Fechar">✕</button>
         
-        <h2 className="text-xl font-bold tracking-tight mb-1">Acessar Foco em Dados</h2>
-        <p className="text-xs text-slate-400 mb-6">Entre com sua conta para verificar sua assinatura (R$ 39,90/mês).</p>
+        <h2 className="text-xl font-bold tracking-tight mb-1">Acessar Foco em Dados PRO</h2>
+        <p className="text-xs text-slate-400 mb-6">Entre com sua conta ou cadastre-se para acessar o ecossistema (R$ 39,90/mês).</p>
 
         {errorMsg && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
@@ -80,9 +68,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         )}
 
         {isEmailMode ? (
-          <form onSubmit={handleEmailAuth} className="space-y-4">
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-semibold text-amber-400">{isSignUp ? 'Criar Nova Conta' : 'Entrar com E-mail'}</span>
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-[11px] text-slate-400 hover:text-slate-200 underline cursor-pointer"
+              >
+                {isSignUp ? 'Já tem conta? Entrar' : 'Não tem conta? Cadastre-se'}
+              </button>
+            </div>
+
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">E-mail corporativo ou pessoal</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">E-mail</label>
               <input
                 type="email"
                 value={email}
@@ -93,7 +92,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Senha de acesso</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Senha</label>
               <input
                 type="password"
                 value={password}
@@ -108,34 +107,34 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               disabled={loading}
               className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
             >
-              {loading ? 'Processando...' : 'Entrar ou Cadastrar com E-mail'}
+              {loading ? 'Processando...' : (isSignUp ? 'Criar Conta com E-mail' : 'Entrar na Conta')}
             </button>
             <button
               type="button"
               onClick={() => setIsEmailMode(false)}
               className="w-full text-xs text-slate-400 hover:text-slate-200 underline cursor-pointer pt-2"
             >
-              ← Voltar para login social (Google, Microsoft, GitHub)
+              ← Voltar para login social
             </button>
           </form>
         ) : (
           <div className="space-y-3">
             <button
-              onClick={() => handleOAuth('google')}
+              onClick={() => handleSocialLogin('google')}
               className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
               <span>Continuar com Google</span>
             </button>
 
             <button
-              onClick={() => handleOAuth('azure')}
+              onClick={() => handleSocialLogin('microsoft')}
               className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
-              <span>Continuar com Microsoft (Azure AD)</span>
+              <span>Continuar com Microsoft</span>
             </button>
 
             <button
-              onClick={() => handleOAuth('github')}
+              onClick={() => handleSocialLogin('github')}
               className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
               <span>Continuar com GitHub</span>
@@ -143,10 +142,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
             <div className="pt-2">
               <button
-                onClick={() => setIsEmailMode(true)}
+                onClick={() => { setIsEmailMode(true); setIsSignUp(false); }}
                 className="w-full py-3 px-4 bg-slate-950 hover:bg-slate-800 text-amber-400 rounded-xl font-medium text-xs border border-amber-500/30 transition-all cursor-pointer"
               >
-                ✉️ Acessar com E-mail e Senha separados
+                ✉️ Cadastrar ou Entrar com E-mail e Senha
               </button>
             </div>
           </div>

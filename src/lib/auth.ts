@@ -1,89 +1,82 @@
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import {
+  getAuth,
   signInWithPopup,
   signInWithRedirect,
   GoogleAuthProvider,
   GithubAuthProvider,
+  OAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
-import { auth } from './firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
 
-const provider = new GoogleAuthProvider();
-provider.addScope('https://www.googleapis.com/auth/spreadsheets');
-provider.addScope('https://www.googleapis.com/auth/drive.file');
+const ensureApp = () => {
+  try {
+    return getApps().length === 0 ? initializeApp(firebaseConfig as any) : getApps()[0];
+  } catch {
+    return initializeApp({ projectId: 'foco-em-dados-fallback' }) as FirebaseApp;
+  }
+};
 
+const app = ensureApp();
+const auth = getAuth(app);
+
+const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
-githubProvider.addScope('read:user');
-githubProvider.addScope('user:email');
+const microsoftProvider = new OAuthProvider('microsoft.com');
 
-let isSigningIn = false;
 let cachedAccessToken: string | null = null;
 
-export const initAuth = () => onAuthStateChanged(auth, async (_user: User | null) => {
-  cachedAccessToken = null;
-});
+export const initAuth = (
+  onAuthSuccess?: (user: User, token: string) => void,
+  onAuthFailure?: () => void
+) => {
+  return onAuthStateChanged(auth, async (user: User | null) => {
+    if (user) {
+      const token = await user.getIdToken();
+      cachedAccessToken = token;
+      if (onAuthSuccess) onAuthSuccess(user, token);
+    } else {
+      cachedAccessToken = null;
+      if (onAuthFailure) onAuthFailure();
+    }
+  });
+};
 
-export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
+export const signInWithSocial = async (providerName: 'google' | 'github' | 'microsoft'): Promise<User> => {
+  let provider = googleProvider;
+  if (providerName === 'github') provider = githubProvider;
+  if (providerName === 'microsoft') provider = microsoftProvider;
+
   try {
-    isSigningIn = true;
-    let result;
-    try {
-      result = await signInWithPopup(auth, provider);
-    } catch (popupError: any) {
-      console.warn('Popup blocked or failed, attempting redirect signIn...', popupError);
-      await signInWithRedirect(auth, provider);
-      return null;
-    }
-
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    if (!credential?.accessToken) {
-      throw new Error('Falha ao obter token de acesso do Google Auth.');
-    }
-
-    cachedAccessToken = credential.accessToken;
-    return { user: result.user, accessToken: cachedAccessToken };
-  } catch (error: any) {
-    console.error('Sign in error:', error);
-    alert('Erro no login com Google: ' + (error.message || error));
-    throw error;
-  } finally {
-    isSigningIn = false;
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (popupErr: any) {
+    console.warn('Popup blocked, trying redirect...', popupErr);
+    await signInWithRedirect(auth, provider);
+    throw new Error('Redirecionando para autenticação...');
   }
 };
 
-export const githubSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
-  try {
-    isSigningIn = true;
-    let result;
-    try {
-      result = await signInWithPopup(auth, githubProvider);
-    } catch (popupError: any) {
-      console.warn('Popup blocked or failed, attempting redirect signIn...', popupError);
-      await signInWithRedirect(auth, githubProvider);
-      return null;
-    }
-
-    const credential = GithubAuthProvider.credentialFromResult(result);
-    if (!credential?.accessToken) {
-      throw new Error('Falha ao obter token de acesso do GitHub.');
-    }
-
-    cachedAccessToken = credential.accessToken;
-    return { user: result.user, accessToken: cachedAccessToken };
-  } catch (error: any) {
-    console.error('GitHub sign in error:', error);
-    alert('Erro no login com GitHub: ' + (error.message || error));
-    throw error;
-  } finally {
-    isSigningIn = false;
+export const signUpOrSignInWithEmail = async (email: string, pass: string, isSignUp: boolean): Promise<User> => {
+  if (isSignUp) {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await sendEmailVerification(cred.user);
+    alert('Cadastro realizado! Enviamos um e-mail de verificação para ' + email + '. Por favor, confirme para ativar sua conta.');
+    return cred.user;
+  } else {
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    return cred.user;
   }
-};
-
-export const getAccessToken = async (): Promise<string | null> => {
-  return cachedAccessToken;
 };
 
 export const logout = async () => {
   await auth.signOut();
   cachedAccessToken = null;
+  localStorage.removeItem('foco_em_dados_auth');
+  localStorage.removeItem('foco_usuario');
 };

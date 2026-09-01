@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
-import { googleSignIn, githubSignIn } from '../lib/auth';
+import { signInWithSocial } from '../lib/auth';
 
 interface LandingProps {
   onStart: (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => void;
