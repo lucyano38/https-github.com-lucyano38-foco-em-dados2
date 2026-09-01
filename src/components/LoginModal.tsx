@@ -1,131 +1,165 @@
 import React, { useState } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-const ERROR_MESSAGES: Record<string, string> = {
-  'AuthApiError: Database error saving new user':
-    'Erro ao criar sua conta. Verifique se o login OAuth está habilitado no painel do Supabase (Authentication → Providers).',
-  'AuthApiError: Invalid login credentials':
-    'Credenciais inválidas. Verifique as chaves do Supabase no painel.',
-  'AuthApiError: Email address not confirmed':
-    'E-mail ainda não confirmado. Verifique sua caixa de entrada.',
-};
-
-function friendlyError(err: unknown): string {
-  if (!err) return 'Erro desconhecido ao autenticar.';
-  const raw = (err as any)?.message || String(err);
-  for (const [key, msg] of Object.entries(ERROR_MESSAGES)) {
-    if (raw.includes(key)) return msg;
-  }
-  if (raw.includes('Database error saving new user')) {
-    return (
-      'Erro de banco ao criar usuário. Possíveis causas:\n' +
-      '• Tabela "profiles" com coluna NOT NULL sem valor padrão\n' +
-      '• Trigger de criação de profile com restrição\n' +
-      '• Provedor OAuth não habilitado no Supabase Dashboard'
-    );
-  }
-  return `Erro de autenticação: ${raw.slice(0, 200)}`;
+  onLoginProvider?: (provider: string) => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
+  const [isEmailMode, setIsEmailMode] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
-    if (!isSupabaseConfigured) {
-      setError(
-        'Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no painel do Vercel.',
-      );
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
+  const handleOAuth = async (provider: 'google' | 'github' | 'azure') => {
     try {
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      setErrorMsg(null);
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/`,
-          queryParams:
-            provider === 'google'
-              ? { access_type: 'offline', prompt: 'consent' }
-              : undefined,
+          redirectTo: `${window.location.origin}/prospeccao`,
         },
       });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMsg('Erro na autenticação: ' + err.message);
+      setLoading(false);
+    }
+  };
 
-      if (authError) {
-        setError(friendlyError(authError));
-        setLoading(false);
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setErrorMsg('Preencha e-mail e senha.');
+      return;
+    }
+    setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      // Tenta login
+      let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        // Se falhar, tenta cadastrar automaticamente
+        const signUpRes = await supabase.auth.signUp({ email, password });
+        if (signUpRes.error) throw signUpRes.error;
+        data = signUpRes.data;
+        alert('Cadastro realizado com sucesso! Verifique seu e-mail se necessário.');
       }
-      // On success the browser redirects — no need to setLoading(false)
-    } catch (err) {
-      setError(friendlyError(err));
+
+      if (data?.session || data?.user) {
+        localStorage.setItem('foco_em_dados_auth', 'true');
+        localStorage.setItem('foco_usuario', JSON.stringify({ nome: email.split('@')[0], email }));
+        onClose();
+        window.location.href = '/prospeccao';
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Erro ao autenticar com e-mail.');
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-md bg-[#0f1011] border border-white/[0.08] rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[#8a8f98] hover:text-[#f7f8f8] transition-colors text-sm font-semibold cursor-pointer"
-        >
-          ✕
-        </button>
-        <h2 className="text-xl font-bold text-[#f7f8f8] tracking-tight mb-2">
-          Entrar no ecossistema
-        </h2>
-        <p className="text-xs text-[#8a8f98] mb-6">
-          Acesse CRM, OpenSquad, automação e inteligência de dados.
-        </p>
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200 text-slate-100">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-sm font-semibold" aria-label="Fechar">✕</button>
+        
+        <h2 className="text-xl font-bold tracking-tight mb-1">Acessar Foco em Dados</h2>
+        <p className="text-xs text-slate-400 mb-6">Entre com sua conta ou e-mail para acessar o ecossistema (R$ 39,90/mês).</p>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs whitespace-pre-wrap">
-            {error}
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+            {errorMsg}
           </div>
         )}
 
-        {!isSupabaseConfigured && (
-          <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-            ⚠️ Variáveis de ambiente do Supabase não encontradas.
-            Configure <code>VITE_SUPABASE_URL</code> e{' '}
-            <code>VITE_SUPABASE_ANON_KEY</code> no painel do Vercel.
+        {isEmailMode ? (
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">E-mail corporativo ou pessoal</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:border-amber-500 outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Senha de acesso</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:border-amber-500 outline-none"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
+            >
+              {loading ? 'Processando...' : 'Entrar ou Cadastrar com E-mail'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEmailMode(false)}
+              className="w-full text-xs text-slate-400 hover:text-slate-200 underline cursor-pointer pt-2"
+            >
+              ← Voltar para login social (Google, Microsoft, GitHub)
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-3">
+            <button
+              onClick={() => handleOAuth('google')}
+              className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+            >
+              <span>Continuar com Google</span>
+            </button>
+
+            <button
+              onClick={() => handleOAuth('azure')}
+              className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+            >
+              <span>Continuar com Microsoft (Azure AD)</span>
+            </button>
+
+            <button
+              onClick={() => handleOAuth('github')}
+              className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-medium text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+            >
+              <span>Continuar com GitHub</span>
+            </button>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setIsEmailMode(true)}
+                className="w-full py-3 px-4 bg-slate-950 hover:bg-slate-800 text-amber-400 rounded-xl font-medium text-xs border border-amber-500/30 transition-all cursor-pointer"
+              >
+                ✉️ Acessar com E-mail e Senha separados
+              </button>
+            </div>
           </div>
         )}
-
-        <div className="space-y-3">
-          <button
-            onClick={() => handleOAuth('google')}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white/[0.04] hover:bg-white/[0.06] text-[#f7f8f8] rounded-xl font-medium text-sm transition-all border border-white/[0.08] cursor-pointer shadow-md disabled:opacity-50"
-          >
-            <span className="text-base">🌐</span>
-            <span>{loading ? 'Conectando...' : 'Entrar com Google'}</span>
-          </button>
-
-          <button
-            onClick={() => handleOAuth('github')}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white/[0.04] hover:bg-white/[0.06] text-[#f7f8f8] rounded-xl font-medium text-sm transition-all border border-white/[0.08] cursor-pointer shadow-md disabled:opacity-50"
-          >
-            <span className="text-base">💻</span>
-            <span>{loading ? 'Conectando...' : 'Entrar com GitHub'}</span>
-          </button>
-        </div>
-
-        <p className="text-[11px] text-[#62666d] mt-4 text-center">
-          Ao entrar, você aceita os termos de uso e a política de privacidade.
-        </p>
       </div>
     </div>
   );
 };
+
+export default LoginModal;
