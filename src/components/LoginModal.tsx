@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '../lib/supabaseClient';
 
 export interface LoginModalProps {
   isOpen: boolean;
@@ -47,11 +43,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     setErrorMsg(null);
 
     try {
-      // Tenta login
       let { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        // Se falhar, tenta cadastrar automaticamente
         const signUpRes = await supabase.auth.signUp({ email, password });
         if (signUpRes.error) throw signUpRes.error;
         data = signUpRes.data;
@@ -77,7 +71,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-sm font-semibold" aria-label="Fechar">✕</button>
         
         <h2 className="text-xl font-bold tracking-tight mb-1">Acessar Foco em Dados</h2>
-        <p className="text-xs text-slate-400 mb-6">Entre com sua conta ou e-mail para acessar o ecossistema (R$ 39,90/mês).</p>
+        <p className="text-xs text-slate-400 mb-6">Entre com sua conta para verificar sua assinatura (R$ 39,90/mês).</p>
 
         {errorMsg && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
