@@ -1,3 +1,4 @@
+import { isMasterAdmin } from "./lib/constants";
 import { OpenSquadView } from "./components/OpenSquadView";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -546,26 +547,23 @@ export const App: React.FC = () => {
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('foco_em_dados_user_email') || '');
 
   // Verifica assinatura no Supabase antes de liberar o ecossistema completo
-  const ensureProAccess = useCallback(async () => {
-    const isAutenticado = localStorage.getItem('foco_em_dados_auth') === 'true';
-    if (!isAutenticado) {
-      return false;
-    }
-    const email = localStorage.getItem('foco_em_dados_user_email') || '';
-    if (!email) return false;
-
-    if (email.toLowerCase() === MASTER_EMAIL.toLowerCase()) {
-      localStorage.setItem('foco_em_dados_pro', 'true');
+    const ensureProAccess = useCallback(async () => {
+    const email = localStorage.getItem("foco_em_dados_user_email") || "";
+    if (isMasterAdmin(email)) {
+      localStorage.setItem("foco_em_dados_pro", "true");
+      localStorage.setItem("foco_em_dados_auth", "true");
       return true;
     }
-
+    const isAutenticado = localStorage.getItem("foco_em_dados_auth") === "true";
+    if (!isAutenticado) return false;
+    if (!email) return false;
     try {
-      const { verifySubscriptionByEmail } = await import('./lib/subscription');
+      const { verifySubscriptionByEmail } = await import("./lib/subscription");
       const sub = await verifySubscriptionByEmail(email);
-      localStorage.setItem('foco_em_dados_pro', sub ? 'true' : 'false');
+      localStorage.setItem("foco_em_dados_pro", sub ? "true" : "false");
       return !!sub;
     } catch {
-      localStorage.setItem('foco_em_dados_pro', 'false');
+      localStorage.setItem("foco_em_dados_pro", "false");
       return false;
     }
   }, []);

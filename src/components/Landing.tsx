@@ -1,3 +1,4 @@
+import { isMasterAdmin } from "../lib/constants";
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
 import { signInWithSocial } from '../lib/auth';
