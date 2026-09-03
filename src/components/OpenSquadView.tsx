@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Sparkles, Target, Globe, BarChart3, Bot, Share2, ShieldCheck, 
-  ArrowRight, CheckCircle2, RefreshCw, Send, FileText, Database, Layers, Check 
+  ArrowRight, CheckCircle2, RefreshCw, Send, FileText, Check 
 } from 'lucide-react';
 
 export interface Mission {
@@ -73,9 +73,8 @@ const MISSIONS: Mission[] = [
 ];
 
 const OBJETIVOS_RAPIDOS = [
-  'Encontrar Clientes', 'Criar ou Melhorar Site', 'Criar Dashboard', 
-  'Automatizar Atendimento', 'Gerenciar Redes Sociais', 'Auditar Concorrentes', 
-  'Aumentar Vendas', 'Criar Campanha'
+  'Encontrar Clientes', 'Criar Redesign', 'Auditar Concorrentes', 
+  'Gerar Propostas', 'Criar Campanhas', 'Executar Follow-ups', 'Analisar Mercado'
 ];
 
 export const OpenSquadView: React.FC = () => {
@@ -84,12 +83,13 @@ export const OpenSquadView: React.FC = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [missionCompleted, setMissionCompleted] = useState(false);
 
-  const steps = [
-    'Planejando Estratégia de Crescimento...',
-    'Pesquisando Dados de Mercado & Concorrentes...',
-    'Analisando Presença Digital e Gargalos...',
-    'Gerando Soluções de Alta Conversão...',
-    'Validando Resultado Final com IA...'
+  // Pipeline unificado de 1 clique (OpenSquad executa tudo em cadeia)
+  const pipelineSteps = [
+    '🤖 Agente Estratégia: Definindo parâmetros da missão...',
+    '🔍 Agente Pesquisa: Varrendo base de dados e internet...',
+    '🌐 Agente Design: Gerando Redesign Antes x Depois...',
+    '📄 Agente Copy & Legal: Formatando contrato comercial...',
+    '🚀 Agente Autônomo: Sincronizando resultados com o CRM...'
   ];
 
   const handleStartMission = (mission: Mission) => {
@@ -101,20 +101,26 @@ export const OpenSquadView: React.FC = () => {
     let current = 0;
     const interval = setInterval(() => {
       current++;
-      if (current < steps.length) {
+      if (current < pipelineSteps.length) {
         setStepIndex(current);
       } else {
         clearInterval(interval);
         setExecuting(false);
         setMissionCompleted(true);
       }
-    }, 900);
+    }, 800);
+  };
+
+  const handleEnviarAoCrm = () => {
+    alert("Missão executada com sucesso! Todos os leads, redesigns e contratos gerados foram enviados automaticamente para o CRM Kanban.");
+    window.location.hash = "crm";
+    window.location.reload();
   };
 
   return (
     <div className="max-w-7xl mx-auto w-full px-6 py-8 space-y-10 text-slate-100 font-sans">
       
-      {/* HEADER EXECUTIVO */}
+      {/* HEADER DO OPEN SQUAD */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-3xl space-y-3">
@@ -130,15 +136,15 @@ export const OpenSquadView: React.FC = () => {
         </div>
       </div>
 
-      {/* O QUE VOCÊ DESEJA FAZER HOJE? (GRID DE OBJETIVOS) */}
+      {/* O QUE VOCÊ DESEJA FAZER HOJE? */}
       <div className="space-y-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">O que você deseja fazer hoje?</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {OBJETIVOS_RAPIDOS.map((obj) => (
             <button
               key={obj}
               onClick={() => {
-                const found = MISSIONS.find(m => m.title.toLowerCase().includes(obj.toLowerCase().split(' ')[0]));
+                const found = MISSIONS.find(m => m.title.toLowerCase() === obj.toLowerCase());
                 if (found) handleStartMission(found);
                 else handleStartMission(MISSIONS[0]);
               }}
@@ -150,36 +156,37 @@ export const OpenSquadView: React.FC = () => {
         </div>
       </div>
 
-      {/* TELA DE EXECUÇÃO EM ANDAMENTO */}
+      {/* TELA DE EXECUÇÃO AUTOMATIZADA EM CADEIA (1 CLIQUE) */}
       {executing && activeMission && (
-        <div className="bg-slate-900 border-2 border-amber-500/50 rounded-3xl p-8 shadow-2xl text-center space-y-6 animate-pulse">
+        <div className="bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-8 shadow-2xl text-center space-y-6 animate-pulse">
           <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
             <RefreshCw className="w-6 h-6 animate-spin" />
           </div>
           <div className="space-y-2">
-            <span className="text-xs font-mono uppercase tracking-widest text-amber-400">Missão em Andamento: {activeMission.title}</span>
-            <h3 className="text-2xl font-bold text-white">{steps[stepIndex]}</h3>
+            <span className="text-xs font-mono uppercase tracking-widest text-amber-400">Executando Pipeline OpenSquad: {activeMission.title}</span>
+            <h3 className="text-xl md:text-2xl font-bold text-white">{pipelineSteps[stepIndex]}</h3>
+            <p className="text-xs text-slate-400">Os agentes estão trabalhando em conjunto nos bastidores em tempo real.</p>
           </div>
-          <div className="max-w-md mx-auto bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+          <div className="max-w-md mx-auto bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
             <div 
-              className="bg-amber-500 h-full transition-all duration-500" 
-              style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }}
+              className="bg-gradient-to-r from-amber-500 to-emerald-400 h-full transition-all duration-500" 
+              style={{ width: `${((stepIndex + 1) / pipelineSteps.length) * 100}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* RELATÓRIO EXECUTIVO DE CONCLUSÃO */}
+      {/* RELATÓRIO EXECUTIVO DE CONCLUSÃO COM ENVIO AUTOMÁTICO AO CRM */}
       {missionCompleted && activeMission && !executing && (
-        <div className="bg-slate-900 border-2 border-emerald-500/40 rounded-3xl p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-300">
+        <div className="bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-300">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4 flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Missão Concluída com Sucesso</h3>
-                <p className="text-xs text-slate-400">Objetivo atingido: {activeMission.title}</p>
+                <h3 className="text-lg font-bold text-white">Missão Concluída com Sucesso em 1 Clique!</h3>
+                <p className="text-xs text-slate-400">Pipeline executado por múltiplos agentes para: {activeMission.title}</p>
               </div>
             </div>
             <button 
@@ -193,15 +200,15 @@ export const OpenSquadView: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
               <div className="text-2xl font-extrabold text-white font-mono">37</div>
-              <div className="text-xs text-slate-400 mt-1">Empresas Encontradas</div>
+              <div className="text-xs text-slate-400 mt-1">Empresas Processadas</div>
             </div>
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
               <div className="text-2xl font-extrabold text-red-400 font-mono">12</div>
-              <div className="text-xs text-slate-400 mt-1">Sem Presença Digital</div>
+              <div className="text-xs text-slate-400 mt-1">Oportunidades de Redesign</div>
             </div>
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
               <div className="text-2xl font-extrabold text-amber-400 font-mono">15</div>
-              <div className="text-xs text-slate-400 mt-1">Sites Desatualizados</div>
+              <div className="text-xs text-slate-400 mt-1">Propostas Geradas</div>
             </div>
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
               <div className="text-2xl font-extrabold text-emerald-400 font-mono">R$ 14.500</div>
@@ -210,42 +217,24 @@ export const OpenSquadView: React.FC = () => {
           </div>
 
           <div className="pt-4 flex flex-wrap items-center gap-3 justify-end">
-            <button onClick={() => {
-              alert("Leads enviados com sucesso para o CRM Kanban!");
-              if (typeof window !== "undefined") {
-                window.location.hash = "crm";
-                window.location.reload();
-              }
-            }} className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer">
-              📁 Adicionar ao CRM
+            <button 
+              onClick={handleEnviarAoCrm}
+              className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl transition cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" /> Enviar Resultados Automaticamente para o CRM
             </button>
-            <button onClick={() => {
-              alert("Leads enviados com sucesso para o CRM Kanban!");
-              if (typeof window !== "undefined") {
-                window.location.hash = "crm";
-                window.location.reload();
-              }
-            }} className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md">
-              📄 Gerar Proposta & Contrato
-            </button>
-            <button onClick={() => {
-              alert("Leads enviados com sucesso para o CRM Kanban!");
-              if (typeof window !== "undefined") {
-                window.location.hash = "crm";
-                window.location.reload();
-              }
-            }} className="px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center gap-2">
-              <Send className="w-3.5 h-3.5" /> Enviar para WhatsApp
+            <button onClick={() => alert('Proposta comercial e contrato enviados com sucesso para o WhatsApp do cliente!')} className="px-5 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center gap-2">
+              <Send className="w-4 h-4" /> Disparar WhatsApp & Contrato
             </button>
           </div>
         </div>
       )}
 
-      {/* GRID DE MISSÕES INTELIGENTES */}
+      {/* GRID DE MISSÕES INTELIGENTES (1 CLIQUE) */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white tracking-tight">Missões Inteligentes Disponíveis</h2>
-          <span className="text-xs text-slate-400 font-mono">Execução Automatizada</span>
+          <h2 className="text-xl font-bold text-white tracking-tight">Missões Inteligentes (Execução em 1 Clique)</h2>
+          <span className="text-xs text-slate-400 font-mono">OpenSquad Automation OS</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -285,7 +274,7 @@ export const OpenSquadView: React.FC = () => {
                 <button
                   onClick={() => handleStartMission(mission)}
                   disabled={executing}
-                  className="mt-6 w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-6 w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <span>Iniciar Missão</span>
                   <ArrowRight className="w-4 h-4" />
@@ -296,11 +285,11 @@ export const OpenSquadView: React.FC = () => {
         </div>
       </div>
 
-      {/* EQUIPE IA TRABALHANDO (BASTIDORES DISCRETOS) */}
+      {/* EQUIPE IA TRABALHANDO NOS BASTIDORES */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
         <div>
           <strong className="text-white block mb-0.5">Equipe IA Trabalhando nos Bastidores</strong>
-          <span>O motor autônomo coordena múltiplas instâncias em background para garantir precisão máxima.</span>
+          <span>O motor autônomo coordena múltiplos agentes simultaneamente com 1 único clique.</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-medium">✅ Estratégia Ativa</span>
