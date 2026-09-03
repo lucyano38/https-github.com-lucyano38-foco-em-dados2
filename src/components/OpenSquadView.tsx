@@ -114,7 +114,7 @@ export const OpenSquadView: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5" /> OpenSquad AI • Departamento Virtual
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-            Central de Crescimento Empresarial
+            OpenSquad AI
           </h1>
           <p className="text-sm text-slate-300 leading-relaxed">
             "Encontre clientes, analise concorrentes, gere propostas, crie sites, automatize atendimento e aumente suas vendas com Inteligência Artificial — sem entender nada de tecnologia."
