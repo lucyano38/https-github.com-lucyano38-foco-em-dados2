@@ -1,3 +1,4 @@
+import { HermesGrowthEngineView } from "./components/HermesGrowthEngineView";
 import { LivePreviewView } from "./components/LivePreviewView";
 import { isMasterAdmin } from "./lib/constants";
 import { OpenSquadView } from "./components/OpenSquadView";
@@ -795,7 +796,7 @@ export const App: React.FC = () => {
         </div>
       ) : ecosystemMode === 'evolua_demo' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
-          <EvoluaDemoDashboard onBackToLanding={() => setShowLanding(true)} onOpenAppMode={handleOpenAppMode} />
+          <HermesGrowthEngineView />
         </div>
       ) : null}
 
