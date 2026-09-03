@@ -142,7 +142,7 @@ export const RedesignModal: React.FC<RedesignModalProps> = ({
                           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                           <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                         </div>
-                        <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">preview.focoemdados.com.br/{lead.id}</span>
+                        <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">focoemdados.com.br/evolua_demo</span>
                       </div>
                       <div className="space-y-2 py-2">
                         <div className="text-sm font-bold text-white">🚀 {lead.nome} - Especialista em {lead.nicho}</div>
