@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RedesignModal } from './RedesignModal';
+import { RedesignStudioView } from './RedesignStudioView';
 
 export type LeadStatus = 'novo' | 'contatado' | 'proposta_enviada' | 'fechado';
 
@@ -30,10 +30,6 @@ export const ProspectCard: React.FC<ProspectCardProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const currentStatus = statusStyles[lead.status] || statusStyles.novo;
-
-  const handleSuccess = (_leadId: string) => {
-    // Atualiza status localmente se necessário
-  };
 
   return (
     <>
@@ -70,11 +66,10 @@ export const ProspectCard: React.FC<ProspectCardProps> = ({
         </div>
       </div>
 
-      <RedesignModal
+      <RedesignStudioView
         lead={lead}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={handleSuccess}
       />
     </>
   );
