@@ -180,40 +180,6 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
       </section>
 
-      {/* PILAR 1: SITES INTELIGENTES */}
-      <section id="sites" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800">
-        <div className="bg-slate-900 border-2 border-slate-700 hover:border-amber-500 rounded-3xl p-8 sm:p-12 shadow-2xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center transition-all">
-          <div className="space-y-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">Pilar 1 · Presença Digital</span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Sites Inteligentes Prontos em Minutos</h2>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Envie uma planilha, CSV, PDF, logo ou descrição do seu negócio. Nossa IA gera automaticamente seu site institucional, landing page, catálogo de produtos e páginas de contato com integrações de WhatsApp e redes sociais.
-            </p>
-            <ul className="text-xs sm:text-sm text-slate-200 space-y-2.5 pt-2">
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Geração automática por Inteligência Artificial</li>
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Otimizado para conversão e mobile</li>
-              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Integração instantânea com WhatsApp e Instagram</li>
-            </ul>
-            <button
-              onClick={() => handleNavegacao('analytics')}
-              className="mt-4 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-lg"
-            >
-              Criar Meu Site Agora →
-            </button>
-          </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-inner space-y-4 font-mono text-xs text-slate-300">
-            <div className="text-amber-400 font-bold border-b border-slate-800 pb-2">Preview Automático do Gerador IA</div>
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <div className="text-white font-bold">🏢 Empresa: Sabor & Arte Gastronomia</div>
-              <div className="text-emerald-400">✓ Landing Page Gerada</div>
-              <div className="text-emerald-400">✓ Catálogo de Pratos Ativo</div>
-              <div className="text-emerald-400">✓ Botão WhatsApp Flutuante Configurado</div>
-            </div>
-            <div className="text-right text-[10px] text-slate-500">Status: Publicado com SSL gratuito 🚀</div>
-          </div>
-        </div>
-      </section>
-
       {/* PILAR 3: AGENTE HERMES */}
       <section id="hermes" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800">
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
