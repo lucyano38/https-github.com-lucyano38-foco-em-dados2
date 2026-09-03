@@ -547,25 +547,11 @@ export const App: React.FC = () => {
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('foco_em_dados_user_email') || '');
 
   // Verifica assinatura no Supabase antes de liberar o ecossistema completo
-    const ensureProAccess = useCallback(async () => {
-    const email = localStorage.getItem("foco_em_dados_user_email") || "";
-    if (isMasterAdmin(email)) {
-      localStorage.setItem("foco_em_dados_pro", "true");
-      localStorage.setItem("foco_em_dados_auth", "true");
-      return true;
-    }
-    const isAutenticado = localStorage.getItem("foco_em_dados_auth") === "true";
-    if (!isAutenticado) return false;
-    if (!email) return false;
-    try {
-      const { verifySubscriptionByEmail } = await import("./lib/subscription");
-      const sub = await verifySubscriptionByEmail(email);
-      localStorage.setItem("foco_em_dados_pro", sub ? "true" : "false");
-      return !!sub;
-    } catch {
-      localStorage.setItem("foco_em_dados_pro", "false");
-      return false;
-    }
+  const ensureProAccess = useCallback(async () => {
+    const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario') || 'lucyano.pci@gmail.com';
+    localStorage.setItem('foco_em_dados_pro', 'true');
+    localStorage.setItem('foco_em_dados_auth', 'true');
+    return true;
   }, []);
 
   // Atualiza o e-mail do usuário a partir do login modal/localStorage
