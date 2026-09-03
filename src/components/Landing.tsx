@@ -21,12 +21,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
     }
   });
 
-  const handleNavegacao = (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => {
-    localStorage.setItem('foco_em_dados_auth', 'true');
-    localStorage.setItem('foco_em_dados_pro', 'true');
-    if (typeof onStart === 'function') {
+    const handleNavegacao = (mode) => {
+    localStorage.setItem("foco_em_dados_auth", "true");
+    localStorage.setItem("foco_em_dados_pro", "true");
+    if (typeof onStart === "function") {
       onStart(mode);
+      return;
     }
+    window.location.href = "/?mode=" + mode;
   };
 
   const handleCheckoutStripe = async (plano: string) => {
