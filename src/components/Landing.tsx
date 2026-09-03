@@ -72,7 +72,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           <source src="/bg.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/40 to-slate-950/80" />
       </div>
 
       {/* NAVBAR PROFISSIONAL */}
