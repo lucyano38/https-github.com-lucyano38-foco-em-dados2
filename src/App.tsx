@@ -1,3 +1,4 @@
+import { LivePreviewView } from "./components/LivePreviewView";
 import { isMasterAdmin } from "./lib/constants";
 import { OpenSquadView } from "./components/OpenSquadView";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
@@ -500,6 +501,10 @@ function useInputState() {
 }
 
 export const App: React.FC = () => {
+  if (typeof window !== "undefined" && (window.location.pathname.includes("/preview") || window.location.pathname.includes("/evolua_demo") || window.location.search.includes("nome="))) {
+    return <LivePreviewView />;
+  }
+
   const { showLanding, setShowLanding } = useLandingGate();
   const [ecosystemMode, setEcosystemMode] = useState<string>('analysis');
   const { files, isUploading, setIsUploading, addFiles, removeFile } = useUploadedFiles();
