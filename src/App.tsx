@@ -649,12 +649,14 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setEcosystemMode('analysis')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Análise</button>
-            <button onClick={() => setEcosystemMode('prospecting')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'prospecting' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>Prospecção & Redesign</button>
-            <button onClick={() => setEcosystemMode('opensquad')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'opensquad' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>OpenSquad AI</button>
-            <button onClick={() => setEcosystemMode('crm')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-[#d4a574] text-[#1c1917]' : 'text-[#94a3b8] hover:text-[#f8fafc]'}`}>CRM Kanban</button>
-            <button onClick={handleLogin} className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#4f4632] bg-[#121414] text-[#ffe4af] hover:bg-[#292a2a] cursor-pointer">Entrar</button>
+          <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto py-1">
+            <button onClick={() => setEcosystemMode('analysis')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🏠 Dashboard</button>
+            <button onClick={() => setEcosystemMode('opensquad')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'opensquad' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🤖 OpenSquad AI</button>
+            <button onClick={() => setEcosystemMode('crm')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>👥 CRM</button>
+            <button onClick={() => setEcosystemMode('prospecting')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'prospecting' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🌐 Sites</button>
+            <button onClick={() => setEcosystemMode('indicators')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'indicators' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>📊 Dashboards BI</button>
+            <button onClick={() => setEcosystemMode('evolua_demo')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'evolua_demo' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>⚙️ Hermes IA</button>
+            <button onClick={() => window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03'} className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer">💰 Financeiro</button>
           </div>
         </div>
       </nav>
