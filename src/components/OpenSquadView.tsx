@@ -23,44 +23,52 @@ const MISSIONS: Mission[] = [
     icon: Target
   },
   {
-    id: 'redesign-site',
-    title: 'Redesign de Site',
+    id: 'criar-redesign',
+    title: 'Criar Redesign',
     category: 'Presença Digital',
     description: 'Analisamos um site existente e criamos uma proposta visual moderna e responsiva para disparar suas conversões.',
     expectedResults: ['Diagnóstico Visual 0-100', 'Problemas Detectados', 'Novo Layout Antes/Depois', 'Página de Demonstração'],
     icon: Globe
   },
   {
-    id: 'dashboard-kpi',
-    title: 'Dashboard Inteligente',
-    category: 'Inteligência de Dados',
-    description: 'Transforme planilhas financeiras, comerciais ou operacionais em dashboards gerenciais profissionais automaticamente.',
-    expectedResults: ['KPIs Dinâmicos', 'Gráficos de Tendência', 'Insights de IA', 'Relatórios Executivos'],
-    icon: BarChart3
+    id: 'auditar-concorrentes',
+    title: 'Auditar Concorrentes',
+    category: 'Inteligência Competitiva',
+    description: 'Monitore concorrentes, sites, redes sociais e avaliações para descobrir oportunidades de mercado ocultas.',
+    expectedResults: ['Relatório de Concorrência', 'Análise de Posicionamento', 'Gaps Identificados', 'Alertas Estratégicos'],
+    icon: ShieldCheck
   },
   {
-    id: 'agente-hermes',
-    title: 'Agente Hermes (WhatsApp)',
-    category: 'Automação Omnichannel',
-    description: 'Automatize atendimentos e vendas no WhatsApp, Facebook e Instagram 24 horas por dia sem esforço manual.',
-    expectedResults: ['Atendimento 24/7', 'Qualificação de Leads', 'Respostas Instantâneas', 'Follow-up Automático'],
+    id: 'gerar-propostas',
+    title: 'Gerar Propostas',
+    category: 'Comercial & Contratos',
+    description: 'Crie propostas comerciais profissionais e contratos pré-formatados personalizados com o nome do cliente instantaneamente.',
+    expectedResults: ['Proposta Comercial em PDF', 'Contrato Pronto para Assinatura', 'Termos de Serviço', 'Link de Fechamento'],
+    icon: FileText
+  },
+  {
+    id: 'criar-campanhas',
+    title: 'Criar Campanhas',
+    category: 'Marketing & Aquisição',
+    description: 'Desenvolva campanhas completas de aquisição de clientes para canais digitais com copies validadas por IA.',
+    expectedResults: ['Estratégia de Tráfego', 'Copies de Anúncios', 'Segmentação de Público', 'Calendário de Campanhas'],
+    icon: Sparkles
+  },
+  {
+    id: 'executar-followups',
+    title: 'Executar Follow-ups',
+    category: 'Automação & WhatsApp',
+    description: 'Automatize sequências de mensagens no WhatsApp e E-mail para nutrir leads e fechar negócios no piloto automático.',
+    expectedResults: ['Sequência Ativa no WhatsApp', 'Respostas Automáticas', 'Agendamento de Reuniões', 'Relatório de Engajamento'],
     icon: Bot
   },
   {
-    id: 'redes-sociais',
-    title: 'Redes Sociais Automáticas',
-    category: 'Marketing & Engajamento',
-    description: 'Crie conteúdo, legendas persuasivas, hashtags e calendários editoriais completos para o Instagram e Facebook.',
-    expectedResults: ['Calendário Editorial', 'Posts e Legendas', 'Ideias de Engajamento', 'Relatório de Alcance'],
-    icon: Share2
-  },
-  {
-    id: 'auditoria-digital',
-    title: 'Auditoria Digital & LGPD',
-    category: 'Segurança & SEO',
-    description: 'Analise a presença digital da empresa, pontuação de SEO, velocidade, SSL e conformidade com a LGPD.',
-    expectedResults: ['Nota Geral de SEO', 'Velocidade & Responsividade', 'Checklist de Segurança', 'Plano de Ação'],
-    icon: ShieldCheck
+    id: 'analisar-mercado',
+    title: 'Analisar Mercado',
+    category: 'BI & Indicadores',
+    description: 'Acesse tendências de mercado, indicadores macroeconômicos e relatórios gerenciais consolidados em tempo real.',
+    expectedResults: ['Tendências Macroeconômicas', 'Indicadores de Setor', 'Gráficos Interativos', 'Insights Automáticos'],
+    icon: BarChart3
   }
 ];
 
