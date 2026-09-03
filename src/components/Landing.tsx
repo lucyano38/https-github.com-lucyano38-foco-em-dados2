@@ -86,7 +86,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
 
         <div className="hidden lg:flex items-center gap-7 text-sm text-slate-300 font-medium">
-          <a href="#sites" className="hover:text-amber-400 transition-colors">Sites Inteligentes</a>
+          
           <a href="#dashboards" className="hover:text-amber-400 transition-colors">Dashboards</a>
           <a href="#hermes" className="hover:text-amber-400 transition-colors">Agente Hermes</a>
           <a href="#prospector" className="hover:text-amber-400 transition-colors">Prospector IA</a>
@@ -116,13 +116,22 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               Entrar
             </button>
           )}
-          <button
-            onClick={() => handleCheckoutStripe('pro')}
-            disabled={loadingCheckout}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            {loadingCheckout ? 'Processando...' : 'Testar Grátis'}
-          </button>
+          {usuarioLogado ? (
+            <button
+              onClick={() => handleNavegacao('prospecting')}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
+            >
+              🚀 Acessar Painel PRO
+            </button>
+          ) : (
+            <button
+              onClick={() => handleCheckoutStripe('pro')}
+              disabled={loadingCheckout}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              {loadingCheckout ? 'Processando...' : 'Testar Grátis'}
+            </button>
+          )}
         </div>
       </nav>
 
