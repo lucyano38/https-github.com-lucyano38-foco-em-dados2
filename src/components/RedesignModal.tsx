@@ -174,7 +174,7 @@ export const RedesignModal: React.FC<RedesignModalProps> = ({
                 </p>
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 font-mono text-xs text-amber-400 flex items-center justify-between">
                   <span>URL do Preview Gerado: preview.focoemdados.com.br/{lead.id}</span>
-                  <a href="#preview" onClick={(e) => { e.preventDefault(); window.open("/evolua_demo", "_blank"); }} className="text-xs text-blue-400 underline flex items-center gap-1">Testar Preview <ExternalLink className="w-3 h-3" /></a>
+                  <a href="#preview" onClick={(e) => { e.preventDefault(); window.open(`/evolua_demo?nome=${encodeURIComponent(lead.nome)}&nicho=${encodeURIComponent(lead.nicho)}&site=${encodeURIComponent(lead.siteAtual || "")}`, "_blank"); }} className="text-xs text-blue-400 underline flex items-center gap-1">Testar Preview <ExternalLink className="w-3 h-3" /></a>
                 </div>
               </div>
             )}
