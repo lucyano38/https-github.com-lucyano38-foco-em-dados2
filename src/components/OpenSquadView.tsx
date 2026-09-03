@@ -210,13 +210,31 @@ export const OpenSquadView: React.FC = () => {
           </div>
 
           <div className="pt-4 flex flex-wrap items-center gap-3 justify-end">
-            <button onClick={() => alert('Leads exportados para o CRM com sucesso!')} className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer">
+            <button onClick={() => {
+              alert("Leads enviados com sucesso para o CRM Kanban!");
+              if (typeof window !== "undefined") {
+                window.location.hash = "crm";
+                window.location.reload();
+              }
+            }} className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer">
               📁 Adicionar ao CRM
             </button>
-            <button onClick={() => alert('Proposta comercial gerada e pronta!')} className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md">
+            <button onClick={() => {
+              alert("Leads enviados com sucesso para o CRM Kanban!");
+              if (typeof window !== "undefined") {
+                window.location.hash = "crm";
+                window.location.reload();
+              }
+            }} className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md">
               📄 Gerar Proposta & Contrato
             </button>
-            <button onClick={() => alert('Mensagem enviada via WhatsApp!')} className="px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center gap-2">
+            <button onClick={() => {
+              alert("Leads enviados com sucesso para o CRM Kanban!");
+              if (typeof window !== "undefined") {
+                window.location.hash = "crm";
+                window.location.reload();
+              }
+            }} className="px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center gap-2">
               <Send className="w-3.5 h-3.5" /> Enviar para WhatsApp
             </button>
           </div>
