@@ -329,7 +329,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
 
       if (data.messages && Array.isArray(data.messages)) {
         // Stream messages in with cadence for realism
-        for (let i = 0; i < data.messages.length; i++) {
+        for (let i = 0; i < data.messages?.length || 0; i++) {
           const item = data.messages[i];
           await new Promise((resolve) => setTimeout(resolve, 320));
 
@@ -431,7 +431,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
 
       const data = await res.json();
       if (data.messages && Array.isArray(data.messages)) {
-        for (let i = 0; i < data.messages.length; i++) {
+        for (let i = 0; i < data.messages?.length || 0; i++) {
           const item = data.messages[i];
           await new Promise((resolve) => setTimeout(resolve, 280));
           const agent = agents.find((a) => a.role === item.agentRole) || agents[0];
@@ -464,7 +464,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
 
   // Import Squad-Generated Leads into the CRM database
   const handleImportLeadsToCrm = async (leadsToImport: Lead[]) => {
-    if (!leadsToImport || leadsToImport.length === 0) return;
+    if (!leadsToImport || leadsToImport?.length || 0 === 0) return;
 
     try {
       const res = await fetch('/api/opensquad/import-leads', {
@@ -513,8 +513,8 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
   };
 
   // Calculate completed plan steps count
-  const completedStepsCount = planSteps.filter((s) => s.status === 'completed').length;
-  const progressPercentage = Math.round((completedStepsCount / planSteps.length) * 100);
+  const completedStepsCount = planSteps.filter((s) => s.status === 'completed')?.length || 0;
+  const progressPercentage = Math.round((completedStepsCount / planSteps?.length || 0) * 100);
 
   // Filter messages by agent
   const filteredMessages =
@@ -570,7 +570,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
               className="flex items-center gap-2 px-5 py-2 bg-[#2D3436] hover:bg-[#1a1f20] text-white rounded-xl text-xs font-bold shadow-md transition"
             >
               <Layers className="w-4 h-4 text-[#A8D5BA]" />
-              Pipeline CRM ({leads.length} leads)
+              Pipeline CRM ({leads?.length || 0} leads)
             </button>
           )}
         </div>
@@ -704,7 +704,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
                                 className="w-full flex items-center justify-center gap-2 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-2xs transition"
                               >
                                 <CheckCircle2 className="w-4 h-4" />
-                                Importar {msg.deliverable.data.length} Leads para o Pipeline do CRM
+                                Importar {msg.deliverable.data?.length || 0} Leads para o Pipeline do CRM
                               </button>
                             </div>
                           )}
@@ -868,7 +868,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
           <div className="p-3.5 bg-neutral-50 rounded-2xl border border-neutral-200 text-xs space-y-2">
             <div className="font-bold text-neutral-800 flex items-center justify-between">
               <span>Status do CRM Conectado</span>
-              <span className="font-mono text-emerald-600 font-bold">{leads.length} leads</span>
+              <span className="font-mono text-emerald-600 font-bold">{leads?.length || 0} leads</span>
             </div>
             <div className="text-[11px] text-neutral-500">
               Novos leads gerados pelo Squad entram automaticamente na coluna <b className="text-neutral-800">"Novo"</b> com cálculo de implantação e mensalidade MRR.
@@ -959,7 +959,7 @@ export const OpenSquadView: React.FC<OpenSquadViewProps> = ({
         onSelectModel={setSelectedModel}
         themeMode={themeMode}
         onSelectTheme={setThemeMode}
-        totalDeliberationsCount={messages.length}
+        totalDeliberationsCount={messages?.length || 0}
         onClearSessionMemory={() => {
           setMessages([messages[0]]);
           setIsConfigModalOpen(false);
