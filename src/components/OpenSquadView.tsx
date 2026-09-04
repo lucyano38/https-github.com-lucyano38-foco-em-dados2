@@ -147,7 +147,7 @@ export const OpenSquadView: React.FC = () => {
     'Calculando Score de Oportunidade e enviando para o CRM...'
   ];
 
-  const handleIniciarProspeccao = (e: React.FormEvent) => {
+    const handleIniciarProspeccao = (e) => {
     e.preventDefault();
     setExecuting(true);
     setStepIndex(0);
@@ -162,12 +162,34 @@ export const OpenSquadView: React.FC = () => {
         clearInterval(interval);
         setExecuting(false);
         setBuscou(true);
-        setEmpresas(EMPRESAS_MOCK);
+
+        const regiaoAlvo = cidade.trim();
+        const ajustados = EMPRESAS_MOCK.map(emp => {
+          let novoScore = emp.score;
+          let novaClassificacao = emp.classificacao;
+          let novosMotivos = [...emp.motivosScore];
+
+          if (emp.site.includes("emporio") && (regiaoAlvo.toLowerCase().includes("itupeva") || regiaoAlvo.toLowerCase().includes("campinas"))) {
+            novoScore = 95;
+            novaClassificacao = "Alta Oportunidade";
+            novosMotivos = ["Domínio inativo / Fora do ar", "Sem presença digital ativa na região", "Oportunidade imediata de criação de site"];
+          }
+
+          return {
+            ...emp,
+            cidade: regiaoAlvo.split("-")[0].trim() || "Itupeva",
+            score: novoScore,
+            classificacao: novaClassificacao,
+            motivosScore: novosMotivos
+          };
+        });
+
+        setEmpresas(ajustados);
       }
     }, 700);
   };
 
-  const enviarAoCrm = (empresa: ProspectEmpresa) => {
+    const enviarAoCrm = (empresa: ProspectEmpresa) => {
     alert(`Sucesso! ${empresa.nome} foi enviada automaticamente para o CRM → Novo Lead.`);
   };
 
