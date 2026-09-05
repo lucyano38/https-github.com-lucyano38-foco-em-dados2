@@ -3,7 +3,7 @@ import { LoginModal } from './LoginModal';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
 interface LandingProps {
-  onStart: (mode: 'crm' | 'analytics' | 'opensquad' | 'evolua_demo' | 'prospecting' | 'indicators') => void;
+  onStart: (mode: 'crm' | 'analytics' | 'growth' | 'indicators') => void;
   onUploadFile?: () => void;
 }
 
@@ -120,7 +120,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           )}
           {usuarioLogado ? (
             <button
-              onClick={() => handleNavegacao('prospecting')}
+              onClick={() => handleNavegacao('growth')}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
             >
               🚀 Acessar Painel PRO
@@ -154,7 +154,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <button
-            onClick={() => handleNavegacao('prospecting')}
+            onClick={() => handleNavegacao('growth')}
             className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-base rounded-xl transition-all shadow-xl shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer"
           >
             <span>Testar Grátis Agora</span>
@@ -162,7 +162,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           </button>
 
           <button
-            onClick={() => handleNavegacao('evolua_demo')}
+            onClick={() => handleNavegacao('growth')}
             className="w-full sm:w-auto px-8 py-4 bg-slate-900/90 hover:bg-slate-800 text-slate-100 font-semibold text-base rounded-xl transition-all border border-slate-700 backdrop-blur-md flex items-center justify-center gap-3 cursor-pointer shadow-lg"
           >
             <PlayCircle className="w-5 h-5 text-amber-400" />
@@ -228,7 +228,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               Busque empresas por Cidade, Segmento e Raio de km. O sistema coleta nome, telefone, e-mail, redes sociais e classifica automaticamente entre <span className="text-emerald-400 font-bold">Alta Oportunidade</span> (sem site) e <span className="text-amber-400 font-bold">Média Oportunidade</span> (site antigo).
             </p>
             <button
-              onClick={() => handleNavegacao('prospecting')}
+              onClick={() => handleNavegacao('growth')}
               className="mt-4 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-lg"
             >
               Acessar Prospector IA & CRM →

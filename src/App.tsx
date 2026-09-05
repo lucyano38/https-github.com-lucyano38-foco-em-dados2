@@ -1,15 +1,11 @@
 import { HermesGrowthEngineView } from "./components/HermesGrowthEngineView";
 import { LivePreviewView } from "./components/LivePreviewView";
 import { isMasterAdmin } from "./lib/constants";
-import { OpenSquadView } from "./components/OpenSquadView";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
 import { Landing } from './components/Landing';
-import { ProspeccaoDashboard } from './components/ProspeccaoDashboard';
-import { EvoluaDemoDashboard } from './components/EvoluaDemoDashboard';
-import { UnifiedProspectView } from './components/UnifiedProspectView';
 import { AutomatedIndicatorsView } from './components/AutomatedIndicatorsView';
 import { CookieBanner } from './components/CookieBanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -48,7 +44,7 @@ import { MASTER_EMAIL } from './lib/roles';
 
 /* --------------------------- Landing --------------------------- */
 const SITE_TITLE = 'Foco em Dados';
-const SITE_DESCRIPTION = 'CRM, prospecção e redesign de sites com squad OpenSquad AI';
+const SITE_DESCRIPTION = 'CRM, Growth Engine e análise de dados com IA';
 
 /* --------------------------- Data hooks --------------------------- */
 const DEFAULT_PROMPTS = [
@@ -502,7 +498,7 @@ function useInputState() {
 }
 
 export const App: React.FC = () => {
-  if (typeof window !== "undefined" && (window.location.pathname.includes("/preview") || window.location.pathname.includes("/evolua_demo") || window.location.search.includes("nome="))) {
+  if (typeof window !== "undefined" && (window.location.pathname.includes("/preview") || window.location.pathname.includes("/growth") || window.location.search.includes("nome="))) {
     return <LivePreviewView />;
   }
 
@@ -657,11 +653,9 @@ export const App: React.FC = () => {
 
           <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto py-1">
             <button onClick={() => setEcosystemMode('analysis')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🏠 Dashboard</button>
-            <button onClick={() => setEcosystemMode('opensquad')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'opensquad' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🤖 OpenSquad AI</button>
             <button onClick={() => setEcosystemMode('crm')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>👥 CRM</button>
-            <button onClick={() => setEcosystemMode('prospecting')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'prospecting' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🌐 Sites</button>
+            <button onClick={() => setEcosystemMode('growth')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'growth' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🚀 Growth Engine</button>
             <button onClick={() => setEcosystemMode('indicators')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'indicators' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>📊 Dashboards BI</button>
-            <button onClick={() => setEcosystemMode('evolua_demo')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'evolua_demo' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>⚙️ Hermes IA</button>
             <button onClick={() => window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03'} className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer">💰 Financeiro</button>
           </div>
         </div>
@@ -776,14 +770,6 @@ export const App: React.FC = () => {
             </div>
           )}
         </main>
-      ) : ecosystemMode === 'prospecting' ? (
-        <div className="w-full flex-1 flex flex-col">
-          <ProspeccaoDashboard />
-        </div>
-      ) : ecosystemMode === 'opensquad' ? (
-        <div className="w-full flex-1 flex flex-col">
-          <OpenSquadView />
-        </div>
       ) : ecosystemMode === 'indicators' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
           <AutomatedIndicatorsView />
@@ -794,7 +780,7 @@ export const App: React.FC = () => {
             <CrmDashboard onSendToDataAnalyst={handleSendCrmToAnalyst} />
           </ErrorBoundary>
         </div>
-      ) : ecosystemMode === 'evolua_demo' ? (
+      ) : ecosystemMode === 'growth' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
           <HermesGrowthEngineView />
         </div>

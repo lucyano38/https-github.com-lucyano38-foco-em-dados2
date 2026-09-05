@@ -142,7 +142,7 @@ export const RedesignModal: React.FC<RedesignModalProps> = ({
                           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                           <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                         </div>
-                        <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">focoemdados.com.br/evolua_demo</span>
+                        <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">focoemdados.com.br/growth</span>
                       </div>
                       <div className="space-y-2 py-2">
                         <div className="text-sm font-bold text-white">🚀 {lead.nome} - Especialista em {lead.nicho}</div>
@@ -174,7 +174,7 @@ export const RedesignModal: React.FC<RedesignModalProps> = ({
                 </p>
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 font-mono text-xs text-amber-400 flex items-center justify-between">
                   <span>URL do Preview Gerado: preview.focoemdados.com.br/{lead.id}</span>
-                  <a href="#preview" onClick={(e) => { e.preventDefault(); window.open(`/evolua_demo?nome=${encodeURIComponent(lead.nome)}&nicho=${encodeURIComponent(lead.nicho)}&site=${encodeURIComponent(lead.siteAtual || "")}`, "_blank"); }} className="text-xs text-blue-400 underline flex items-center gap-1">Testar Preview <ExternalLink className="w-3 h-3" /></a>
+                  <a href="#preview" onClick={(e) => { e.preventDefault(); window.open(`/growth?nome=${encodeURIComponent(lead.nome)}&nicho=${encodeURIComponent(lead.nicho)}&site=${encodeURIComponent(lead.siteAtual || "")}`, "_blank"); }} className="text-xs text-blue-400 underline flex items-center gap-1">Testar Preview <ExternalLink className="w-3 h-3" /></a>
                 </div>
               </div>
             )}
