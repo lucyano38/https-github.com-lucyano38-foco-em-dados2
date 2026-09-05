@@ -78,12 +78,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
           loop 
           muted 
           playsInline 
-          className="absolute inset-0 w-full h-full object-cover opacity-65 scale-105"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         >
           <source src="/bg.mp4" type="video/mp4" />
           Seu navegador não suporta vídeos em segundo plano.
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/40 to-slate-950/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/40 to-slate-950/80 z-[1]" />
       </div>
 
       {/* NAVBAR PROFISSIONAL */}
