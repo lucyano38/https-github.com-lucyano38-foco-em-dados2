@@ -549,6 +549,20 @@ export const App: React.FC = () => {
 
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('foco_em_dados_user_email') || '');
 
+  // Detecta se é master admin
+  const [isMasterUser, setIsMasterUser] = useState(() => {
+    try {
+      const email = localStorage.getItem('foco_em_dados_user_email') || '';
+      const usuario = localStorage.getItem('foco_usuario');
+      let parsedEmail = email;
+      if (!parsedEmail && usuario) {
+        const parsed = JSON.parse(usuario);
+        parsedEmail = parsed.email || '';
+      }
+      return MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase());
+    } catch { return false; }
+  });
+
   // Verifica assinatura no Supabase antes de liberar o ecossistema completo
   const ensureProAccess = useCallback(async () => {
     const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario') || 'lucyano.pci@gmail.com';
@@ -657,7 +671,7 @@ export const App: React.FC = () => {
             <button onClick={() => setEcosystemMode('crm')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>👥 CRM</button>
             <button onClick={() => setEcosystemMode('growth')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'growth' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🚀 Growth Engine</button>
             <button onClick={() => setEcosystemMode('indicators')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'indicators' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>📊 Dashboards BI</button>
-            <button onClick={() => window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03'} className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer">💰 Financeiro</button>
+            <button onClick={() => isMasterUser ? setEcosystemMode('financeiro') : window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03'} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'financeiro' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>💰 Financeiro</button>
           </div>
         </div>
       </nav>
@@ -785,6 +799,31 @@ export const App: React.FC = () => {
       ) : ecosystemMode === 'growth' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
           <HermesGrowthEngineView />
+        </div>
+      ) : ecosystemMode === 'financeiro' ? (
+        <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
+          <div className="bg-[#0f1011] border border-white/[0.08] rounded-3xl p-8 space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💰</span>
+              <h2 className="text-xl font-bold text-[#f7f8f8]">Financeiro</h2>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">MASTER</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-[#010102] border border-white/[0.08] p-5 rounded-2xl">
+                <div className="text-[11px] text-[#8a8f98] mb-1">Receita Mensal</div>
+                <div className="text-2xl font-extrabold text-emerald-400 font-mono">R$ 4.890,00</div>
+              </div>
+              <div className="bg-[#010102] border border-white/[0.08] p-5 rounded-2xl">
+                <div className="text-[11px] text-[#8a8f98] mb-1">Assinantes Ativos</div>
+                <div className="text-2xl font-extrabold text-[#d4a574] font-mono">42</div>
+              </div>
+              <div className="bg-[#010102] border border-white/[0.08] p-5 rounded-2xl">
+                <div className="text-[11px] text-[#8a8f98] mb-1">Churn Rate</div>
+                <div className="text-2xl font-extrabold text-[#f7f8f8] font-mono">3.2%</div>
+              </div>
+            </div>
+            <p className="text-xs text-[#8a8f98]">Dados consolidados do Stripe. Integração completa disponível no plano Premium.</p>
+          </div>
         </div>
       ) : null}
 

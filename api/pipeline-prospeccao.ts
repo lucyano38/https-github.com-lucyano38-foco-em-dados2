@@ -13,77 +13,112 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ sucesso: false, erro: 'Método não permitido' });
   }
 
+  const { nicho, cidade, raio, ticketAlvo, mrrAlvo, focoAbordagem } = req.body || {};
+
+  if (!cidade || !nicho) {
+    return res.status(400).json({ sucesso: false, erro: 'Cidade e Nicho são obrigatórios' });
+  }
+
   try {
-    const { nicho, cidade, raio, ticketAlvo, mrrAlvo, focoAbordagem } = req.body || {};
+    // 1. Geolocalização com Nominatim
+    const geoRes = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade + ', Brasil')}`,
+      { headers: { 'User-Agent': 'FocoEmDadosApp/2.0' } }
+    );
+    const geoData = await geoRes.json();
 
-    if (!cidade || !nicho) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: 'Preencha pelo menos a Cidade e o Nicho para iniciar a prospecção.',
-      });
+    if (!geoData || geoData.length === 0) {
+      return res.status(404).json({ sucesso: false, erro: 'Cidade não encontrada para geolocalização.' });
     }
 
-    // PASSO 1: Geolocalização com fallback seguro
-    let lat = -23.55052;
-    let lon = -46.633308;
-    
-    try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}`,
-        { headers: { 'User-Agent': 'FocoEmDadosApp/2.0' } }
+    const lat = parseFloat(geoData[0].lat);
+    const lon = parseFloat(geoData[0].lon);
+    const raioMetros = (parseInt(raio) || 15) * 1000;
+
+    // 2. Mapeamento de CNAE/nicho para tags do OpenStreetMap
+    const amenityMap: Record<string, string[]> = {
+      'Restaurantes': ['restaurant', 'cafe', 'fast_food', 'bar', 'pub'],
+      'Odontologia': ['dentist', 'clinic'],
+      'Advocacia': ['lawyer'],
+      'Arquitetura': ['office'],
+      'Automotivo': ['car_repair', 'car', 'fuel'],
+      'Saúde & Bem-estar': ['clinic', 'pharmacy', 'dentist'],
+      'Gastronomia': ['restaurant', 'cafe', 'fast_food', 'bar', 'bakery'],
+      'Educação & Cursos': ['school', 'university', 'college'],
+      'Construção Civil': ['hardware', 'trade'],
+      'Imobiliário': ['estate_agent'],
+      'Tecnologia & SaaS': ['office'],
+      'Comércio Local': ['shop', 'supermarket', 'convenience'],
+    };
+
+    const amenityTypes = amenityMap[nicho] || ['restaurant', 'cafe', 'shop'];
+
+    // 3. Busca Overpass API — dados REAIS do OpenStreetMap
+    const amenityFilters = amenityTypes.map(t => `node["amenity"="${t}"](around:${raioMetros},${lat},${lon});`).join('\n        ');
+    const shopFilters = nicho === 'Comércio Local'
+      ? `node["shop"](around:${raioMetros},${lat},${lon});`
+      : '';
+
+    const queryOverpass = `
+      [out:json][timeout:20];
+      (
+        ${amenityFilters}
+        ${shopFilters}
       );
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        if (geoData && geoData.length > 0) {
-          lat = parseFloat(geoData[0].lat);
-          lon = parseFloat(geoData[0].lon);
-        }
-      }
-    } catch (e) {
-      console.warn('[Pipeline] Fallback de geolocalização acionado.');
-    }
+      out tags 25;
+    `.trim();
 
-    // PASSO 2: Mapeamento e Auditoria dos Leads
-    const leadsMapeados = [
-      {
-        id: `lead_${Date.now()}_1`,
-        nome: `${nicho} Premium ${cidade}`,
+    const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: queryOverpass,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+
+    const overpassData = await overpassRes.json();
+    const elementos = overpassData?.elements || [];
+
+    // 4. Mapeia APENAS empresas reais que possuem nome
+    const leadsReais = elementos
+      .filter((el: any) => el.tags && el.tags.name)
+      .map((el: any, index: number) => ({
+        id: `real_${el.id || index}`,
+        nome: el.tags.name,
         nicho,
         cidade,
-        temSite: false,
-        necessitaRedesign: true,
-        score: 88,
-        status: 'Redesign Gerado',
-        previewUrl: `https://preview.focoemdados.com.br/demo-1`,
-      },
-      {
-        id: `lead_${Date.now()}_2`,
-        nome: `Centro de ${nicho} ${cidade}`,
-        nicho,
-        cidade,
-        temSite: true,
-        siteAtual: 'http://site-antigo.com.br',
-        necessitaRedesign: true,
-        score: 92,
-        status: 'Pronto para Abordagem',
-        previewUrl: `https://preview.focoemdados.com.br/demo-2`,
-      },
-    ];
+        telefone: el.tags.phone || el.tags['contact:phone'] || null,
+        whatsapp: el.tags['contact:mobile'] || el.tags.phone || null,
+        email: el.tags['contact:email'] || null,
+        siteUrl: el.tags.website || null,
+        temSite: !!el.tags.website,
+        necessitaRedesign: !el.tags.website,
+        score: !el.tags.website ? 90 : 60,
+        status: !el.tags.website ? 'Sem Site (Oportunidade)' : 'Com Site',
+        rating: el.tags.stars ? parseFloat(el.tags.stars) : null,
+        notas: el.tags.opening_hours ? `Horário: ${el.tags.opening_hours}` : null,
+        isRealData: true,
+        osmId: el.id,
+        lat: el.lat,
+        lon: el.lon,
+      }));
 
-    // PASSO 3 & 4: Retorno com estrutura garantida
     return res.status(200).json({
       sucesso: true,
-      mensagem: 'Pipeline executado com sucesso.',
-      parametros: { nicho, cidade, raio: raio || 50, ticketAlvo, mrrAlvo, focoAbordagem },
+      mensagem: leadsReais.length > 0
+        ? `${leadsReais.length} empresas reais encontradas em ${cidade}`
+        : `Nenhuma empresa encontrada no OpenStreetMap para ${nicho} em ${cidade}. Tente outro nicho ou raio maior.`,
+      parametros: { nicho, cidade, raio: parseInt(raio) || 15, ticketAlvo, mrrAlvo, focoAbordagem },
       coordenadas: { lat, lon },
-      leads: leadsMapeados,
+      totalEncontrados: leadsReais.length,
+      leads: leadsReais,
+      fonte: 'OpenStreetMap (dados abertos reais)',
     });
+
   } catch (error: any) {
     console.error('[Pipeline Error]:', error);
     return res.status(500).json({
       sucesso: false,
-      erro: 'Falha interna ao processar esteira de prospecção. Tente novamente.',
-      detalhes: error?.message || 'Erro desconhecido',
+      erro: 'Erro ao consultar base de dados reais de empresas.',
+      detalhes: error.message,
     });
   }
 }
