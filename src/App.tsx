@@ -12,6 +12,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { CrmDashboard } from './components/CrmDashboard';
 import { SlideDeckModal } from './components/SlideDeckModal';
 import { GeminiChatSidebar } from './components/GeminiChatSidebar';
+import { ChatwootWidget } from './components/ChatwootWidget';
 import {
   Search,
   Building2,
@@ -663,6 +664,7 @@ export const App: React.FC = () => {
 
       <div className="h-20"></div>
       <CookieBanner />
+      <ChatwootWidget />
 
       {ecosystemMode === 'analysis' ? (
         <main className="mx-auto max-w-screen-2xl w-full px-6 pt-6">
