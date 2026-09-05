@@ -161,7 +161,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
       <MarketDiagnostic onOpenPaywall={() => handleCheckoutStripe('starter')} />
 
       {/* AGENTE HERMES */}
-      <AgenteHermesSection onOpenDemo={() => handleCheckoutStripe('starter')} />
+      <AgenteHermesSection 
+        onOpenDemo={() => handleCheckoutStripe('starter')}
+        onEnterApp={(mode) => handleNavegacao(mode)}
+      />
 
       {/* CTA DE CAPTURA */}
       <LeadCaptureCTA onOpenPaywall={() => handleCheckoutStripe('starter')} />

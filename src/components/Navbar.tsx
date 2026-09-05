@@ -35,19 +35,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const hasAccess = isPro || isMasterUser;
 
-  const handleDashboardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-
+  const handleEnterApp = (mode: string) => {
     if (hasAccess) {
-      if (onEnterApp) {
-        onEnterApp('growth');
-      } else {
-        setActiveTab('prospector');
-        const element = document.getElementById('prospector-view');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
+      if (onEnterApp) onEnterApp(mode);
+      else setActiveTab(mode);
     } else {
       onOpenPaywall();
     }
@@ -61,48 +52,42 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <nav className="hidden md:flex items-center gap-4">
             <button
-              onClick={handleDashboardClick}
+              onClick={() => handleEnterApp('analysis')}
               className={`text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
-                activeTab === 'prospector'
+                activeTab === 'analysis'
                   ? 'bg-amber-500 text-slate-950 font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-900'
               }`}
             >
-              Dashboards
+              Dashboard
             </button>
 
             <button
-              onClick={() => {
-                if (hasAccess) {
-                  if (onEnterApp) onEnterApp('growth');
-                  else setActiveTab('hermes');
-                } else {
-                  onOpenPaywall();
-                }
-              }}
-              className="text-xs text-slate-300 hover:text-white px-3 py-2"
+              onClick={() => handleEnterApp('crm')}
+              className={`text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
+                activeTab === 'crm'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-900'
+              }`}
             >
-              Agente Hermes
+              CRM
             </button>
 
             <button
-              onClick={() => {
-                if (hasAccess) {
-                  if (onEnterApp) onEnterApp('growth');
-                  else setActiveTab('prospector');
-                } else {
-                  onOpenPaywall();
-                }
-              }}
-              className="text-xs text-slate-300 hover:text-white px-3 py-2"
+              onClick={() => handleEnterApp('growth')}
+              className={`text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
+                activeTab === 'growth'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-900'
+              }`}
             >
-              Prospector IA
+              Growth Engine
             </button>
           </nav>
         </div>
 
         <button
-          onClick={hasAccess ? () => { if (onEnterApp) onEnterApp('growth'); } : onOpenPaywall}
+          onClick={() => handleEnterApp('growth')}
           className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"
         >
           {hasAccess ? '🚀 Acessar Painel PRO' : 'Testar Grátis'}

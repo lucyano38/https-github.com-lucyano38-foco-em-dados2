@@ -104,6 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             endereco: `${rua}${numero ? ', ' + numero : ''}${bairro ? ' - ' + bairro : ''}`,
             temSite: false,
             necessitaRedesign: true,
+            redesignPreviewUrl: `/preview?nome=${encodeURIComponent(place.display_name.split(',')[0])}&nicho=${encodeURIComponent(nicho)}&cidade=${encodeURIComponent(cidade)}`,
             score: Math.floor(Math.random() * 15) + 75,
             status: 'Sem Site (Oportunidade)',
             distancia: parseFloat(distancia.toFixed(1)),
