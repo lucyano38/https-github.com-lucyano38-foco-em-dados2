@@ -1,5 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Geolocalização com Nominatim
     const geoRes = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade + ', Brasil')}`,
-      { headers: { 'User-Agent': 'FocoEmDadosApp/2.0' } }
+      { headers: { 'User-Agent': 'FocoEmDadosApp/2.0 (contato@focoemdados.com.br)' } }
     );
     const geoData = await geoRes.json();
 
@@ -35,12 +40,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const lon = parseFloat(geoData[0].lon);
     const raioMetros = (parseInt(raio) || 15) * 1000;
 
-    // 2. Mapeamento de CNAE/nicho para tags do OpenStreetMap
+    // 2. Mapeamento de nicho para tags do OpenStreetMap
     const amenityMap: Record<string, string[]> = {
       'Restaurantes': ['restaurant', 'cafe', 'fast_food', 'bar', 'pub'],
+      'Restaurantes & Gastronomia': ['restaurant', 'cafe', 'fast_food', 'bar', 'pub'],
       'Odontologia': ['dentist', 'clinic'],
+      'Odontologia & Estética': ['dentist', 'clinic'],
       'Advocacia': ['lawyer'],
+      'Advocacia & Direito': ['lawyer'],
       'Arquitetura': ['office'],
+      'Arquitetura & Design': ['office'],
       'Automotivo': ['car_repair', 'car', 'fuel'],
       'Saúde & Bem-estar': ['clinic', 'pharmacy', 'dentist'],
       'Gastronomia': ['restaurant', 'cafe', 'fast_food', 'bar', 'bakery'],
@@ -53,45 +62,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const amenityTypes = amenityMap[nicho] || ['restaurant', 'cafe', 'shop'];
 
-    // 3. Busca Overpass API — dados REAIS do OpenStreetMap
-    const amenityFilters = amenityTypes.map(t => `node["amenity"="${t}"](around:${raioMetros},${lat},${lon});`).join('\n        ');
-    const shopFilters = nicho === 'Comércio Local'
+    // 3. Monta query Overpass
+    const amenityFilters = amenityTypes.map(t => `node["amenity"="${t}"](around:${raioMetros},${lat},${lon});`).join('\n');
+    const shopFilters = nicho.includes('Comércio')
       ? `node["shop"](around:${raioMetros},${lat},${lon});`
       : '';
 
-    const queryOverpass = `
-      [out:json][timeout:20];
-      (
-        ${amenityFilters}
-        ${shopFilters}
-      );
-      out tags 25;
-    `.trim();
+    const queryOverpass = `[out:json][timeout:20];(
+${amenityFilters}
+${shopFilters}
+);out tags 25;`;
 
-    const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: `data=${encodeURIComponent(queryOverpass)}`,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'FocoEmDadosApp/2.0 (contato@focoemdados.com.br)',
-      },
-    });
+    // 4. Tenta múltiplos endpoints Overpass
+    let overpassData: any = null;
+    let lastError = '';
 
-    const overpassText = await overpassRes.text();
-    let overpassData;
-    try {
-      overpassData = JSON.parse(overpassText);
-    } catch {
-      console.error('[Overpass] Resposta não-JSON:', overpassText.substring(0, 200));
+    for (const endpoint of OVERPASS_ENDPOINTS) {
+      try {
+        const overpassRes = await fetch(endpoint, {
+          method: 'POST',
+          body: `data=${encodeURIComponent(queryOverpass)}`,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'FocoEmDadosApp/2.0 (contato@focoemdados.com.br)',
+          },
+        });
+
+        const overpassText = await overpassRes.text();
+
+        try {
+          overpassData = JSON.parse(overpassText);
+          break; // Sucesso, sai do loop
+        } catch {
+          lastError = `Resposta não-JSON de ${endpoint}`;
+          continue;
+        }
+      } catch (err: any) {
+        lastError = `Falha ao conectar em ${endpoint}: ${err.message}`;
+        continue;
+      }
+    }
+
+    if (!overpassData) {
       return res.status(502).json({
         sucesso: false,
-        erro: 'Overpass API retornou resposta inválida. Tente novamente em instantes.',
-        detalhes: overpassText.substring(0, 100),
+        erro: 'Não foi possível conectar à base de dados de empresas. Tente novamente em instantes.',
+        detalhes: lastError,
       });
     }
+
     const elementos = overpassData?.elements || [];
 
-    // 4. Mapeia APENAS empresas reais que possuem nome
+    // 5. Mapeia empresas reais
     const leadsReais = elementos
       .filter((el: any) => el.tags && el.tags.name)
       .map((el: any, index: number) => ({
@@ -131,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('[Pipeline Error]:', error);
     return res.status(500).json({
       sucesso: false,
-      erro: 'Erro ao consultar base de dados reais de empresas.',
+      erro: 'Erro interno ao processar prospecção.',
       detalhes: error.message,
     });
   }
