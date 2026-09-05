@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
-      body: queryOverpass,
+      body: `data=${encodeURIComponent(queryOverpass)}`,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
