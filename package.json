@@ -34,6 +34,7 @@
     "lucide-react": "^0.546.0",
     "multer": "^2.2.0",
     "pako": "^2.1.0",
+    "playwright": "^1.63.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-markdown": "^10.1.0",
@@ -57,5 +58,21 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2"
-  }
+  },
+  "description": "",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucyano38/https-github.com-lucyano38-foco-em-dados2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lucyano38/https-github.com-lucyano38-foco-em-dados2/issues"
+  },
+  "homepage": "https://github.com/lucyano38/https-github.com-lucyano38-foco-em-dados2#readme"
 }

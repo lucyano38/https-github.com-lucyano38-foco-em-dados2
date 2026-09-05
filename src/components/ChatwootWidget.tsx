@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MessageSquare, PhoneCall } from 'lucide-react';
+import { PhoneCall } from 'lucide-react';
 
 interface ChatwootWidgetProps {
   whatsappNumber?: string;
@@ -9,30 +9,32 @@ export const ChatwootWidget: React.FC<ChatwootWidgetProps> = ({
   whatsappNumber = '5511994411307',
 }) => {
   useEffect(() => {
-    const BASE_URL = 'https://app.chatwoot.com';
-    const existingScript = document.querySelector(`script[src="${BASE_URL}/packs/js/sdk.js"]`);
-    if (existingScript) return;
+    const CHATWOOT_BASE_URL = 'https://app.chatwoot.com';
+    const WEBSITE_TOKEN = 'k2FHhoWWCxj7cXXD3f4dZSZw';
 
-    const g = document.createElement('script');
-    g.src = BASE_URL + '/packs/js/sdk.js';
-    g.defer = true;
-    g.async = true;
-    document.head.appendChild(g);
-
-    g.onload = () => {
-      (window as any).chatwootSettings = {
-        hideMessageBubble: false,
-        position: 'right',
-        locale: 'pt_BR',
-        type: 'expanded_bubble',
+    // Chatwoot SDK
+    const existingScript = document.querySelector(`script[src="${CHATWOOT_BASE_URL}/packs/js/sdk.js"]`);
+    if (!existingScript) {
+      const g = document.createElement('script');
+      g.src = CHATWOOT_BASE_URL + '/packs/js/sdk.js';
+      g.defer = true;
+      g.async = true;
+      document.head.appendChild(g);
+      g.onload = () => {
+        (window as any).chatwootSettings = {
+          hideMessageBubble: false,
+          position: 'right',
+          locale: 'pt_BR',
+          type: 'expanded_bubble',
+        };
+        if ((window as any).chatwootSDK) {
+          (window as any).chatwootSDK.run({
+            websiteToken: WEBSITE_TOKEN,
+            baseUrl: CHATWOOT_BASE_URL,
+          });
+        }
       };
-      if ((window as any).chatwootSDK) {
-        (window as any).chatwootSDK.run({
-          websiteToken: process.env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN || 'CHATWOOT_TOKEN',
-          baseUrl: BASE_URL,
-        });
-      }
-    };
+    }
   }, []);
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
