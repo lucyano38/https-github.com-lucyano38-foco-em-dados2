@@ -264,7 +264,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       <AgenteHermesSection onOpenDemo={() => handleCheckoutStripe('starter')} />
 
       {/* CTA DE CAPTURA */}
-      <LeadCaptureCTA />
+      <LeadCaptureCTA onOpenPaywall={() => handleCheckoutStripe('starter')} />
 
       {/* PLANOS SAAS */}
       <section id="planos" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800 text-center">
