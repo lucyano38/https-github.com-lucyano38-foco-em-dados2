@@ -71,20 +71,17 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-x-hidden font-sans">
       
-      {/* BACKGROUND CINEMATOGRÁFICO COM VÍDEO ANIMADO E OVERLAY */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        >
-          <source src="/bg.mp4" type="video/mp4" />
-          Seu navegador não suporta vídeos em segundo plano.
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/40 to-slate-950/80 z-[1]" />
-      </div>
+      {/* VÍDEO DE FUNDO FIXO — cobre 100% da tela, atrás de tudo */}
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        playsInline 
+        className="fixed inset-0 w-full h-full object-cover z-0 opacity-40 pointer-events-none"
+      >
+        <source src="/bg.mp4" type="video/mp4" />
+      </video>
+      <div className="fixed inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/40 to-slate-950/80 z-0 pointer-events-none" />
 
       {/* NAVBAR PROFISSIONAL */}
       <Navbar
