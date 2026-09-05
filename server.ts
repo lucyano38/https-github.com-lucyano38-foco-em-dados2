@@ -2038,6 +2038,168 @@ Retorne APENAS um array JSON válido, sem texto adicional.`;
   });
 
   /* ────────────────────────────────────────────────────────── */
+  /*  Prospect API — Geocoding + Gemini Lead Discovery          */
+  /* ────────────────────────────────────────────────────────── */
+  app.post("/api/prospect", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") return res.status(200).end();
+
+    const { nicho, cidade, raio, maxResults } = req.body || {};
+    if (!nicho || !cidade) {
+      return res.status(400).json({
+        error: "Campos obrigatórios: nicho, cidade.",
+        example: { nicho: "Odontologia", cidade: "Barueri/SP", raio: 10 },
+      });
+    }
+
+    const nichoClean = String(nicho).trim().slice(0, 120);
+    const cidadeClean = String(cidade).trim().slice(0, 120);
+    const raioKm = typeof raio === "number" && raio > 0 && raio <= 100 ? raio : 10;
+    const limit = typeof maxResults === "number" && maxResults > 0 && maxResults <= 50 ? maxResults : 20;
+
+    try {
+      // PASSO 1: Geocodificação via Nominatim
+      let geoLat: number | null = null;
+      let geoLon: number | null = null;
+      let geoDisplayName: string | null = null;
+      try {
+        const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(cidadeClean)}`;
+        const geoRes = await fetch(geoUrl, {
+          headers: {
+            "User-Agent": "FocoEmDados-Prospector/1.0 (contato@focoemdados.com.br)",
+            "Accept-Language": "pt-BR",
+          },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (geoRes.ok) {
+          const geoData: any[] = await geoRes.json();
+          if (geoData && geoData.length > 0) {
+            geoLat = parseFloat(geoData[0].lat);
+            geoLon = parseFloat(geoData[0].lon);
+            geoDisplayName = geoData[0].display_name || cidadeClean;
+          }
+        }
+      } catch (geoErr) {
+        console.warn("[api/prospect] Geocode fallback:", geoErr);
+      }
+
+      // PASSO 2: Descoberta de Leads via Gemini
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+      const geoContext = geoLat && geoLon ? ` (coordenadas: ${geoLat}, ${geoLon})` : "";
+      const prompt = `Você é um especialista em prospecção B2B e inteligência de mercado.
+Gere uma lista de ${limit} empresas reais ou altamente realistas do nicho "${nichoClean}" localizadas em "${cidadeClean}"${geoContext}.
+
+Para cada empresa, retorne um objeto JSON contendo:
+- id (string, slug único)
+- nome (string, nome real da empresa)
+- nicho (string)
+- cidade (string)
+- temSite (boolean)
+- siteUrl (string|null, URL do site atual se existir)
+- necessitaRedesign (boolean, true se o site for antigo, lento ou inexistente)
+- notas (string, motivo da qualificação)
+- telefone (string)
+- whatsapp (string, formato 55XXXXXXXXXXX)
+- email (string)
+- rating (number, nota Google 1-5)
+- reviewsCount (number)
+- status (string: "Identificado")
+
+Retorne APENAS um array JSON válido, sem texto adicional.
+Filtre empresas com boa reputação física mas presença digital defasada.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.7-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json" },
+      });
+
+      let leadsFromAI: any[] = [];
+      try {
+        const parsed = JSON.parse(response.text || "[]");
+        leadsFromAI = Array.isArray(parsed) ? parsed.slice(0, limit) : [];
+      } catch {
+        console.error("[api/prospect] Gemini JSON parse error");
+      }
+
+      // PASSO 3: Geração de Redesign Preview via Gemini
+      const leadsComRedesign = await Promise.all(
+        leadsFromAI.map(async (lead: any) => {
+          if (!lead.necessitaRedesign) return lead;
+          try {
+            const redesignPrompt = `Gere uma estrutura de Landing Page moderna em HTML/Tailwind CSS para "${lead.nome}" do segmento de ${lead.nicho} em ${lead.cidade}.
+Foco: CTA de WhatsApp, SEO local, design responsivo, alta conversão.
+Site atual: ${lead.siteUrl || "sem site próprio"}.
+Retorne APENAS o HTML completo, sem markdown.`;
+
+            const redesignResponse = await ai.models.generateContent({
+              model: "gemini-3.7-flash",
+              contents: redesignPrompt,
+            });
+
+            const previewHtml = redesignResponse.text || "";
+            if (previewHtml.length > 100) {
+              // Salvar preview no output dir
+              const previewId = `preview-${lead.id}-${Date.now()}`;
+              const previewDir = path.join(process.cwd(), "output", previewId);
+              fs.mkdirSync(previewDir, { recursive: true });
+              fs.writeFileSync(path.join(previewDir, "index.html"), previewHtml, "utf-8");
+              lead.redesignPreviewUrl = `/output/${previewId}/index.html`;
+              lead.status = "Redesign Gerado";
+            }
+          } catch (redesignErr) {
+            console.warn(`[api/prospect] Redesign fallback para ${lead.nome}:`, redesignErr);
+          }
+          return lead;
+        })
+      );
+
+      // PASSO 4: Persistir leads no CRM local
+      const savedLeads: any[] = [];
+      for (const lead of leadsComRedesign) {
+        try {
+          const saved = upsertLead({
+            slug: lead.id || `prospect-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            nome: lead.nome,
+            nicho: lead.nicho,
+            cidade: lead.cidade,
+            telefone: lead.telefone,
+            whatsapp: lead.whatsapp,
+            email: lead.email,
+            nota: lead.rating,
+            avaliacoes: lead.reviewsCount,
+            siteAntigo: lead.siteUrl,
+            urlNova: lead.redesignPreviewUrl,
+            motivo: lead.notas || "Prospectado via API /api/prospect",
+            status: lead.status === "Redesign Gerado" ? "redesenhado" : "novo",
+            obs: `Prospectado automaticamente. Raio: ${raioKm}km.`,
+          });
+          savedLeads.push(saved);
+        } catch (saveErr) {
+          console.warn("[api/prospect] Falha ao salvar lead:", saveErr);
+        }
+      }
+
+      return res.status(200).json({
+        sucesso: true,
+        totalProcessados: savedLeads.length,
+        coordenadasBusca: {
+          lat: geoLat,
+          lon: geoLon,
+          raioKm,
+          cidade: geoDisplayName || cidadeClean,
+        },
+        leads: savedLeads,
+      });
+    } catch (err: any) {
+      console.error("[api/prospect] Pipeline error:", err);
+      return res.status(500).json({ error: err.message || "Erro ao processar prospecção" });
+    }
+  });
+
+  /* ────────────────────────────────────────────────────────── */
   /*  OpenSquad Multi-Agent Collaboration Routes                */
   /* ────────────────────────────────────────────────────────── */
   app.post("/api/opensquad/run-mission", async (req, res) => {
@@ -2445,18 +2607,26 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
     });
   }
 
-  const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-
-  // Disable timeouts for long-running agent interactions
-  server.setTimeout(0);
-  server.requestTimeout = 0;
-  server.headersTimeout = 0;
-  server.keepAliveTimeout = 0;
+  // Vercel: export the app for serverless function usage
+  // Local: start the server with listen
+  if (process.env.VERCEL || process.env.VERCEL_ENV) {
+    console.log("[server] Running on Vercel — app exported, not listening.");
+  } else {
+    const server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+    // Disable timeouts for long-running agent interactions
+    server.setTimeout(0);
+    server.requestTimeout = 0;
+    server.headersTimeout = 0;
+    server.keepAliveTimeout = 0;
+  }
 }
 
 startServer();
+
+// Export for Vercel serverless function
+export default app;
 
   /* ────────────────────────────────────────────────────────── */
   /*  n8n Webhook Integration Endpoint                         */
@@ -2715,11 +2885,6 @@ startServer();
     }
   });
 
-    } catch (err: any) {
-      return res.status(500).json({ status: "erro", mensagem: err.message });
-    }
-  });
-
   /* ────────────────────────────────────────────────────────── */
   /*  Stripe Checkout Alias (/api/criar-checkout)              */
   /* ────────────────────────────────────────────────────────── */
@@ -2765,45 +2930,6 @@ startServer();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao conectar com o Stripe.";
       return res.status(500).json({ error: errorMessage });
-    }
-  });
-
-    }
-    try {
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-        apiVersion: "2025-02-27.acacia",
-      });
-
-      const { email } = req.body || {};
-      const origin = req.headers.origin || "https://www.focoemdados.com.br";
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "brl",
-              product_data: {
-                name: "Foco em Dados - Acesso Total PRO",
-                description: "Painel de Prospecção B2B e Agentes Inteligentes",
-              },
-              unit_amount: 3990,
-              recurring: { interval: "month" },
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "subscription",
-        customer_email: typeof email === "string" && email.trim() ? email.trim() : "atendimento@focoemdados.com.br",
-        success_url: origin + "/prospeccao?pagamento=sucesso",
-        cancel_url: origin + "/?pagamento=cancelado",
-      });
-
-      return res.status(200).json({ url: session.url, urlCheckout: session.url });
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao criar sessão de pagamento.";
-      return res.status(400).json({ error: errorMessage });
     }
   });
 
