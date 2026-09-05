@@ -4,14 +4,18 @@ import { NicheSolutions } from './NicheSolutions';
 import { MarketDiagnostic } from './MarketDiagnostic';
 import { AgenteHermesSection } from './AgenteHermesSection';
 import { LeadCaptureCTA } from './LeadCaptureCTA';
+import { Navbar } from './Navbar';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
 interface LandingProps {
   onStart: (mode: 'crm' | 'analytics' | 'growth' | 'indicators') => void;
   onUploadFile?: () => void;
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+  isPro?: boolean;
 }
 
-export const Landing: React.FC<LandingProps> = ({ onStart }) => {
+export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveTab, isPro }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -82,64 +86,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </div>
 
       {/* NAVBAR PROFISSIONAL */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-7xl mx-auto border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <span className="text-slate-950 font-extrabold text-base">⚡</span>
-          </div>
-          <span className="font-bold text-lg tracking-tight text-slate-100">Foco em Dados</span>
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">OS 3.0</span>
-        </div>
-
-        <div className="hidden lg:flex items-center gap-7 text-sm text-slate-300 font-medium">
-          
-          <a href="#dashboards" className="hover:text-amber-400 transition-colors">Dashboards</a>
-          <a href="#hermes" className="hover:text-amber-400 transition-colors">Agente Hermes</a>
-          <a href="#prospector" className="hover:text-amber-400 transition-colors">Prospector IA</a>
-          <a href="#planos" className="hover:text-amber-400 transition-colors">Planos</a>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {usuarioLogado ? (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-amber-400 font-medium">Olá, {usuarioLogado.nome}</span>
-              <button
-                onClick={() => {
-                  setUsuarioLogado(null);
-                  localStorage.removeItem('foco_usuario');
-                  localStorage.removeItem('foco_em_dados_auth');
-                }}
-                className="text-xs text-slate-400 hover:text-slate-200 cursor-pointer underline"
-              >
-                Sair
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setIsLoginOpen(true)}
-              className="text-xs font-semibold text-slate-300 hover:text-slate-100 transition-colors px-3 py-2 cursor-pointer"
-            >
-              Entrar
-            </button>
-          )}
-          {usuarioLogado ? (
-            <button
-              onClick={() => handleNavegacao('growth')}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
-            >
-              🚀 Acessar Painel PRO
-            </button>
-          ) : (
-            <button
-              onClick={() => handleCheckoutStripe('pro')}
-              disabled={loadingCheckout}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
-            >
-              {loadingCheckout ? 'Processando...' : 'Testar Grátis'}
-            </button>
-          )}
-        </div>
-      </nav>
+      <Navbar
+        activeTab={activeTab || ''}
+        setActiveTab={setActiveTab || (() => {})}
+        onOpenPaywall={() => handleCheckoutStripe('starter')}
+        isPro={isPro || false}
+      />
 
       {/* HERO PRINCIPAL */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-20 text-center flex flex-col items-center">
