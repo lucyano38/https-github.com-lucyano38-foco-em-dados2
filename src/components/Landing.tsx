@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
 import { NicheSolutions } from './NicheSolutions';
+import { MarketDiagnostic } from './MarketDiagnostic';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
 interface LandingProps {
@@ -253,6 +254,9 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       <section id="automacao">
         <NicheSolutions />
       </section>
+
+      {/* DIAGNÓSTICO DE MERCADO */}
+      <MarketDiagnostic />
 
       {/* PLANOS SAAS */}
       <section id="planos" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800 text-center">
