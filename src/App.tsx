@@ -679,8 +679,6 @@ export const App: React.FC = () => {
             <button onClick={() => setEcosystemMode('analysis')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🏠 Dashboard</button>
             <button onClick={() => setEcosystemMode('crm')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>👥 CRM</button>
             <button onClick={() => setEcosystemMode('growth')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'growth' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🚀 Growth Engine</button>
-            <button onClick={() => setEcosystemMode('indicators')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'indicators' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>📊 Dashboards BI</button>
-            <button onClick={() => isMasterUser ? setEcosystemMode('financeiro') : window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03'} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'financeiro' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>💰 Financeiro</button>
           </div>
         </div>
       </nav>
