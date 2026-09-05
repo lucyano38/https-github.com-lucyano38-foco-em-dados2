@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LoginModal } from './LoginModal';
 import { NicheSolutions } from './NicheSolutions';
 import { MarketDiagnostic } from './MarketDiagnostic';
-import { OpenSquadShowcase } from './OpenSquadShowcase';
+import { AgenteHermesSection } from './AgenteHermesSection';
 import { LeadCaptureCTA } from './LeadCaptureCTA';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
@@ -254,14 +254,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
       {/* SOLUÇÕES POR NICHO */}
       <section id="automacao">
-        <NicheSolutions />
+        <NicheSolutions onOpenPaywall={() => handleCheckoutStripe('starter')} />
       </section>
 
       {/* DIAGNÓSTICO DE MERCADO */}
       <MarketDiagnostic />
 
-      {/* OPEN SQUAD SHOWCASE */}
-      <OpenSquadShowcase />
+      {/* AGENTE HERMES */}
+      <AgenteHermesSection onOpenDemo={() => handleCheckoutStripe('starter')} />
 
       {/* CTA DE CAPTURA */}
       <LeadCaptureCTA />
