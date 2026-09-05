@@ -71,10 +71,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: `data=${encodeURIComponent(queryOverpass)}`,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'FocoEmDadosApp/2.0 (contato@focoemdados.com.br)',
+      },
     });
 
-    const overpassData = await overpassRes.json();
+    const overpassText = await overpassRes.text();
+    let overpassData;
+    try {
+      overpassData = JSON.parse(overpassText);
+    } catch {
+      console.error('[Overpass] Resposta não-JSON:', overpassText.substring(0, 200));
+      return res.status(502).json({
+        sucesso: false,
+        erro: 'Overpass API retornou resposta inválida. Tente novamente em instantes.',
+        detalhes: overpassText.substring(0, 100),
+      });
+    }
     const elementos = overpassData?.elements || [];
 
     // 4. Mapeia APENAS empresas reais que possuem nome
