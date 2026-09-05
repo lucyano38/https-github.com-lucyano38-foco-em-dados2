@@ -96,9 +96,9 @@ export const HermesGrowthEngineView: React.FC = () => {
       // The API handles geocoding internally
       updateStep('geo', 'done');
 
-      // Step 2-4: Call /api/prospect (handles discovery + redesign + CRM save)
+      // Step 2-4: Call /api/pipeline-prospeccao (Overpass API real data)
       updateStep('discover', 'running');
-      const res = await fetch('/api/prospect', {
+      const res = await fetch('/api/pipeline-prospeccao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nicho: activeNicho, cidade, raio, maxResults: 10 }),

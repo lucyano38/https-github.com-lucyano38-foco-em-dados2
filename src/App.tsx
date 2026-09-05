@@ -550,7 +550,7 @@ export const App: React.FC = () => {
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('foco_em_dados_user_email') || '');
 
   // Detecta se é master admin
-  const [isMasterUser, setIsMasterUser] = useState(() => {
+  const checkMasterUser = useCallback(() => {
     try {
       const email = localStorage.getItem('foco_em_dados_user_email') || '';
       const usuario = localStorage.getItem('foco_usuario');
@@ -561,7 +561,16 @@ export const App: React.FC = () => {
       }
       return MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase());
     } catch { return false; }
-  });
+  }, []);
+
+  const [isMasterUser, setIsMasterUser] = useState(() => checkMasterUser());
+
+  // Re-verifica master user quando entra no app
+  useEffect(() => {
+    if (!showLanding) {
+      setIsMasterUser(checkMasterUser());
+    }
+  }, [showLanding, checkMasterUser]);
 
   // Verifica assinatura no Supabase antes de liberar o ecossistema completo
   const ensureProAccess = useCallback(async () => {
