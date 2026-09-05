@@ -88,6 +88,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
         activeTab={activeTab || ''}
         setActiveTab={setActiveTab || (() => {})}
         onOpenPaywall={() => handleCheckoutStripe('starter')}
+        onEnterApp={(mode) => handleNavegacao(mode)}
         isPro={isPro || false}
       />
 
