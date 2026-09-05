@@ -258,7 +258,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </section>
 
       {/* DIAGNÓSTICO DE MERCADO */}
-      <MarketDiagnostic />
+      <MarketDiagnostic onOpenPaywall={() => handleCheckoutStripe('starter')} />
 
       {/* AGENTE HERMES */}
       <AgenteHermesSection onOpenDemo={() => handleCheckoutStripe('starter')} />
