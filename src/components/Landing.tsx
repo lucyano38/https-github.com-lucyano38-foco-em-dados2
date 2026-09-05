@@ -5,6 +5,7 @@ import { MarketDiagnostic } from './MarketDiagnostic';
 import { AgenteHermesSection } from './AgenteHermesSection';
 import { LeadCaptureCTA } from './LeadCaptureCTA';
 import { Navbar } from './Navbar';
+import { Hero } from './Hero';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
 interface LandingProps {
@@ -94,58 +95,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
       />
 
       {/* HERO PRINCIPAL */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-20 text-center flex flex-col items-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-slate-700 shadow-md mb-6 backdrop-blur-md">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-medium text-slate-200">Transforme dados em oportunidades e automatize seu negócio com IA</span>
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-8 leading-[1.1]">
-          Crie sites, dashboards, automações e <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">agentes de IA</span> sem complicação.
-        </h1>
-
-        <p className="text-base sm:text-lg text-slate-300 max-w-3xl mb-12 font-normal leading-relaxed">
-          A plataforma 100% online para PMEs criarem presença digital, prospectarem clientes e operarem todo o atendimento no WhatsApp, Instagram e Facebook automaticamente.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-          <button
-            onClick={() => handleNavegacao('growth')}
-            className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-base rounded-xl transition-all shadow-xl shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer"
-          >
-            <span>Testar Grátis Agora</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={() => handleNavegacao('growth')}
-            className="w-full sm:w-auto px-8 py-4 bg-slate-900/90 hover:bg-slate-800 text-slate-100 font-semibold text-base rounded-xl transition-all border border-slate-700 backdrop-blur-md flex items-center justify-center gap-3 cursor-pointer shadow-lg"
-          >
-            <PlayCircle className="w-5 h-5 text-amber-400" />
-            <span>Ver Demonstração ao Vivo</span>
-          </button>
-        </div>
-
-        {/* MÉTRICAS DE PROVA SOCIAL */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl w-full pt-8 border-t border-slate-800/80">
-          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl backdrop-blur-md">
-            <div className="text-2xl font-bold text-white font-mono">+10.000</div>
-            <div className="text-xs text-slate-400 mt-1">Sites Gerados</div>
-          </div>
-          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl backdrop-blur-md">
-            <div className="text-2xl font-bold text-amber-400 font-mono">24/7</div>
-            <div className="text-xs text-slate-400 mt-1">Atendimento WhatsApp</div>
-          </div>
-          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl backdrop-blur-md">
-            <div className="text-2xl font-bold text-emerald-400 font-mono">38%</div>
-            <div className="text-xs text-slate-400 mt-1">Conversão Média</div>
-          </div>
-          <div className="col-span-2 md:col-span-1 bg-slate-900/80 border border-slate-800 p-4 rounded-2xl backdrop-blur-md">
-            <div className="text-2xl font-bold text-blue-400 font-mono">100%</div>
-            <div className="text-xs text-slate-400 mt-1">Remoto & Automático</div>
-          </div>
-        </div>
-      </section>
+      <Hero onOpenPaywall={() => handleCheckoutStripe('starter')} />
 
       {/* PILAR 3: AGENTE HERMES */}
       <section id="hermes" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800">
