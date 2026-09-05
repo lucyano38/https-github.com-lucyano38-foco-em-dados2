@@ -357,11 +357,16 @@ async function startServer() {
       let source = "BCB API (SGS 11 - Selic)";
 
       try {
-        const response = await fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/12?formato=json", {
-          signal: AbortSignal.timeout(5000)
-        });
-        if (response.ok) {
+        const response = await fetch(
+          "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/12?formato=json",
+          { signal: AbortSignal.timeout(5000) },
+        );
+
+        const contentType = response.headers.get("content-type") || "";
+        if (response.ok && contentType.includes("application/json")) {
           bcbData = await response.json();
+        } else {
+          throw new Error(`Unexpected BCB response: ${response.status} ${contentType}`);
         }
       } catch (err) {
         console.warn("[indicators] External BCB API fetch failed, falling back to cache:", err);
