@@ -1,5 +1,6 @@
 import { HermesGrowthEngineView } from "./components/HermesGrowthEngineView";
 import { LivePreviewView } from "./components/LivePreviewView";
+import PreviewRedesign from "./components/PreviewRedesign";
 import { isMasterAdmin } from "./lib/constants";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -499,6 +500,9 @@ function useInputState() {
 }
 
 export const App: React.FC = () => {
+  if (typeof window !== "undefined" && window.location.pathname.includes("/preview-redesign")) {
+    return <PreviewRedesign />;
+  }
   if (typeof window !== "undefined" && (window.location.pathname.includes("/preview") || window.location.pathname.includes("/growth") || window.location.search.includes("nome="))) {
     return <LivePreviewView />;
   }
