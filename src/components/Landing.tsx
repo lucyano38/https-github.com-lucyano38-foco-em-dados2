@@ -104,41 +104,44 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div onClick={() => handleNavegacao('opensquad')} className="bg-slate-900 border-2 border-slate-700 hover:border-amber-500 rounded-3xl p-8 shadow-2xl transition-all cursor-pointer group">
-            <Bot className="w-8 h-8 text-violet-400 mb-4 group-hover:scale-110 transition" />
+          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-8 shadow-2xl transition-all">
+            <Bot className="w-8 h-8 text-violet-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Hermes Imobiliária</h3>
             <p className="text-xs text-slate-300 leading-relaxed">Atendimento automático de imóveis, envio de fotos e agendamento direto de visitas na agenda.</p>
           </div>
-          <div onClick={() => handleNavegacao('opensquad')} className="bg-slate-900 border-2 border-slate-700 hover:border-amber-500 rounded-3xl p-8 shadow-2xl transition-all cursor-pointer group">
-            <Users className="w-8 h-8 text-blue-400 mb-4 group-hover:scale-110 transition" />
+          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-8 shadow-2xl transition-all">
+            <Users className="w-8 h-8 text-blue-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Hermes Clínica</h3>
             <p className="text-xs text-slate-300 leading-relaxed">Confirmação de consultas, triagem de pacientes e agendamentos automatizados sem operador humano.</p>
           </div>
-          <div onClick={() => handleNavegacao('opensquad')} className="bg-slate-900 border-2 border-slate-700 hover:border-amber-500 rounded-3xl p-8 shadow-2xl transition-all cursor-pointer group">
-            <Cpu className="w-8 h-8 text-emerald-400 mb-4 group-hover:scale-110 transition" />
+          <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-8 shadow-2xl transition-all">
+            <Cpu className="w-8 h-8 text-emerald-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">OpenSquad & Outros Nichos</h3>
             <p className="text-xs text-slate-300 leading-relaxed">Oficinas, advocacia, restaurantes e comércio com agentes especializados monitorando todo o pipeline.</p>
           </div>
         </div>
       </section>
 
-      {/* PILAR 4: PROSPECTOR IA */}
+      {/* PILAR 4: PROSPECTOR IA — gated behind paywall */}
       <section id="prospector" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800">
-        <div className="bg-slate-900 border-2 border-slate-700 hover:border-amber-500 rounded-3xl p-8 sm:p-12 shadow-2xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center transition-all">
+        <div className="bg-slate-900 border border-slate-700/60 rounded-3xl p-8 sm:p-12 shadow-2xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center transition-all">
           <div className="space-y-4">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-500/20">Pilar 4 · Prospecção B2B (Estilo Apollo)</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Prospector IA: Encontre Clientes em Escala</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
               Busque empresas por Cidade, Segmento e Raio de km. O sistema coleta nome, telefone, e-mail, redes sociais e classifica automaticamente entre <span className="text-emerald-400 font-bold">Alta Oportunidade</span> (sem site) e <span className="text-amber-400 font-bold">Média Oportunidade</span> (site antigo).
             </p>
-            <button
-              onClick={() => handleNavegacao('growth')}
-              className="mt-4 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-lg"
-            >
-              Acessar Prospector IA & CRM →
-            </button>
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                onClick={() => handleCheckoutStripe('starter')}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-lg"
+              >
+                Desbloquear com Plano PRO →
+              </button>
+              <span className="text-xs text-slate-500">R$ 39,90/mês</span>
+            </div>
           </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-inner space-y-3 font-mono text-xs text-slate-300">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-inner space-y-3 font-mono text-xs text-slate-300 opacity-70">
             <div className="text-amber-400 font-bold border-b border-slate-800 pb-2">Ranking de Oportunidades B2B</div>
             <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex justify-between items-center">
               <span>Restaurante Sabor (SP)</span>
@@ -148,6 +151,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
               <span>Clínica Vida (RJ)</span>
               <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px]">Site Antigo (Média)</span>
             </div>
+            <div className="text-center text-[10px] text-slate-600 pt-2">🔒 Acesso liberado após assinatura</div>
           </div>
         </div>
       </section>
@@ -161,10 +165,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
       <MarketDiagnostic onOpenPaywall={() => handleCheckoutStripe('starter')} />
 
       {/* AGENTE HERMES */}
-      <AgenteHermesSection 
-        onOpenDemo={() => handleCheckoutStripe('starter')}
-        onEnterApp={(mode) => handleNavegacao(mode)}
-      />
+      <AgenteHermesSection />
 
       {/* CTA DE CAPTURA */}
       <LeadCaptureCTA onOpenPaywall={() => handleCheckoutStripe('starter')} />

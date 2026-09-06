@@ -44,6 +44,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  // Dashboard is always free — no paywall gate
+  const handleDashboard = () => {
+    if (onEnterApp) onEnterApp('analysis');
+    else setActiveTab('analysis');
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -52,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <nav className="hidden md:flex items-center gap-4">
             <button
-              onClick={() => handleEnterApp('analysis')}
+              onClick={handleDashboard}
               className={`text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
                 activeTab === 'analysis'
                   ? 'bg-amber-500 text-slate-950 font-bold'
@@ -70,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-300 hover:text-white hover:bg-slate-900'
               }`}
             >
-              CRM
+              CRM {!hasAccess && '🔒'}
             </button>
 
             <button
@@ -81,16 +87,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-300 hover:text-white hover:bg-slate-900'
               }`}
             >
-              Growth Engine
+              Growth Engine {!hasAccess && '🔒'}
             </button>
           </nav>
         </div>
 
         <button
-          onClick={() => handleEnterApp('growth')}
+          onClick={() => hasAccess ? handleEnterApp('growth') : onOpenPaywall()}
           className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"
         >
-          {hasAccess ? '🚀 Acessar Painel PRO' : 'Testar Grátis'}
+          {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 39,90'}
         </button>
       </div>
     </header>

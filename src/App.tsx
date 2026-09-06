@@ -695,45 +695,103 @@ export const App: React.FC = () => {
         <main className="mx-auto max-w-screen-2xl w-full px-6 pt-6">
           {status === 'idle' || status === 'uploading' ? (
             <div className="space-y-6">
-              <div className="mb-6 mt-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-8">
-                <h1 className="text-4xl sm:text-4xl lg:text-[3.5rem] leading-[1.05] tracking-tight font-['Hanken_Grotesk'] font-bold text-[#ffe4af] w-full md:w-1/2">
-                  Pergunte qualquer coisa <br className="hidden sm:block" /> sobre seus dados
-                </h1>
-                <div className="w-full md:w-1/2 space-y-3">
-                  <p className="text-sm text-[#d4c5ab] leading-relaxed">
-                    Faça upload de planilhas ou bases e receba análise automática com gráficos, tabelas e insights.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={handleUploadFile}
-                      className="px-4 py-2.5 rounded-xl bg-[#1e2020] border border-[#334155] text-[#ffe4af] hover:bg-[#292a2a] text-xs font-semibold cursor-pointer"
-                    >
-                      Enviar planilha
-                    </button>
-                    <button
-                      onClick={handleRun}
-                      disabled={!files.length || status === 'running'}
-                      className="px-4 py-2.5 rounded-xl bg-[#ffc107] text-[#3f2e00] text-xs font-bold hover:bg-[#fabd00] shadow-[0_0_15px_rgba(250,189,0,0.2)] disabled:opacity-40 cursor-pointer"
-                    >
-                      Executar análise
-                    </button>
+              {/* Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/20">
+                    <BarChart3 className="w-4 h-4 text-amber-400" />
                   </div>
-                  {selectedFilesForUpload.length > 0 && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">Análise de Dados</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-tight font-bold text-white">
+                  Pergunte qualquer coisa<br className="hidden sm:block" /> sobre seus dados
+                </h1>
+                <p className="text-sm text-slate-400 mt-3 max-w-lg leading-relaxed">
+                  Faça upload de planilhas ou bases e receba análise automática com gráficos, tabelas e insights profissionais.
+                </p>
+              </div>
+
+              {/* Upload Zone — Professional */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Upload Area */}
+                <div className="lg:col-span-2">
+                  <div
+                    onClick={handleUploadFile}
+                    className="relative group border-2 border-dashed border-slate-700 hover:border-amber-500/50 rounded-3xl bg-gradient-to-br from-[#0f1011] to-[#121414] p-10 text-center cursor-pointer transition-all hover:shadow-[0_0_40px_rgba(212,165,116,0.06)]"
+                  >
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10">
+                      <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-500/15 to-amber-600/5 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg className="w-7 h-7 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-semibold text-white mb-1">
+                        {selectedFilesForUpload.length > 0 ? 'Arquivo selecionado' : 'Arraste ou clique para enviar'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        CSV, XLSX ou JSON · Até 100 linhas gratuitamente
+                      </p>
+                      {selectedFilesForUpload.length > 0 && (
+                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                          {selectedFilesForUpload.map((file) => (
+                            <span key={file.name} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-400 font-medium">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              {file.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="space-y-4">
+                  <button
+                    onClick={handleUploadFile}
+                    className="w-full px-5 py-4 rounded-2xl bg-[#1e2020] border border-[#334155] hover:border-amber-500/30 text-white text-xs font-semibold cursor-pointer transition-all text-left flex items-center gap-3 group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-bold">Enviar planilha</div>
+                      <div className="text-[10px] text-slate-500 font-normal mt-0.5">CSV, XLSX ou JSON</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={handleRun}
+                    disabled={!files.length || status === 'running'}
+                    className="w-full px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 text-xs font-bold hover:from-amber-400 hover:to-amber-300 shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all text-left flex items-center gap-3 group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-slate-950/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-bold">{status === 'running' ? 'Analisando...' : 'Executar análise'}</div>
+                      <div className="text-[10px] text-slate-700 font-normal mt-0.5">IA analisa e gera insights</div>
+                    </div>
+                  </button>
+
+                  {/* Supported formats */}
+                  <div className="rounded-2xl border border-slate-800 bg-[#0f1011] p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3">Formatos suportados</div>
                     <div className="flex flex-wrap gap-2">
-                      {selectedFilesForUpload.map((file) => (
-                        <span key={file.name} className="px-3 py-1.5 rounded-xl bg-[#121414] border border-[#4f4632] text-[11px] text-[#d4c5ab]">
-                          {file.name}
-                        </span>
+                      {['.csv', '.xlsx', '.xls', '.json'].map((fmt) => (
+                        <span key={fmt} className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-400 font-mono">{fmt}</span>
                       ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
-              {!files.length && (
-                <div className="rounded-3xl border border-dashed border-[#334155] bg-[#121414] p-6 text-xs text-[#d4c5ab]">
-                  Dica: use CSV, XLSX ou JSON para iniciar a análise.
-                </div>
-              )}
             </div>
           ) : (
             <div className="space-y-6">

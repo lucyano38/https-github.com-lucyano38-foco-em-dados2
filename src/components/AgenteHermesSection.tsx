@@ -1,12 +1,7 @@
 import React from 'react';
-import { Bot, Brain, Shield, Zap, ArrowRight, PlayCircle } from 'lucide-react';
+import { Bot, Brain, Shield, Zap, ArrowRight } from 'lucide-react';
 
-interface AgenteHermesSectionProps {
-  onOpenDemo?: () => void;
-  onEnterApp?: (mode: string) => void;
-}
-
-export const AgenteHermesSection: React.FC<AgenteHermesSectionProps> = ({ onOpenDemo, onEnterApp }) => {
+export const AgenteHermesSection: React.FC = () => {
   const features = [
     {
       icon: Bot,
@@ -14,7 +9,6 @@ export const AgenteHermesSection: React.FC<AgenteHermesSectionProps> = ({ onOpen
       desc: 'Identifica leads qualificados via Google Maps, CNAE e redes sociais 24/7.',
       color: 'text-amber-400',
       bg: 'bg-amber-500/10',
-      action: () => onEnterApp?.('growth'),
     },
     {
       icon: Brain,
@@ -22,7 +16,6 @@ export const AgenteHermesSection: React.FC<AgenteHermesSectionProps> = ({ onOpen
       desc: 'Conversa com leads no WhatsApp, tira dúvidas e agenda reuniões sem intervenção.',
       color: 'text-violet-400',
       bg: 'bg-violet-500/10',
-      action: () => onEnterApp?.('growth'),
     },
     {
       icon: Shield,
@@ -30,7 +23,6 @@ export const AgenteHermesSection: React.FC<AgenteHermesSectionProps> = ({ onOpen
       desc: 'Monitora conversas, valida regras de negócio e atualiza o CRM em tempo real.',
       color: 'text-emerald-400',
       bg: 'bg-emerald-500/10',
-      action: () => onEnterApp?.('crm'),
     },
   ];
 
@@ -58,32 +50,22 @@ export const AgenteHermesSection: React.FC<AgenteHermesSectionProps> = ({ onOpen
             return (
               <div
                 key={idx}
-                onClick={feature.action}
-                className="bg-[#0f1011] border border-white/[0.08] rounded-2xl p-6 hover:border-amber-500/30 transition-all group cursor-pointer"
+                className="bg-[#0f1011] border border-white/[0.08] rounded-2xl p-6 hover:border-amber-500/20 transition-all"
               >
-                <div className={`w-12 h-12 ${feature.bg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <div className={`w-12 h-12 ${feature.bg} rounded-xl flex items-center justify-center mb-4`}>
                   <Icon className={`w-6 h-6 ${feature.color}`} />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{feature.desc}</p>
-                <span className="inline-flex items-center gap-1 text-xs text-amber-400 font-semibold group-hover:gap-2 transition-all">
-                  Acessar <ArrowRight className="w-3 h-3" />
-                </span>
+                <p className="text-xs text-slate-400 leading-relaxed">{feature.desc}</p>
               </div>
             );
           })}
         </div>
 
         <div className="text-center">
-          <button
-            onClick={onOpenDemo}
-            className="inline-flex items-center gap-3 px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-xl shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <PlayCircle className="w-5 h-5" />
-            <span>Ver Demonstração ao Vivo</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
-          <p className="text-xs text-slate-500 mt-3">Setup em 5 minutos • Sem cartão de crédito</p>
+          <p className="text-xs text-slate-500">
+            Disponível no plano Premium · R$ 39,90/mês
+          </p>
         </div>
       </div>
     </section>
