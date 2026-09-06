@@ -9,13 +9,19 @@ const NICHOS = [
   'Restaurantes & Gastronomia',
   'Odontologia & Estética',
   'Advocacia & Direito',
-  'Arquitetura & Design',
+  'Barbearias & Estética',
   'Automotivo & Serviços',
-  'Saúde & Bem-estar',
-  'Educação & Cursos',
+  'Comércio Local',
   'Construção Civil',
   'Imobiliário',
+  'Pallets / Embalagens / Logística',
+  'Educação & Cursos',
   'Tecnologia & SaaS',
+  'Saúde & Bem-estar',
+  'Academia & Fitness',
+  'Pet Shop / Veterinário',
+  'Posto de Gasolina',
+  'Hotel / Hospedagem',
 ];
 
 interface LeadResult {
@@ -101,7 +107,7 @@ export const HermesGrowthEngineView: React.FC = () => {
       const res = await fetch('/api/pipeline-prospeccao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho: activeNicho, cidade, raio, maxResults: 10 }),
+        body: JSON.stringify({ nicho, customNicho: customNicho.trim() || undefined, cidade, raio, maxResults: 20 }),
       });
 
       const text = await res.text();
