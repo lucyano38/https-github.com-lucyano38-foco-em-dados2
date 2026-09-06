@@ -40,6 +40,7 @@ import {
   TrendingUp,
   ExternalLink,
   Settings,
+  BarChart3,
 } from 'lucide-react';
 import { Lead, UploadedFile, AnalysisReport, ActivityLog, SavedReport, ContratanteConfig, HostgatorConfig } from './types';
 import { MASTER_EMAIL } from './lib/roles';

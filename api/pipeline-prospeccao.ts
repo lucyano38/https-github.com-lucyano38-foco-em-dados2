@@ -230,8 +230,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const query = `[out:json][timeout:25];(${overpassQueries.join('; ')});out tags ${limit};`;
 
     /* ── 3. Query Overpass API ── */
-    const overpassData = await queryOverpass(query);
-    const elements: any[] = overpassData?.elements || [];
+    let overpassData: any = null;
+    try {
+      overpassData = await queryOverpass(query);
+    } catch (overpassErr) {
+      console.warn('[Pipeline] Overpass falhou:', (overpassErr as Error).message);
+    }
+
+    let elements: any[] = overpassData?.elements || [];
+
+    // Fallback: Nominatim search
+    if (elements.length === 0) {
+      try {
+        const searchNicho = customNicho || nicho;
+        const firstWord = searchNicho.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(firstWord + ' ' + cidade)}&addressdetails=1&limit=${limit}`,
+          { headers: { 'User-Agent': 'FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)' } }
+        );
+        const nomData = await nomRes.json();
+        if (Array.isArray(nomData) && nomData.length > 0) {
+          elements = nomData.map((n: any) => ({
+            id: parseInt(n.place_id) || Math.floor(Math.random() * 100000),
+            lat: parseFloat(n.lat),
+            lon: parseFloat(n.lon),
+            tags: {
+              name: (n.display_name || '').split(',')[0] || firstWord,
+              phone: n.extratags?.phone || n.extratags?.['contact:phone'] || null,
+              website: n.extratags?.website || n.extratags?.['contact:website'] || null,
+              email: n.extratags?.email || n.extratags?.['contact:email'] || null,
+              opening_hours: n.extratags?.opening_hours || null,
+              'addr:street': n.address?.road || null,
+              'addr:housenumber': n.address?.house_number || null,
+              'addr:suburb': n.address?.suburb || n.address?.neighbourhood || null,
+              'addr:city': n.address?.city || n.address?.town || null,
+            },
+          }));
+        }
+      } catch (nomErr) {
+        console.warn('[Pipeline] Nominatim fallback falhou:', (nomErr as Error).message);
+      }
+    }
 
     /* ── 4. Map elements to lead objects ── */
     const leadsReais: any[] = [];
@@ -283,7 +322,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         endereco: addr,
         temSite,
         necessitaRedesign: !temSite,
-        redesignPreviewUrl: `/preview?nome=${encodeURIComponent(name)}&nicho=${encodeURIComponent(nicho)}&cidade=${encodeURIComponent(cidade)}`,
+        redesignPreviewUrl: `/preview-redesign?nome=${encodeURIComponent(name)}&nicho=${encodeURIComponent(nicho)}&cidade=${encodeURIComponent(cidade)}`,
         score: temSite ? Math.floor(Math.random() * 15) + 50 : Math.floor(Math.random() * 15) + 75,
         status: temSite ? 'Site Potencial (Redesign)' : 'Sem Site (Oportunidade)',
         distancia: parseFloat(distancia.toFixed(1)),

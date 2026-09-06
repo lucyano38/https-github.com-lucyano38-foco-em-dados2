@@ -6,6 +6,10 @@ import { AgenteHermesSection } from './AgenteHermesSection';
 import { LeadCaptureCTA } from './LeadCaptureCTA';
 import { Navbar } from './Navbar';
 import { Hero } from './Hero';
+import { DashboardPreview } from './landing/DashboardPreview';
+import { ConversionFunnel } from './landing/ConversionFunnel';
+import { PricingSection } from './landing/PricingSection';
+import { FaqSection } from './landing/FaqSection';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
 interface LandingProps {
@@ -19,7 +23,6 @@ interface LandingProps {
 export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveTab, isPro }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const [usuarioLogado, setUsuarioLogado] = useState<{ nome: string; email: string } | null>(() => {
     try {
@@ -61,13 +64,6 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
     }
   };
 
-  const faqs = [
-    { q: 'Como a plataforma cria sites automaticamente?', a: 'Você envia uma planilha, PDF ou logo do seu negócio, e nossa IA gera um site institucional completo com páginas de produtos e integração com WhatsApp em minutos.' },
-    { q: 'O Agente Hermes atende no WhatsApp e Instagram?', a: 'Sim! O Hermes opera 24h respondendo clientes, qualificando leads, agendando reuniões e enviando propostas de forma 100% autônoma.' },
-    { q: 'Como funciona a prospecção de clientes?', a: 'Nosso módulo Prospector IA varre empresas por cidade, nicho e raio em km, classificando-as automaticamente entre alta, média e baixa oportunidade.' },
-    { q: 'Posso cancelar a assinatura quando quiser?', a: 'Sim, sem fidelidade ou multas. O cancelamento é feito diretamente pelo painel com 1 clique.' }
-  ];
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-x-hidden font-sans">
       
@@ -94,6 +90,16 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
 
       {/* HERO PRINCIPAL */}
       <Hero onOpenPaywall={() => handleCheckoutStripe('starter')} />
+
+      {/* DASHBOARD PREVIEW — métricas interativas */}
+      <div className="relative z-10">
+        <DashboardPreview onOpenDashboard={() => handleNavegacao('analytics')} />
+      </div>
+
+      {/* FUNIL DE CONVERSÃO */}
+      <div className="relative z-10">
+        <ConversionFunnel />
+      </div>
 
       {/* PILAR 3: AGENTE HERMES */}
       <section id="hermes" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800">
@@ -171,96 +177,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
       <LeadCaptureCTA onOpenPaywall={() => handleCheckoutStripe('starter')} />
 
       {/* PLANOS SAAS */}
-      <section id="planos" className="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-slate-800 text-center">
-        <div className="max-w-3xl mx-auto mb-16 space-y-3">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">Planos Transparentes para o seu Crescimento</h2>
-          <p className="text-sm text-slate-300">Escolha o plano ideal e opere 100% remotamente.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-          {/* Starter */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl flex flex-col justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Starter</span>
-              <div className="text-3xl font-extrabold text-white my-2">R$ 97 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
-              <p className="text-xs text-slate-400 mb-6">Para pequenos negócios iniciando no digital.</p>
-              <ul className="text-xs text-slate-300 space-y-3 mb-8">
-                <li>✓ 1 Site Inteligente Automático</li>
-                <li>✓ 5 Dashboards de KPIs</li>
-                <li>✓ Diagnóstico Digital Ilimitado</li>
-              </ul>
-            </div>
-            <button onClick={() => handleCheckoutStripe('starter')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition cursor-pointer">
-              Assinar Starter
-            </button>
-          </div>
-
-          {/* Business */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl flex flex-col justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Business</span>
-              <div className="text-3xl font-extrabold text-white my-2">R$ 197 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
-              <p className="text-xs text-slate-400 mb-6">Para empresas em expansão de vendas.</p>
-              <ul className="text-xs text-slate-300 space-y-3 mb-8">
-                <li>✓ Sites Inteligentes Ilimitados</li>
-                <li>✓ CRM Inteligente Completo</li>
-                <li>✓ Social IA (Redes Sociais)</li>
-                <li>✓ Upload de Planilhas Ilimitado</li>
-              </ul>
-            </div>
-            <button onClick={() => handleCheckoutStripe('business')} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-lg">
-              Assinar Business
-            </button>
-          </div>
-
-          {/* Premium (R$ 39,90 destaque / R$ 397) */}
-          <div className="bg-slate-900 border-2 border-amber-500 rounded-3xl p-8 shadow-2xl relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 text-[10px] font-bold px-4 py-1 rounded-bl-xl uppercase tracking-wider">
-              Mais Popular
-            </div>
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Premium (Especial)</span>
-              <div className="text-4xl font-extrabold text-white my-2">R$ 39,90 <span className="text-xs text-slate-400 font-normal">/mês</span></div>
-              <p className="text-xs text-amber-300/80 mb-6">Acesso total por tempo limitado.</p>
-              <ul className="text-xs text-slate-200 space-y-3 mb-8">
-                <li>✓ Tudo do Business incluído</li>
-                <li>✓ Agente Hermes IA (WhatsApp/Instagram)</li>
-                <li>✓ Prospector IA (Estilo Apollo)</li>
-                <li>✓ Observatório de Concorrência & LGPD</li>
-              </ul>
-            </div>
-            <button onClick={() => handleCheckoutStripe('premium')} className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-xl shadow-amber-500/30 cursor-pointer">
-              Garantir Acesso PRO (R$ 39,90)
-            </button>
-          </div>
-        </div>
-      </section>
+      <div className="relative z-10">
+        <PricingSection onSelectPlan={(planId) => handleCheckoutStripe(planId)} />
+      </div>
 
       {/* FAQ */}
-      <section id="faq" className="relative z-10 max-w-3xl mx-auto px-6 py-20 border-t border-slate-800">
-        <div className="text-center mb-12 space-y-2">
-          <h2 className="text-2xl font-bold text-white">Perguntas Frequentes</h2>
-          <p className="text-sm text-slate-400">Tire suas dúvidas sobre a plataforma.</p>
-        </div>
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div key={index} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
-              <button
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                className="w-full px-6 py-4 text-left font-semibold text-white flex justify-between items-center cursor-pointer hover:bg-slate-800/50 transition"
-              >
-                <span className="text-sm">{faq.q}</span>
-                <span className={`transform transition-transform ${openFaq === index ? 'rotate-180' : ''}`}>▼</span>
-              </button>
-              {openFaq === index && (
-                <div className="px-6 pb-4 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800 pt-3">
-                  {faq.a}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+      <div className="relative z-10">
+        <FaqSection onAskQuestion={() => handleNavegacao('growth')} />
+      </div>
 
       {/* Modal de Login */}
       <LoginModal
