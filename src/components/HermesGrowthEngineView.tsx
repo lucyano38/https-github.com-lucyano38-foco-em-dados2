@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   Sparkles, Zap, RefreshCw, CheckCircle2, MapPin, Globe, Search,
   BarChart3, Users, TrendingUp, Bot, Send, ChevronDown, ChevronUp,
-  ExternalLink, Building2, Star, Phone, Mail, Loader2, Target, ShieldCheck
+  ExternalLink, Building2, Star, Phone, Mail, Loader2, Target, ShieldCheck,
+  Database, Map
 } from 'lucide-react';
 
 const NICHOS = [
@@ -24,6 +25,13 @@ const NICHOS = [
   'Hotel / Hospedagem',
 ];
 
+interface FontesInfo {
+  overpass: number;
+  googlePlaces: number;
+  cnaeBrasilAPI: number;
+  total: number;
+}
+
 interface LeadResult {
   id: string;
   nome: string;
@@ -40,6 +48,10 @@ interface LeadResult {
   rating?: number;
   reviewsCount?: number;
   notas?: string;
+  fonte?: string;
+  googleRating?: number;
+  googleTotalRatings?: number;
+  distancia?: number;
 }
 
 interface PipelineStep {
@@ -50,7 +62,6 @@ interface PipelineStep {
 }
 
 export const HermesGrowthEngineView: React.FC = () => {
-  // Config form
   const [nicho, setNicho] = useState(NICHOS[0]);
   const [customNicho, setCustomNicho] = useState('');
   const [cidade, setCidade] = useState('Barueri/SP');
@@ -59,22 +70,20 @@ export const HermesGrowthEngineView: React.FC = () => {
   const [mrrTarget, setMrrTarget] = useState(200);
   const [focus, setFocus] = useState('Conversão Mobile e WhatsApp');
 
-  // Pipeline state
   const [isRunning, setIsRunning] = useState(false);
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([
     { id: 'geo', label: 'Geolocalização', icon: <MapPin className="w-4 h-4" />, status: 'pending' },
-    { id: 'discover', label: 'Descoberta de Leads', icon: <Search className="w-4 h-4" />, status: 'pending' },
+    { id: 'discover', label: 'Descoberta Multi-Fonte', icon: <Search className="w-4 h-4" />, status: 'pending' },
     { id: 'redesign', label: 'Redesign IA', icon: <Sparkles className="w-4 h-4" />, status: 'pending' },
     { id: 'crm', label: 'Salvar no CRM', icon: <CheckCircle2 className="w-4 h-4" />, status: 'pending' },
   ]);
 
-  // Results
   const [leads, setLeads] = useState<LeadResult[]>([]);
   const [coords, setCoords] = useState<{ lat: number | null; lon: number | null; cidade: string }>({ lat: null, lon: null, cidade: '' });
   const [error, setError] = useState<string | null>(null);
   const [savedToCrm, setSavedToCrm] = useState<Set<string>>(new Set());
+  const [fontesInfo, setFontesInfo] = useState<FontesInfo | null>(null);
 
-  // Marketing autopilot
   const [autopilotOpen, setAutopilotOpen] = useState(false);
   const [autopilotAtivo, setAutopilotAtivo] = useState(false);
   const [autopilotLogs, setAutopilotLogs] = useState<string[]>([
@@ -94,20 +103,18 @@ export const HermesGrowthEngineView: React.FC = () => {
     setError(null);
     setLeads([]);
     setSavedToCrm(new Set());
+    setFontesInfo(null);
     setPipelineSteps(prev => prev.map(s => ({ ...s, status: 'pending' })));
 
     try {
-      // Step 1: Geocoding
       updateStep('geo', 'running');
-      // The API handles geocoding internally
       updateStep('geo', 'done');
 
-      // Step 2-4: Call /api/pipeline-prospeccao (Overpass API real data)
       updateStep('discover', 'running');
       const res = await fetch('/api/pipeline-prospeccao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho, customNicho: customNicho.trim() || undefined, cidade, raio, maxResults: 20 }),
+        body: JSON.stringify({ nicho, customNicho: customNicho.trim() || undefined, cidade, raio, maxResults: 30 }),
       });
 
       const text = await res.text();
@@ -119,24 +126,25 @@ export const HermesGrowthEngineView: React.FC = () => {
       }
 
       if (!res.ok) {
-        throw new Error(data.error || `Erro ${res.status}`);
+        throw new Error(data.error || data.erro || `Erro ${res.status}`);
       }
 
       updateStep('discover', 'done');
 
-      if (data.coordenadasBusca) {
-        setCoords(data.coordenadasBusca);
+      if (data.coordenadas) {
+        setCoords({ lat: data.coordenadas.lat, lon: data.coordenadas.lon, cidade });
       }
 
-      // Step 3: Redesign (handled by API, mark done)
+      if (data.fontes) {
+        setFontesInfo(data.fontes);
+      }
+
       updateStep('redesign', 'running');
       const redesignsCount = (data.leads || []).filter((l: LeadResult) => l.redesignPreviewUrl).length;
-      await new Promise(r => setTimeout(r, 500)); // Brief pause for UX
+      await new Promise(r => setTimeout(r, 500));
       updateStep('redesign', 'done');
 
-      // Step 4: CRM save (handled by API, mark done)
       updateStep('crm', 'running');
-      const savedCount = (data.leads || []).length;
       await new Promise(r => setTimeout(r, 300));
       updateStep('crm', 'done');
 
@@ -145,8 +153,9 @@ export const HermesGrowthEngineView: React.FC = () => {
       if (autopilotAtivo) {
         setAutopilotLogs(prev => [
           `🚀 [PROSPECÇÃO] ${data.leads?.length || 0} leads descobertos em ${cidade} (${activeNicho})`,
+          `📊 [FONTES] ${data.fonteDescricao || 'múltiplas fontes'}`,
           `🎨 [REDESIGN] ${redesignsCount} redesigns gerados via IA`,
-          `✅ [CRM] ${savedCount} leads salvos no pipeline`,
+          `✅ [CRM] ${(data.leads || []).length} leads salvos no pipeline`,
           ...prev,
         ]);
       }
@@ -169,12 +178,12 @@ export const HermesGrowthEngineView: React.FC = () => {
         siteAntigo: lead.siteUrl || '',
         valor: ticketTarget,
         manutencao: mrrTarget,
-        obs: `Prospectado via Hermes Growth Engine. ${lead.notas || ''}`,
+        obs: `Prospectado via Hermes Growth Engine (${lead.fonte || 'Pipeline'}). ${lead.notas || ''}`,
         telefone: lead.telefone,
         whatsapp: lead.whatsapp,
         email: lead.email,
-        nota: lead.rating,
-        avaliacoes: lead.reviewsCount,
+        nota: lead.googleRating || lead.rating,
+        avaliacoes: lead.googleTotalRatings || lead.reviewsCount,
       };
       const res = await fetch('/api/leads', {
         method: 'POST',
@@ -195,7 +204,7 @@ export const HermesGrowthEngineView: React.FC = () => {
     if (next) {
       setAutopilotLogs(prev => [
         `🚀 [AUTOPILOTO ATIVADO] Hermes assumiu prospecção e marketing de ${activeNicho} em ${cidade}.`,
-        'Monitorando Google Maps, Instagram e LinkedIn...',
+        'Monitorando Google Maps, OpenStreetMap, CNAE e redes sociais...',
         ...prev,
       ]);
     } else {
@@ -203,7 +212,6 @@ export const HermesGrowthEngineView: React.FC = () => {
     }
   };
 
-  // Metrics
   const totalLeads = leads.length;
   const comSite = leads.filter(l => l.temSite).length;
   const semSite = leads.filter(l => !l.temSite).length;
@@ -218,13 +226,13 @@ export const HermesGrowthEngineView: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d4a574]/10 border border-[#d4a574]/20 text-xs font-semibold text-[#d4a574]">
-              <Sparkles className="w-3.5 h-3.5" /> Hermes Growth Engine • Prospecção + Redesign + Marketing
+              <Sparkles className="w-3.5 h-3.5" /> Hermes Growth Engine • Prospecção Multi-Fonte
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#f7f8f8]">
               Crescimento no Piloto Automático
             </h1>
             <p className="text-sm text-[#8a8f98] leading-relaxed">
-              Busque empresas por nicho e cidade, identifique sites obsoletos, gere redesigns com IA e salve tudo no CRM — em uma única operação.
+              Busque empresas em 3 fontes simultâneas — Google Places, OpenStreetMap e CNAE — identifique sites obsoletos, gere redesigns com IA e salve tudo no CRM.
             </p>
           </div>
           {coords.lat && (
@@ -270,7 +278,7 @@ export const HermesGrowthEngineView: React.FC = () => {
         <div className="mt-5">
           <button onClick={runPipeline} disabled={isRunning} className="px-6 py-3 rounded-xl bg-[#d4a574] hover:bg-[#e2b98a] text-[#1c1917] text-xs font-bold shadow-[0_0_20px_rgba(212,165,116,0.25)] disabled:opacity-50 cursor-pointer flex items-center gap-2">
             {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            {isRunning ? 'Executando pipeline...' : '🚀 Iniciar Prospecção & Redesign'}
+            {isRunning ? 'Buscando em 3 fontes...' : '🚀 Iniciar Prospecção Multi-Fonte'}
           </button>
         </div>
       </div>
@@ -295,6 +303,32 @@ export const HermesGrowthEngineView: React.FC = () => {
             ))}
           </div>
           {error && <div className="mt-3 text-xs text-red-400 bg-red-500/10 p-3 rounded-xl">{error}</div>}
+        </div>
+      )}
+
+      {/* FONTES DE DADOS */}
+      {fontesInfo && fontesInfo.total > 0 && (
+        <div className="rounded-3xl border border-white/[0.08] bg-[#0f1011] p-5 shadow-xl">
+          <div className="text-sm font-semibold text-[#d4d6e0] mb-3 flex items-center gap-2">
+            <Database className="w-4 h-4 text-[#d4a574]" /> Fontes de Dados Consultadas
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs">
+              <Map className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-blue-300 font-bold">{fontesInfo.googlePlaces}</span>
+              <span className="text-[#8a8f98]">Google Places</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-emerald-300 font-bold">{fontesInfo.overpass}</span>
+              <span className="text-[#8a8f98]">OpenStreetMap</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs">
+              <Database className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-purple-300 font-bold">{fontesInfo.cnaeBrasilAPI}</span>
+              <span className="text-[#8a8f98]">CNAE/BrasilAPI</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -332,15 +366,24 @@ export const HermesGrowthEngineView: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <Building2 className="w-5 h-5 text-[#d4a574] shrink-0" />
                   <h3 className="text-sm font-bold text-[#f7f8f8]">{lead.nome}</h3>
-                  {lead.rating && (
+                  {(lead.googleRating || lead.rating) && (
                     <span className="flex items-center gap-1 text-[10px] text-amber-400">
-                      <Star className="w-3 h-3 fill-amber-400" /> {lead.rating}
+                      <Star className="w-3 h-3 fill-amber-400" /> {lead.googleRating || lead.rating}
                     </span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px]">
                   <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-[#8a8f98] border border-white/[0.08]">{lead.nicho}</span>
                   <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-[#8a8f98] border border-white/[0.08]">{lead.cidade}</span>
+                  {lead.fonte && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      lead.fonte === 'Google Places' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                      lead.fonte === 'OpenStreetMap' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                      'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                    }`}>
+                      {lead.fonte}
+                    </span>
+                  )}
                   {lead.temSite ? (
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Com Site</span>
                   ) : (
@@ -349,8 +392,10 @@ export const HermesGrowthEngineView: React.FC = () => {
                   {lead.necessitaRedesign && (
                     <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Redesign IA</span>
                   )}
-                  {lead.status === 'Redesign Gerado' && (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Redesign Pronto</span>
+                  {lead.distancia !== null && lead.distancia !== undefined && (
+                    <span className="px-2 py-0.5 rounded-full bg-white/[0.04] text-[#555] border border-white/[0.06]">
+                      📍 {lead.distancia}km
+                    </span>
                   )}
                 </div>
                 {lead.notas && <p className="text-[11px] text-[#8a8f98]">{lead.notas}</p>}
@@ -385,7 +430,7 @@ export const HermesGrowthEngineView: React.FC = () => {
         </div>
       )}
 
-      {/* MARKETING AUTOPILOT (collapsible) */}
+      {/* MARKETING AUTOPILOT */}
       <div className="rounded-3xl border border-white/[0.08] bg-[#0f1011] shadow-xl overflow-hidden">
         <button onClick={() => setAutopilotOpen(!autopilotOpen)} className="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition">
           <div className="flex items-center gap-3">
