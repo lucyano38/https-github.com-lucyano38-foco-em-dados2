@@ -95,27 +95,37 @@ function getOverpassFilter(nicho: string, customNicho?: string): string {
    ────────────────────────────────────────────────────────────────────── */
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
 ];
 
 async function queryOverpass(query: string): Promise<any> {
-  const body = `data=${encodeURIComponent(query)}`;
+  // Use GET method — POST is blocked from Vercel's IP range
   for (const endpoint of OVERPASS_ENDPOINTS) {
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)',
-        },
-        body,
-        signal: AbortSignal.timeout(20_000),
-      });
-      const text = await res.text();
-      if (!text.startsWith('{') && !text.startsWith('[')) continue;
-      return JSON.parse(text);
-    } catch { continue; }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)',
+          },
+          signal: AbortSignal.timeout(25_000),
+        });
+
+        const text = await res.text();
+        if (!text.startsWith('{') && !text.startsWith('[')) {
+          if (attempt < 1) await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        return JSON.parse(text);
+      } catch {
+        if (attempt < 1) await new Promise(r => setTimeout(r, 2000));
+        continue;
+      }
+    }
   }
+
   throw new Error('Todos os endpoints Overpass API retornaram erro ou estavam indisponíveis.');
 }
 
