@@ -13,6 +13,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { CrmDashboard } from './components/CrmDashboard';
 import { SlideDeckModal } from './components/SlideDeckModal';
 import { GeminiChatSidebar } from './components/GeminiChatSidebar';
+import { SiteChat } from './components/SiteChat';
 import { ChatwootWidget } from './components/ChatwootWidget';
 import {
   Search,
@@ -906,6 +907,7 @@ export const App: React.FC = () => {
         contextReport={report}
         datasetSummary={datasetName}
       />
+      <SiteChat />
     </div>
   );
 };
