@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Clock, MapPin, Star, CheckCircle, ArrowRight, MessageCircle, ChevronDown, Leaf, Flame, Award, Heart, Scissors, Store, Wrench, Globe, ShieldCheck, BookOpen, Car, Building2, GraduationCap, Laptop, Dumbbell, PawPrint, Fuel, Hotel } from 'lucide-react';
+import { Phone, Clock, MapPin, Star, CheckCircle, ArrowRight, MessageCircle, ChevronDown, Leaf, Flame, Award, Heart, Scissors, Store, Wrench, Globe, ShieldCheck, BookOpen, Car, Building2, GraduationCap, Laptop, Dumbbell, PawPrint, Fuel, Hotel, Timer, Wifi, Search, Share2 } from 'lucide-react';
 
 /* ── Niche configs ── */
 interface NicheTheme {
@@ -270,6 +270,23 @@ export default function PreviewRedesign() {
   const theme = resolveTheme(nichoParam);
   const [activeMenuCategory, setActiveMenuCategory] = useState('destaques');
   const [showAudit, setShowAudit] = useState(false);
+  const [showSplitScreen, setShowSplitScreen] = useState(false);
+  const [showDiagTerminal, setShowDiagTerminal] = useState(false);
+  const [diagVisibleItems, setDiagVisibleItems] = useState(0);
+
+  useEffect(() => {
+    if (!showDiagTerminal) {
+      setDiagVisibleItems(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setDiagVisibleItems((prev) => {
+        if (prev >= 4) { clearInterval(interval); return 4; }
+        return prev + 1;
+      });
+    }, 400);
+    return () => clearInterval(interval);
+  }, [showDiagTerminal]);
 
   const waEmpresa = `https://wa.me/5511994411307?text=${encodeURIComponent(`Olá! Vi o novo site modelo para o ${nomeEmpresa} e gostaria de ativá-lo.`)}`;
   const waPedido = `https://wa.me/5511994411307?text=${encodeURIComponent(theme.waMessage)}`;
@@ -288,6 +305,12 @@ export default function PreviewRedesign() {
           <span className="font-semibold">Modelo de site para <strong className="font-black text-white">{nomeEmpresa}</strong></span>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowDiagTerminal(!showDiagTerminal)} className="px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border border-white/10 text-white hover:bg-white/5 cursor-pointer">
+            {showDiagTerminal ? '🤖 Ocultar Diag' : '🤖 Diagnóstico IA'}
+          </button>
+          <button onClick={() => { setShowSplitScreen(!showSplitScreen); setShowAudit(false); }} className="px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border border-white/10 text-white hover:bg-white/5 cursor-pointer">
+            {showSplitScreen ? '🌐 Ver Novo Site' : '🔄 Comparar Antes vs Depois'}
+          </button>
           <button onClick={() => setShowAudit(!showAudit)} className="px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border border-white/10 text-white hover:bg-white/5 cursor-pointer">
             {showAudit ? '🌐 Ver Site' : '📊 Auditoria'}
           </button>
@@ -298,6 +321,83 @@ export default function PreviewRedesign() {
           </a>
         </div>
       </div>
+
+      {/* ===== SPLIT SCREEN: ANTES vs DEPOIS ===== */}
+      {showSplitScreen && (
+        <div className="fixed inset-y-[56px] left-0 w-full md:w-1/2 z-40 overflow-y-auto bg-gray-100 border-r-4 border-red-500/60 shadow-2xl">
+          <div className="relative">
+            {/* Label */}
+            <div className="sticky top-0 z-10 bg-red-600 text-white text-center py-2 text-xs font-black uppercase tracking-widest shadow-lg">
+              ❌ Antes — Site Antigo (Genérico)
+            </div>
+            {/* Old Site Mockup */}
+            <div className="bg-white min-h-[90vh]">
+              {/* Generic ugly header */}
+              <div className="bg-gray-300 border-b-2 border-gray-400 px-4 py-3">
+                <div className="flex items-center justify-between max-w-xl mx-auto">
+                  <div className="text-gray-700 font-bold text-sm" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    {nomeEmpresa}
+                  </div>
+                  <div className="flex gap-3 text-[10px] text-gray-600" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    <span>Início</span>
+                    <span>Produtos</span>
+                    <span>Contato</span>
+                  </div>
+                </div>
+              </div>
+              {/* Stock photo hero */}
+              <div className="relative h-48 bg-gray-200 flex items-center justify-center overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=60" alt="" className="w-full h-full object-cover opacity-60" />
+                <div className="absolute inset-0 bg-gray-400/30" />
+                <div className="absolute text-center">
+                  <h1 className="text-xl font-bold text-gray-800 drop-shadow" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    {nomeEmpresa}
+                  </h1>
+                  <p className="text-[10px] text-gray-600 mt-1" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    Bem-vindo ao nosso site
+                  </p>
+                </div>
+              </div>
+              {/* Bad content blocks */}
+              <div className="p-6 max-w-xl mx-auto space-y-4">
+                <div className="bg-gray-50 border border-gray-300 p-4 rounded" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  <h2 className="text-sm font-bold text-gray-700 mb-2">Sobre Nós</h2>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    Somos uma empresa dedicada a oferecer os melhores serviços para nossos clientes. 
+                    Com years de experiência no mercado, estamos prontos para atender você.
+                  </p>
+                </div>
+                <div className="bg-gray-50 border border-gray-300 p-4 rounded" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  <h2 className="text-sm font-bold text-gray-700 mb-2">Nossos Serviços</h2>
+                  <ul className="text-[11px] text-gray-500 space-y-1">
+                    <li>• Serviço 1</li>
+                    <li>• Serviço 2</li>
+                    <li>• Serviço 3</li>
+                    <li>• Serviço 4</li>
+                  </ul>
+                </div>
+                <div className="bg-gray-200 border border-gray-300 p-4 rounded text-center" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  <p className="text-[10px] text-gray-500 mb-2">Ligue para nós:</p>
+                  <p className="text-sm font-bold text-gray-700">(11) 99999-9999</p>
+                  <p className="text-[10px] text-gray-500 mt-2">Horário: Seg-Sex 8h às 17h</p>
+                </div>
+                {/* No WhatsApp, no mobile optimization, bad footer */}
+                <div className="bg-gray-800 text-gray-400 text-center py-4 text-[9px] mt-8" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  <p>© 2019 {nomeEmpresa}. Todos os direitos reservados.</p>
+                  <p className="mt-1">Site feito com { '</'}template{'>'} </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DEPOIS LABEL (visible during split-screen) ===== */}
+      {showSplitScreen && (
+        <div className="fixed top-[72px] right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/30 flex items-center gap-2 pointer-events-none">
+          ✅ Depois — Novo Site Redesigned
+        </div>
+      )}
 
       {/* ===== MODO: AUDITORIA ===== */}
       {showAudit ? (
@@ -476,6 +576,85 @@ export default function PreviewRedesign() {
             <p className="text-[11px] text-stone-600">© {new Date().getFullYear()} {nomeEmpresa}. Todos os direitos reservados.</p>
             <p className="text-[10px] text-stone-700 mt-1">Site desenvolvido por Foco em Dados</p>
           </footer>
+        </div>
+      )}
+
+      {/* ===== DIAGNÓSTICO IA FLUTUANTE ===== */}
+      {showDiagTerminal && (
+        <div className="fixed bottom-20 right-4 z-50 w-80 max-w-[calc(100vw-2rem)]">
+          <div className="bg-stone-950/90 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 overflow-hidden">
+            {/* Terminal header */}
+            <div className="flex items-center gap-2 px-4 py-3 bg-stone-900/80 border-b border-white/5">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+              </div>
+              <span className="text-[10px] text-stone-500 font-mono ml-1">diagnostico-ia.sh</span>
+            </div>
+            {/* Terminal body */}
+            <div className="p-4 space-y-3 font-mono text-xs">
+              <div className="text-emerald-400 text-[10px] font-bold flex items-center gap-1.5 mb-2">
+                <span className="text-green-400">$</span> rodar-diagnostico --empresa="{nomeEmpresa}"
+              </div>
+              {/* Item 1: Tempo de carregamento */}
+              <div className={`flex items-start gap-2 transition-all duration-500 ${diagVisibleItems >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                <Timer className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-stone-500">Tempo de carregamento:</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-red-400 line-through">3.2s</span>
+                    <span className="text-stone-600">→</span>
+                    <span className="text-emerald-400 font-bold">0.8s</span>
+                    <span className="text-emerald-500 text-[9px]">⚡ -75%</span>
+                  </div>
+                </div>
+              </div>
+              {/* Item 2: WhatsApp */}
+              <div className={`flex items-start gap-2 transition-all duration-500 ${diagVisibleItems >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                <MessageCircle className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-stone-500">Presença no WhatsApp:</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-red-400">❌ Não encontrado</span>
+                    <span className="text-stone-600">→</span>
+                    <span className="text-emerald-400 font-bold">✅ Configurado</span>
+                  </div>
+                </div>
+              </div>
+              {/* Item 3: SEO */}
+              <div className={`flex items-start gap-2 transition-all duration-500 ${diagVisibleItems >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                <Search className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-stone-500">Nota SEO:</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-red-400 line-through">45/100</span>
+                    <span className="text-stone-600">→</span>
+                    <span className="text-emerald-400 font-bold">87/100</span>
+                    <span className="text-emerald-500 text-[9px]">📈 +93%</span>
+                  </div>
+                </div>
+              </div>
+              {/* Item 4: Redes Sociais */}
+              <div className={`flex items-start gap-2 transition-all duration-500 ${diagVisibleItems >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                <Share2 className="w-3.5 h-3.5 text-purple-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-stone-500">Presença em Redes:</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-amber-400">⚠️ Inexistente</span>
+                    <span className="text-stone-600">→</span>
+                    <span className="text-emerald-400 font-bold">✅ Integrada</span>
+                  </div>
+                </div>
+              </div>
+              {/* Summary line */}
+              {diagVisibleItems >= 4 && (
+                <div className="pt-2 border-t border-white/5 text-[10px] text-emerald-500 animate-pulse">
+                  ▸ Diagnóstico completo — Pronto para ativação
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

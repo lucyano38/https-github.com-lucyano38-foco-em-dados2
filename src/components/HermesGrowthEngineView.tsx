@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Sparkles, Zap, RefreshCw, CheckCircle2, MapPin, Globe, Search,
   BarChart3, Users, TrendingUp, Bot, Send, ChevronDown, ChevronUp,
@@ -86,10 +86,24 @@ export const HermesGrowthEngineView: React.FC = () => {
 
   const [autopilotOpen, setAutopilotOpen] = useState(false);
   const [autopilotAtivo, setAutopilotAtivo] = useState(false);
+  const [autopilotSpeed, setAutopilotSpeed] = useState<45000 | 90000 | 180000>(90000);
+  const [autopilotNichoIdx, setAutopilotNichoIdx] = useState(0);
+  const [autopilotCidadeIdx, setAutopilotCidadeIdx] = useState(0);
+  const [autopilotRunCount, setAutopilotRunCount] = useState(0);
   const [autopilotLogs, setAutopilotLogs] = useState<string[]>([
     'Hermes Growth Engine inicializado.',
     'Aguardando ativação do Modo Autopiloto.',
   ]);
+  const autopilotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autopilotNichoIdxRef = useRef(0);
+  const autopilotCidadeIdxRef = useRef(0);
+
+  const AUTOPILOT_CIDADES = ['Barueri/SP', 'Itupeva/SP', 'Campinas/SP', 'Jundiaí/SP', 'Sorocaba/SP'];
+  const AUTOPILOT_SPEED_OPTIONS = [
+    { value: 45000 as const, label: '⚡ Rápido (45s)' },
+    { value: 90000 as const, label: '🔄 Normal (90s)' },
+    { value: 180000 as const, label: '🐌 Suave (3min)' },
+  ];
 
   const activeNicho = customNicho.trim() || nicho;
 
@@ -198,19 +212,119 @@ export const HermesGrowthEngineView: React.FC = () => {
     }
   };
 
-  const toggleAutopilot = () => {
-    const next = !autopilotAtivo;
-    setAutopilotAtivo(next);
-    if (next) {
+  const runAutopilotCycle = useCallback(async () => {
+    const nichoAtual = NICHOS[autopilotNichoIdxRef.current % NICHOS.length];
+    const cidadeAtual = AUTOPILOT_CIDADES[autopilotCidadeIdxRef.current % AUTOPILOT_CIDADES.length];
+    const ts = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    setAutopilotLogs(prev => [
+      `🔄 [${ts()}] ═══ CICLO AUTOPILOTO #${autopilotRunCountRef.current + 1} ═══`,
+      `📍 [${ts()}] 🗺️ Geolocalizando ${cidadeAtual}...`,
+      ...prev,
+    ]);
+
+    try {
+      setAutopilotLogs(prev => [`🔍 [${ts()}] Buscando "${nichoAtual}" em ${cidadeAtual} (raio ${raio}km)...`, ...prev]);
+      const res = await fetch('/api/pipeline-prospeccao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nicho: nichoAtual, cidade: cidadeAtual, raio, maxResults: 15 }),
+      });
+      const text = await res.text();
+      let data: any;
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { leads: [] }; }
+
+      const leadsCount = data.leads?.length || 0;
+      const semSite = (data.leads || []).filter((l: any) => !l.temSite).length;
+      const comSite = leadsCount - semSite;
+
       setAutopilotLogs(prev => [
-        `🚀 [AUTOPILOTO ATIVADO] Hermes assumiu prospecção e marketing de ${activeNicho} em ${cidade}.`,
-        'Monitorando Google Maps, OpenStreetMap, CNAE e redes sociais...',
+        `📊 [${ts()}] ✅ ${leadsCount} leads encontrados: ${semSite} sem site (alta oportunidade), ${comSite} com site (redesign)`,
+        `🎨 [${ts()}] Gerando redesigns IA...`,
         ...prev,
       ]);
-    } else {
-      setAutopilotLogs(prev => [`⏸️ [AUTOPILOTO PAUSADO]`, ...prev]);
+
+      if (leadsCount > 0) {
+        for (const lead of (data.leads || []).slice(0, 5)) {
+          try {
+            await fetch('/api/leads', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                slug: lead.id || `auto-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                nome: lead.nome, nicho: nichoAtual, cidade: cidadeAtual,
+                status: 'novo', siteAntigo: lead.siteUrl || '',
+                valor: ticketTarget, manutencao: mrrTarget,
+                obs: `Auto-prospectado por Hermes Autopiloto. Fonte: ${lead.fonte || 'Pipeline'}`,
+                telefone: lead.telefone, whatsapp: lead.whatsapp, email: lead.email,
+              }),
+            });
+          } catch {}
+        }
+        setAutopilotLogs(prev => [`✅ [${ts()}] ${Math.min(leadsCount, 5)} leads salvos no CRM automaticamente`, ...prev]);
+      }
+
+      // Advance rotation
+      autopilotNichoIdxRef.current++;
+      if ((autopilotNichoIdxRef.current) % 3 === 0) {
+        autopilotCidadeIdxRef.current++;
+      }
+      autopilotRunCountRef.current++;
+      setAutopilotNichoIdx(autopilotNichoIdxRef.current);
+      setAutopilotCidadeIdx(autopilotCidadeIdxRef.current);
+      setAutopilotRunCount(autopilotRunCountRef.current);
+
+      setAutopilotLogs(prev => [`⏰ [${ts()}] Próximo: ${NICHOS[autopilotNichoIdxRef.current % NICHOS.length]} em ${AUTOPILOT_CIDADES[autopilotCidadeIdxRef.current % AUTOPILOT_CIDADES.length]}`, ...prev]);
+
+    } catch (err: any) {
+      setAutopilotLogs(prev => [`❌ [${ts()}] Erro: ${err.message || 'desconhecido'}`, ...prev]);
     }
-  };
+  }, [raio, ticketTarget, mrrTarget]);
+
+  const autopilotRunCountRef = useRef(0);
+
+  const toggleAutopilot = useCallback(() => {
+    const next = !autopilotAtivo;
+    setAutopilotAtivo(next);
+    const ts = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    if (next) {
+      autopilotNichoIdxRef.current = 0;
+      autopilotCidadeIdxRef.current = 0;
+      autopilotRunCountRef.current = 0;
+      setAutopilotRunCount(0);
+      setAutopilotLogs([
+        `🚀 [${ts()}] ═══ AUTOPILOTO ATIVADO ═══`,
+        `⚙️ Velocidade: ${autopilotSpeed / 1000}s por ciclo`,
+        `📋 Rotacionando ${NICHOS.length} nichos × ${AUTOPILOT_CIDADES.length} cidades`,
+        `🎯 Ticket: R$ ${ticketTarget} | MRR: R$ ${mrrTarget}/mês`,
+        `📍 Iniciando: ${NICHOS[0]} em ${AUTOPILOT_CIDADES[0]}`,
+      ]);
+      // Run first cycle immediately
+      runAutopilotCycle();
+      autopilotIntervalRef.current = setInterval(() => {
+        runAutopilotCycle();
+      }, autopilotSpeed);
+    } else {
+      if (autopilotIntervalRef.current) {
+        clearInterval(autopilotIntervalRef.current);
+        autopilotIntervalRef.current = null;
+      }
+      setAutopilotLogs(prev => [
+        `⏸️ [${ts()}] ═══ AUTOPILOTO PAUSADO ═══`,
+        `📊 Total de ciclos: ${autopilotRunCountRef.current}`,
+        ...prev,
+      ]);
+    }
+  }, [autopilotAtivo, autopilotSpeed, runAutopilotCycle, ticketTarget, mrrTarget]);
+
+  useEffect(() => {
+    return () => {
+      if (autopilotIntervalRef.current) {
+        clearInterval(autopilotIntervalRef.current);
+      }
+    };
+  }, []);
 
   const totalLeads = leads.length;
   const comSite = leads.filter(l => l.temSite).length;
@@ -446,23 +560,35 @@ export const HermesGrowthEngineView: React.FC = () => {
         </button>
         {autopilotOpen && (
           <div className="px-6 pb-6 space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
               <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
-                <div className="text-lg font-extrabold text-[#f7f8f8] font-mono">24</div>
-                <div className="text-[10px] text-[#8a8f98]">Posts/mês</div>
+                <div className="text-lg font-extrabold text-[#f7f8f8] font-mono">{autopilotRunCount}</div>
+                <div className="text-[10px] text-[#8a8f98]">Ciclos</div>
               </div>
               <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
-                <div className="text-lg font-extrabold text-blue-400 font-mono">18.4k</div>
-                <div className="text-[10px] text-[#8a8f98]">Alcance</div>
+                <div className="text-lg font-extrabold text-emerald-400 font-mono">{totalLeads || 0}</div>
+                <div className="text-[10px] text-[#8a8f98]">Leads Hoje</div>
               </div>
               <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
-                <div className="text-lg font-extrabold text-amber-400 font-mono">{totalLeads || 42}</div>
-                <div className="text-[10px] text-[#8a8f98]">Leads</div>
-              </div>
-              <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
-                <div className="text-lg font-extrabold text-purple-400 font-mono">{redesigns || 12}</div>
+                <div className="text-lg font-extrabold text-[#d4a574] font-mono">{redesigns || 0}</div>
                 <div className="text-[10px] text-[#8a8f98]">Redesigns</div>
               </div>
+              <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
+                <div className="text-[11px] font-bold text-blue-400 truncate">{NICHOS[autopilotNichoIdx % NICHOS.length].split(' ')[0]}</div>
+                <div className="text-[10px] text-[#8a8f98]">Nicho Atual</div>
+              </div>
+              <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
+                <div className="text-[11px] font-bold text-purple-400 truncate">{AUTOPILOT_CIDADES[autopilotCidadeIdx % AUTOPILOT_CIDADES.length].split('/')[0]}</div>
+                <div className="text-[10px] text-[#8a8f98]">Cidade Atual</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {AUTOPILOT_SPEED_OPTIONS.map(opt => (
+                <button key={opt.value} onClick={() => setAutopilotSpeed(opt.value)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${autopilotSpeed === opt.value ? 'bg-[#d4a574] text-[#1c1917]' : 'bg-[#010102] border border-white/[0.08] text-[#8a8f98] hover:text-white'}`}>
+                  {opt.label}
+                </button>
+              ))}
             </div>
             <button onClick={toggleAutopilot} className={`px-5 py-3 rounded-xl font-extrabold text-xs transition-all shadow-lg cursor-pointer flex items-center gap-2 ${
               autopilotAtivo

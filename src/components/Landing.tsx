@@ -139,12 +139,15 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
             </p>
             <div className="flex items-center gap-3 mt-4">
               <button
-                onClick={() => handleCheckoutStripe('starter')}
+                onClick={() => {
+                  const el = document.getElementById('demonstracao');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-lg"
               >
-                Desbloquear com Plano PRO →
+                Quero Testar Grátis →
               </button>
-              <span className="text-xs text-slate-500">R$ 39,90/mês</span>
+              <span className="text-xs text-slate-500">Setup em 5 min • Sem cartão</span>
             </div>
           </div>
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-inner space-y-3 font-mono text-xs text-slate-300 opacity-70">

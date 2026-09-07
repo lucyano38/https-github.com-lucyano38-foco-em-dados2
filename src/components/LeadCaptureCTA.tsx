@@ -22,20 +22,43 @@ export const LeadCaptureCTA: React.FC<LeadCaptureCTAProps> = ({ onOpenPaywall })
     e.preventDefault();
     setEnviando(true);
 
+    const leadData = {
+      nome,
+      whatsapp,
+      nicho,
+      origem: 'focoemdados_landing_cta',
+      data: new Date().toISOString(),
+    };
+
     try {
-      await fetch(process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || '/api/lead-capture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome,
-          whatsapp,
-          nicho,
-          origem: 'focoemdados_dashboard',
-          data: new Date().toISOString(),
+      // Fire n8n webhook (if configured) + save to CRM
+      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || '/api/lead-capture';
+      await Promise.allSettled([
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(leadData),
         }),
-      });
+        fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug: `cta-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            nome,
+            nicho,
+            cidade: '',
+            status: 'novo',
+            telefone: whatsapp,
+            whatsapp,
+            obs: `Capturado via Landing CTA. Nicho: ${nicho}`,
+          }),
+        }),
+      ]);
 
       setEnviado(true);
+      // Also open WhatsApp with personalized message
+      const waText = encodeURIComponent(`Olá! Meu nome é ${nome}. Vim pelo site Foco em Dados e quero ver como a automação pode ajudar meu negócio de ${nicho}.`);
+      window.open(`https://wa.me/5511994411307?text=${waText}`, '_blank');
     } catch (err) {
       console.error('Erro ao enviar lead:', err);
     } finally {
