@@ -276,22 +276,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const limit = Math.min(parseInt(maxResults) || 20, 50);
 
     /* ── 2. Buscar em PARALELO: Overpass + Google Places + CNAE ── */
+    const diag: string[] = [];
     const overpassPromise = (async () => {
       try {
         const overpassFilter = getOverpassFilter(nicho, customNicho);
         const overpassQueries = overpassFilter.split(';').filter(Boolean).map(q => `${q}(around:${raioMetros},${lat},${lon})`);
         const query = `[out:json][timeout:25];(${overpassQueries.join('; ')});out tags ${limit};`;
+        diag.push(`[Overpass] query_len=${query.length} endpoints=${OVERPASS_ENDPOINTS.length}`);
         const data = await queryOverpass(query);
-        return data?.elements || [];
+        const els = data?.elements || [];
+        diag.push(`[Overpass] ok: ${els.length} elements`);
+        return els;
       } catch (err) {
-        console.warn('[Pipeline] Overpass falhou:', (err as Error).message);
+        diag.push(`[Overpass] FALHOU: ${(err as Error).message}`);
         return [];
       }
     })();
 
-    const placesPromise = searchGooglePlaces(lat, lon, parseInt(raio) || 15, nicho, customNicho, limit);
+    const placesPromise = (async () => {
+      const key = process.env.GOOGLE_MAPS_API_KEY;
+      if (!key) { diag.push('[Places] GOOGLE_MAPS_API_KEY não configurada'); return []; }
+      try {
+        const r = await searchGooglePlaces(lat, lon, parseInt(raio) || 15, nicho, customNicho, limit);
+        diag.push(`[Places] ok: ${r.length} results`);
+        return r;
+      } catch (err) {
+        diag.push(`[Places] FALHOU: ${(err as Error).message}`);
+        return [];
+      }
+    })();
 
-    const cnaePromise = searchByCNAE(cidade, nicho, customNicho);
+    const cnaePromise = (async () => {
+      try {
+        const r = await searchByCNAE(cidade, nicho, customNicho);
+        diag.push(`[CNAE] ok: ${r.length} results`);
+        return r;
+      } catch (err) {
+        diag.push(`[CNAE] FALHOU: ${(err as Error).message}`);
+        return [];
+      }
+    })();
 
     const [overpassElements, googlePlaces, cnaeResults] = await Promise.all([
       overpassPromise, placesPromise, cnaePromise
@@ -483,6 +507,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         fontes.google > 0 ? `${fontes.google} via Google Places` : null,
         fontes.cnae > 0 ? `${fontes.cnae} via CNAE/BrasilAPI` : null,
       ].filter(Boolean).join(' + ') || 'Nenhuma fonte retornou dados',
+      diagnostico: diag,
     });
 
   } catch (error: any) {
