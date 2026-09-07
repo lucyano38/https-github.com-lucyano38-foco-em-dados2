@@ -313,21 +313,25 @@ export const HermesGrowthEngineView: React.FC = () => {
             <Database className="w-4 h-4 text-[#d4a574]" /> Fontes de Dados Consultadas
           </div>
           <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs">
-              <Map className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-blue-300 font-bold">{fontesInfo.googlePlaces}</span>
-              <span className="text-[#8a8f98]">Google Places</span>
-            </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
               <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300 font-bold">{fontesInfo.overpass}</span>
+              <span className="text-emerald-300 font-bold">{fontesInfo.overpass || fontesInfo.nominatim || 0}</span>
               <span className="text-[#8a8f98]">OpenStreetMap</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs">
-              <Database className="w-3.5 h-3.5 text-purple-400" />
-              <span className="text-purple-300 font-bold">{fontesInfo.cnaeBrasilAPI}</span>
-              <span className="text-[#8a8f98]">CNAE/BrasilAPI</span>
-            </div>
+            {fontesInfo.googlePlaces > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs">
+                <Map className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-blue-300 font-bold">{fontesInfo.googlePlaces}</span>
+                <span className="text-[#8a8f98]">Google Places</span>
+              </div>
+            )}
+            {fontesInfo.cnaeBrasilAPI > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs">
+                <Database className="w-3.5 h-3.5 text-purple-400" />
+                <span className="text-purple-300 font-bold">{fontesInfo.cnaeBrasilAPI}</span>
+                <span className="text-[#8a8f98]">CNAE/BrasilAPI</span>
+              </div>
+            )}
           </div>
         </div>
       )}
