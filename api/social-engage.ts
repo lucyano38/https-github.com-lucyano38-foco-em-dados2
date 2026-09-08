@@ -66,12 +66,17 @@ const CAPTIONS_AIDA: Record<string, string[]> = {
   restaurantes: [
     '🍽️ **[ATTENÇÃO]** Seu restaurante está INVISÍVEL no Google?\n\n**[INTERESSE]** 78% dos clientes pesquisam "restaurante perto de mim" antes de sair de casa. Se você não aparece, eles vão para o concorrente.\n\n**[DESEJO]** Imagine receber 30+ reservas por semana automaticamente pelo WhatsApp, sem ligar para ninguém.\n\n**[AÇÃO]** 📲 Clique no link e veja como transformamos o cardápio digital do Restaurante Sabor & Arte — 40% mais pedidos em 30 dias.\n\n#RestauranteDigital #CardápioDigital',
     '📱 **[STOP THE SCROLL]** Isso aqui mudou o jogo de 12 restaurantes em SP:\n\n**[INTERESSE]** Um cardápio digital com fotos profissionais + agendamento pelo WhatsApp.\n\n**[DESEJO]** Os clientes pedem direto do celular, sem filas, sem espera. E o melhor: o dono lucra mais trabalhando MENOS.\n\n**[AÇÃO]** 🔥 Quer ver como? Fale comigo agora pelo WhatsApp → wa.me/5511994411307\n\n#RestauranteDigital #FoodieSP',
+    '🏆 **[PROVA SOCIAL]** "Em 45 dias, nosso restaurante lotou 4x por semana" — Maria, dona do Sabor & Arte.\n\n**[INTERESSE]** O segredo: cardápio digital + WhatsApp + Google Meu Negócio otimizado. Os clientes encontram e pedem em 2 cliques.\n\n**[DESEJO]** Seu restaurante pode ser o próximo caso de sucesso. Sem grandes investimentos, sem complicação.\n\n**[AÇÃO]** 🍽️ Fale comigo e receba um plano personalizado → wa.me/5511994411307\n\n#RestauranteDigital #DeliveryOnline',
   ],
   saude: [
     '🏥 **[ATTENÇÃO]** Sua clínica perde 5+ pacientes por semana por falta de agendamento online?\n\n**[INTERESSE]** Pesquisa mostra: 72% dos pacientes preferem agendar pelo celular. Se você não oferece isso, eles vão onde tem.\n\n**[DESEJO]** Imagine uma agenda 100% lotada, com confirmação automática e lembretes no WhatsApp. Sem no-show, sem folga.\n\n**[AÇÃO]** 📲 Demonstração gratuita: como agendar seus primeiros 50 pacientes online. Clique no link!\n\n#ClínicaDigital #AgendamentoOnline',
+    '💊 **[DADOS REAIS]** Clínicas com agendamento online têm 40% menos faltas.\n\n**[INTERESSE]** O WhatsApp não é mais suficiente. Seus pacientes querem agendar 24h, sem depender de secretária.\n\n**[DESEJO]** Um sistema de agendamento + lembretes automáticos = agenda cheia, no-show zero, pacientes felizes.\n\n**[AÇÃO]** 🩺 Fale comigo e configure seu agendamento online em 7 dias → wa.me/5511994411307\n\n#ClínicaDigital #SaúdeDigital',
+    '🏆 **[DEPOIMENTO]** "Em 60 dias, triplicamos os agendamentos e eliminamos 80% das faltas" — Dr. Rafael, Clínica Vida.\n\n**[INTERESSE]** O que mudou? Site profissional + agendamento online + lembretes automáticos no WhatsApp.\n\n**[DESEJO]** Sua clínica merece o mesmo resultado. Sem complicação, sem custo alto.\n\n**[AÇÃO]** 📲 Agende uma conversa gratuita e veja como funciona → wa.me/5511994411307\n\n#OdontologiaDigital #ClínicaOnline',
   ],
   barbearia: [
     '💈 **[STOP]** Barbeiro sem site = barbeiro sem cliente novo.\n\n**[INTERESSE]** Seu Instagram tá bonito, mas e o Google? Quando alguém digita "barbearia perto de mim", você aparece?\n\n**[DESEJO]** Chega de agenda vazia. Um site com agendamento online preenche sua semana em 14 dias.\n\n**[AÇÃO]** 🎯 Fale comigo pelo WhatsApp e veja como o Barbearia Style triplicou os clientes → wa.me/5511994411307\n\n#BarbeariaDigital #Barbeiro',
+    '✂️ **[ATENÇÃO]** 90% das barbearias dependem 100% do indicação. E se isso acabar amanhã?\n\n**[INTERESSE]** Um site profissional + WhatsApp Business transforma visitantes em clientes recorrentes. Sem depender de indicação.\n\n**[DESEJO]** Imagine agenda lotada segunda a sábado, com clientes que encontram você no Google e agendam pelo celular.\n\n**[AÇÃO]** 📲 Demonstração gratuita: como o Barbearia Gold lotou a agenda em 21 dias → wa.me/5511994411307\n\n#BarbeariaDigital #AgendamentoOnline',
+    '🏆 **[PROVA SOCIAL]** "Em 30 dias depois do site, minha agenda triplicou" — Carlos, dono da Barbearia Style.\n\n**[INTERESSE]** O segredo? Um site com galeria de cortes + agendamento pelo WhatsApp + Google Meu Negócio otimizado.\n\n**[DESEJO]** Seus clientes pesquisam "barbearia perto de mim" todo dia. Chega de perder essas pessoas para o concorrente.\n\n**[AÇÃO]** 💈 Fale agora e ganhe uma auditoria digital gratuita da sua barbearia → wa.me/5511994411307\n\n#BarbeariaDigital #BarbeariaSP',
   ],
   default: [
     '🚀 **[ATENÇÃO]** Você sabia que 75% dos clientes pesquisam ONLINE antes de comprar?\n\n**[INTERESSE]** Se sua empresa não aparece no Google, Instagram ou WhatsApp, você está PERDENDO dinheiro todos os dias.\n\n**[DESEJO]** Imagine um site profissional que trabalha 24h por você, convertendo visitantes em clientes automaticamente.\n\n**[AÇÃO]** 💡 Clique aqui e descubra como transformar sua presença digital → wa.me/5511994411307\n\n#PresençaDigital #MarketingDigital',
@@ -80,9 +85,9 @@ const CAPTIONS_AIDA: Record<string, string[]> = {
 };
 
 const ARTE_TEXTOS: Record<string, string[]> = {
-  restaurantes: ['SEU RESTAURANTE\nMERECE SER\nENCONTRADO', 'CARDÁPIO\nDIGITAL\n+ WHATSAPP\n= MAIS VENDAS'],
-  saude: ['AGENDAMENTO\nONLINE\n24 HORAS', 'SUA CLÍNICA\nSEMPRE\nDISPONÍVEL'],
-  barbearia: ['AGENDA\nLOTADA\nEM 14 DIAS', 'BARBEIRO\nDIGITAL\nFATURA MAIS'],
+  restaurantes: ['SEU RESTAURANTE\nMERECE SER\nENCONTRADO', 'CARDÁPIO\nDIGITAL\n+ WHATSAPP\n= MAIS VENDAS', 'MAIS CLIENTES\nMENOS\nESTRESSE'],
+  saude: ['AGENDAMENTO\nONLINE\n24 HORAS', 'SUA CLÍNICA\nSEMPRE\nDISPONÍVEL', 'PACIENTES\nFELIZES\nAGENDA CHEIA'],
+  barbearia: ['AGENDA\nLOTADA\nEM 14 DIAS', 'BARBEIRO\nDIGITAL\nFATURA MAIS', 'SEU CORTE\nMERECE\nSER VISTO'],
   default: ['PRESENÇA\nDIGITAL\nQUE VENDE', 'SEU NEGÓCIO\n24H ONLINE'],
 };
 
