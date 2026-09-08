@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Zap, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, Zap, ArrowRight, ShieldCheck, Sparkles, Globe, Server, Bot, ShoppingCart, Wrench } from 'lucide-react';
 
 const PLANS = [
   {
@@ -133,6 +133,81 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan }) 
         <div className="text-center pt-4 flex items-center justify-center gap-3 text-xs" style={{ color: '#8a8f98' }}>
           <ShieldCheck className="w-4 h-4 text-[#d4a574]" />
           <span>Garantia de 7 dias ou seu dinheiro de volta • Cancelamento sem burocracia</span>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          TABELA DE SERVIÇOS SOB DEMANDA
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="max-w-7xl mx-auto pt-16 space-y-12">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
+            style={{ border: '1px solid rgba(212,165,116,0.3)', background: 'rgba(212,165,116,0.1)', color: '#d4a574' }}>
+            <Wrench className="w-3.5 h-3.5" />
+            <span>Serviços Sob Demanda</span>
+          </div>
+          <h2 className="text-2xl md:text-4xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+            Precisa de algo <span className="text-[#d4a574]">específico?</span>
+          </h2>
+          <p className="text-sm max-w-lg mx-auto" style={{ color: '#8a8f98' }}>
+            Contrate apenas o que precisa. Valores transparentes, sem surpresas.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            {
+              icon: Globe, name: 'Site Simples (Landing Page)',
+              desc: 'Página única profissional com captação de leads, WhatsApp integrado e SEO básico.',
+              price: '297', period: 'único', color: '#3b82f6',
+            },
+            {
+              icon: Server, name: 'Site Institucional Completo',
+              desc: 'Multi-página com sobre, serviços, depoimentos, blog e formulário de contato.',
+              price: '597', period: 'único', color: '#8b5cf6',
+            },
+            {
+              icon: ShoppingCart, name: 'Loja Virtual / E-commerce',
+              desc: 'Catálogo de produtos, carrinho, pagamento integrado (Stripe/PIX) e painel de pedidos.',
+              price: '997', period: 'único', color: '#10b981',
+            },
+            {
+              icon: Bot, name: 'Automação WhatsApp com IA (Hermes)',
+              desc: 'Agente inteligente 24/7, respostas automáticas, qualificação de leads e agendamento.',
+              price: '197', period: '/mês', color: '#d4a574',
+            },
+            {
+              icon: Server, name: 'Hospedagem e Manutenção',
+              desc: 'Servidor dedicado, SSL, backups diários, atualizações de segurança e suporte técnico.',
+              price: '49,90', period: '/mês', color: '#06b6d4',
+            },
+          ].map((svc, i) => {
+            const Icon = svc.icon;
+            return (
+              <div key={i} className="rounded-3xl p-6 transition-all hover:scale-[1.02]"
+                style={{ background: 'rgba(15,16,17,0.7)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: `${svc.color}15`, border: `1px solid ${svc.color}30` }}>
+                    <Icon className="w-5 h-5" style={{ color: svc.color }} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">{svc.name}</h3>
+                    <p className="text-[11px] mt-1 leading-relaxed" style={{ color: '#8a8f98' }}>{svc.desc}</p>
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-1 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <span className="text-xs" style={{ color: '#8a8f98' }}>R$</span>
+                  <span className="text-2xl font-extrabold" style={{ color: svc.color, fontFamily: 'var(--font-display)' }}>{svc.price}</span>
+                  <span className="text-[11px]" style={{ color: '#8a8f98' }}>{svc.period}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="text-center text-[11px] pt-2" style={{ color: '#555' }}>
+          Valores em reais (BRL). Serviços sob demanda não incluem assinatura mensal dos planos acima.
         </div>
       </div>
     </section>

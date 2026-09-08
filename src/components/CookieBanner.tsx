@@ -24,7 +24,7 @@ export const CookieBanner: React.FC = () => {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-8 md:right-auto md:max-w-md z-50 bg-[#1e2020] border border-[#4f4632] rounded-3xl p-5 shadow-2xl text-[#e3e2e2] flex flex-col gap-3 animate-fadeIn">
+    <div className="fixed bottom-20 left-4 right-4 md:left-8 md:right-auto md:max-w-md z-50 bg-[#1e2020] border border-[#4f4632] rounded-3xl p-5 shadow-2xl text-[#e3e2e2] flex flex-col gap-3 animate-fadeIn">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 text-[#ffe4af]">
           <ShieldCheck className="w-5 h-5 text-[#ffc107]" />

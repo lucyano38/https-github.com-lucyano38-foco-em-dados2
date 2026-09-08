@@ -454,6 +454,32 @@ export default function PreviewRedesign() {
               <p>✓ Suporte via WhatsApp</p>
               <p>✓ SEO otimizado para sua região</p>
             </div>
+
+            {/* FERRAMENTAS RECOMENDADAS — AFILIADOS */}
+            <div className="bg-stone-950 border border-white/10 rounded-2xl p-4 mt-4 space-y-3">
+              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="text-amber-400">⚡</span> Ferramentas Recomendadas
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { nome: 'Vercel', desc: 'Hospedagem frontend (grátis)', href: 'https://vercel.com/?ref=focoemdados' },
+                  { nome: 'Stripe', desc: 'Pagamentos online (3,99%)', href: 'https://stripe.com/?ref=focoemdados' },
+                  { nome: 'Supabase', desc: 'Backend & database (grátis)', href: 'https://supabase.com/?ref=focoemdados' },
+                  { nome: 'n8n', desc: 'Automação de workflows', href: 'https://n8n.io/?ref=focoemdados' },
+                ].map((aff, i) => (
+                  <a key={i} href={aff.href} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition group">
+                    <div>
+                      <div className="text-[11px] font-bold text-white group-hover:text-amber-300">{aff.nome}</div>
+                      <div className="text-[9px] text-stone-500">{aff.desc}</div>
+                    </div>
+                    <span className="text-[9px] text-amber-500/60 group-hover:text-amber-400">→</span>
+                  </a>
+                ))}
+              </div>
+              <p className="text-[8px] text-stone-600 italic">Links de afiliado • Você paga o mesmo preço e nos ajuda a manter o projeto.</p>
+            </div>
+
             <a href={waEmpresa} target="_blank" rel="noopener noreferrer"
               className={`w-full py-4 ${theme.bg} hover:opacity-90 text-stone-950 font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02]`}>
               <MessageCircle className="w-5 h-5" /> Aprovar & Ativar Site

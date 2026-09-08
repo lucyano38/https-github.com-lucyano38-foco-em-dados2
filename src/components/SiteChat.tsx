@@ -101,20 +101,20 @@ export const SiteChat: React.FC = () => {
 
   return (
     <>
-      {/* FLOATING CHAT BUTTON */}
+      {/* FLOATING CHAT BUTTON — WhatsApp (esquerda, z-40) */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full bg-[#d4a574] hover:bg-[#e2b98a] text-[#1c1917] shadow-[0_0_30px_rgba(212,165,116,0.4)] flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+          className="fixed bottom-6 left-6 z-40 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-[0_0_30px_rgba(37,211,102,0.4)] flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           aria-label="Abrir chat"
         >
           <MessageCircle className="w-6 h-6" />
         </button>
       )}
 
-      {/* CHAT PANEL */}
+      {/* CHAT PANEL — direita, z-50 (acima do botão WhatsApp) */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-[9999] w-[380px] max-w-[calc(100vw-32px)] h-[520px] bg-[#0f1011] rounded-3xl shadow-2xl border border-white/[0.1] flex flex-col overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-32px)] h-[520px] bg-[#0f1011] rounded-3xl shadow-2xl border border-white/[0.1] flex flex-col overflow-hidden">
           {/* Header */}
           <div className="px-5 py-4 bg-gradient-to-r from-[#d4a574] to-[#c49464] text-[#1c1917] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">

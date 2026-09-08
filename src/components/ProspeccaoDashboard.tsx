@@ -110,7 +110,7 @@ export const ProspeccaoDashboard: React.FC = () => {
       )}
 
       {isAutomating && (
-        <div className="fixed bottom-6 right-6 bg-[#0f1011] border border-white/[0.08] p-4 rounded-xl shadow-2xl flex items-center gap-3 backdrop-blur-md animate-pulse z-50">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#0f1011] border border-white/[0.08] p-4 rounded-xl shadow-2xl flex items-center gap-3 backdrop-blur-md animate-pulse z-50">
           <div className="w-4 h-4 border-2 border-[#d4a574] border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-medium text-[#d0d6e0]">Agente Hermes processando redesign e contrato...</span>
         </div>
