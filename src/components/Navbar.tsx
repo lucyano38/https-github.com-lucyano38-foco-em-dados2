@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => hasAccess ? handleEnterApp('growth') : onOpenPaywall()}
           className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"
         >
-          {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 39,90'}
+          {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 197'}
         </button>
       </div>
     </header>

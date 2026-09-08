@@ -103,14 +103,14 @@ export const NicheSolutions: React.FC<NicheSolutionsProps> = ({ onOpenPaywall })
           <div>
             <span className="text-xs text-amber-400 font-mono">[Status: Automação Ativa]</span>
             <p className="text-xs font-semibold text-slate-200 mt-2 mb-4">
-              Libere o ecossistema completo para o seu negócio por apenas R$ 39,90/mês.
+              Libere o ecossistema completo para o seu negócio por apenas R$ 197/mês.
             </p>
           </div>
           <button
             onClick={onOpenPaywall}
             className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/20"
           >
-            <span>Assinar Acesso Completo (R$ 39,90)</span>
+            <span>Assinar Acesso Completo (R$ 197)</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

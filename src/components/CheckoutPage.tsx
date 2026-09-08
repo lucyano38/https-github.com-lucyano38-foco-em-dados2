@@ -29,7 +29,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBack }) => {
               <h2 className="text-lg font-bold text-[#f7f8f8]">Plano Mensal</h2>
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#d4a574] bg-white/[0.04] px-2 py-1 rounded-full border border-white/[0.08]">PRO</span>
             </div>
-            <div className="text-3xl font-extrabold text-[#f7f8f8] my-2">R$ 39,90 <span className="text-xs text-[#8a8f98] font-normal">/mês</span></div>
+            <div className="text-3xl font-extrabold text-[#f7f8f8] my-2">R$ 197 <span className="text-xs text-[#8a8f98] font-normal">/mês</span></div>
             <ul className="text-xs text-[#d4d6e0] space-y-2">
               <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#d4a574]" /> Acesso completo ao ecossistema</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#d4a574]" /> OpenSquad AI multi-agente</li>

@@ -85,11 +85,19 @@ export const GeminiChatSidebar: React.FC<GeminiChatSidebarProps> = ({
         }),
       });
 
-      const data = await res.json();
+      // Resilient JSON parsing — never crash on HTML responses
+      const textBody = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(textBody);
+      } catch {
+        data = { reply: 'Desculpe, houve um erro de comunicação. Tente novamente.' };
+      }
+
       const botMsg: Message = {
         id: `bot-${Date.now()}`,
         role: 'assistant',
-        text: data.reply || 'Sem resposta disponível no momento.',
+        text: data.reply || data.error || 'Sem resposta disponível no momento.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, botMsg]);
@@ -99,7 +107,7 @@ export const GeminiChatSidebar: React.FC<GeminiChatSidebarProps> = ({
         {
           id: `err-${Date.now()}`,
           role: 'assistant',
-          text: `Desculpe, ocorreu um erro ao se comunicar com o Gemini: ${err.message}`,
+          text: `Erro de conexão. Tente novamente.`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);

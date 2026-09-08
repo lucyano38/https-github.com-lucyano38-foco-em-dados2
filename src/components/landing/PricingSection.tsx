@@ -15,7 +15,7 @@ const PLANS = [
     cta: 'Assinar Business', popular: false,
   },
   {
-    id: 'premium', name: 'Premium Especial', tag: 'Exclusivo Anual', price: '39,90', period: '/mês*',
+    id: 'premium', name: 'Premium Especial', tag: 'Exclusivo Anual', price: '197', period: '/mês*',
     periodNote: '*Faturamento anual promocional por tempo limitado',
     description: 'Acesso irrestrito a todos os módulos com condição histórica.',
     features: ['Tudo do plano Business incluso', 'Extração B2B Ilimitada (com e sem site)', 'Agente Hermes personalizado com a voz da sua marca', 'Suporte prioritário via WhatsApp VIP'],

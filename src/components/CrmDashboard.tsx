@@ -3,6 +3,7 @@ import {
   Users, FileText, CheckCircle2, TrendingUp, DollarSign, 
   Search, Plus, Filter, ArrowRight, Building2, Phone, Mail, Sparkles, Send, Download, Eye, Calendar, Clock, AlertCircle
 } from 'lucide-react';
+import { ContractModal } from './ContractModal';
 
 interface LeadItem {
   id: string;
@@ -43,14 +44,14 @@ const LEADS_INICIAIS: LeadItem[] = [
 ];
 
 const CLIENTES_INICIAIS: ClienteItem[] = [
-  { id: 'c1', empresa: 'Tech Soluções', responsavel: 'Felipe Rocha', telefone: '(11) 94444-5555', plano: 'PRO R$ 39,90', valorMensal: 39.90, dataEntrada: '10/01/2025', status: 'Ativo' },
-  { id: 'c2', empresa: 'Bistrô Sabor & Arte', responsavel: 'Camila', telefone: '(11) 93333-6666', plano: 'PRO R$ 39,90', valorMensal: 39.90, dataEntrada: '15/02/2025', status: 'Ativo' }
+  { id: 'c1', empresa: 'Tech Soluções', responsavel: 'Felipe Rocha', telefone: '(11) 94444-5555', plano: 'PRO R$ 197', valorMensal: 197, dataEntrada: '10/01/2025', status: 'Ativo' },
+  { id: 'c2', empresa: 'Bistrô Sabor & Arte', responsavel: 'Camila', telefone: '(11) 93333-6666', plano: 'PRO R$ 197', valorMensal: 197, dataEntrada: '15/02/2025', status: 'Ativo' }
 ];
 
 const CONTRATOS_INICIAIS: ContratoItem[] = [
   { id: 'ct1', empresa: 'Construtora Horizonte', tipo: 'Redesign + Prospecção', valor: 7500, status: 'Pendente' },
-  { id: 'ct2', empresa: 'Tech Soluções', tipo: 'Acesso PRO SaaS', valor: 39.90, status: 'Ativo' },
-  { id: 'ct3', empresa: 'Bistrô Sabor & Arte', tipo: 'Acesso PRO SaaS', valor: 39.90, status: 'Ativo' }
+  { id: 'ct2', empresa: 'Tech Soluções', tipo: 'Acesso PRO SaaS', valor: 197, status: 'Ativo' },
+  { id: 'ct3', empresa: 'Bistrô Sabor & Arte', tipo: 'Acesso PRO SaaS', valor: 197, status: 'Ativo' }
 ];
 
 export const CrmDashboard: React.FC = () => {
@@ -60,6 +61,7 @@ export const CrmDashboard: React.FC = () => {
   const [contratos, setContratos] = useState<ContratoItem[]>(CONTRATOS_INICIAIS);
   const [busca, setBusca] = useState<string>('');
   const [showAvancado, setShowAvancado] = useState<boolean>(false);
+  const [selectedContrato, setSelectedContrato] = useState<ContratoItem | null>(null);
 
   const estagios = [
     { id: 'novo', label: 'Novo Lead', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
@@ -284,8 +286,8 @@ export const CrmDashboard: React.FC = () => {
                 </div>
                 <div className="text-sm font-mono font-bold text-amber-400">R$ {ct.valor.toLocaleString('pt-BR')}</div>
                 <div className="flex items-center gap-2 pt-3 border-t border-slate-800 flex-wrap">
-                  <button onClick={() => alert('Visualizando PDF do contrato...')} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl cursor-pointer flex items-center gap-1"><Eye className="w-3 h-3" /> Visualizar</button>
-                  <button onClick={() => alert('Baixando PDF...')} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl cursor-pointer flex items-center gap-1"><Download className="w-3 h-3" /> Baixar PDF</button>
+                  <button onClick={() => setSelectedContrato(ct)} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl cursor-pointer flex items-center gap-1"><Eye className="w-3 h-3" /> Visualizar</button>
+                  <button onClick={() => setSelectedContrato(ct)} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl cursor-pointer flex items-center gap-1"><Download className="w-3 h-3" /> Baixar PDF</button>
                   <button onClick={() => alert('Enviando via WhatsApp...')} className="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 text-xs rounded-xl cursor-pointer flex items-center gap-1"><Send className="w-3 h-3" /> WhatsApp</button>
                 </div>
               </div>
@@ -327,6 +329,8 @@ export const CrmDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL DE CONTRATO */}
+      <ContractModal contrato={selectedContrato} onClose={() => setSelectedContrato(null)} />
     </div>
   );
 };

@@ -1,196 +1,169 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Printer, X, Download, FileText, CheckCircle2, Shield, Mail, Copy, Check } from 'lucide-react';
-import { Lead, ContratanteConfig } from '../types';
+import React, { useRef } from 'react';
+import { X, Download, Send, FileText } from 'lucide-react';
 
-interface ContractModalProps {
-  lead: Lead | null;
-  contratante: ContratanteConfig;
-  onClose: () => void;
-  onUpdateStatus?: (status: 'pendente' | 'enviado' | 'assinado') => void;
+interface ContratoData {
+  id: string;
+  empresa: string;
+  tipo: string;
+  valor: number;
+  status: string;
 }
 
-export const ContractModal: React.FC<ContractModalProps> = ({
-  lead,
-  contratante,
-  onClose,
-  onUpdateStatus,
-}) => {
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [showEmailDraft, setShowEmailDraft] = useState(false);
+interface ContractModalProps {
+  contrato: ContratoData | null;
+  onClose: () => void;
+}
 
-  if (!lead) return null;
+export const ContractModal: React.FC<ContractModalProps> = ({ contrato, onClose }) => {
+  const printRef = useRef<HTMLDivElement>(null);
 
-  const contractUrl = `/api/contract-preview/${lead.slug}`;
-  const docxUrl = `/api/contract-docx/${lead.slug}`;
+  if (!contrato) return null;
 
-  const emailDraft = `Olá ${lead.nome}, tudo bem?
+  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const valorFormatado = `R$ ${contrato.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  const mesalidade = contrato.tipo.includes('SaaS') ? valorFormatado : 'R$ 197,00';
 
-É um prazer avançarmos com o nosso projeto! Segue em anexo a minuta do Contrato de Prestação de Serviços (em formato Word .docx e A4) referente à criação e publicação da sua nova página profissional no valor total de R$ ${lead.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '750,00'}.
+  const handleDownload = () => {
+    const content = printRef.current?.innerHTML || '';
+    const fullHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Contrato - ${contrato.empresa}</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #1a1a1a; line-height: 1.6; }
+  h1 { font-size: 18px; text-align: center; border-bottom: 2px solid #d4a574; padding-bottom: 12px; }
+  h2 { font-size: 14px; margin-top: 24px; color: #d4a574; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .header .logo { font-size: 24px; font-weight: 800; color: #d4a574; }
+  .header .sub { font-size: 11px; color: #666; }
+  .clausula { margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #d4a574; font-size: 12px; }
+  .valor-box { text-align: center; padding: 20px; background: #fef3e2; border-radius: 8px; margin: 20px 0; }
+  .valor-box .valor { font-size: 28px; font-weight: 800; color: #d4a574; }
+  .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 16px; }
+  .assinatura { margin-top: 48px; display: flex; justify-content: space-between; }
+  .assinatura .line { border-top: 1px solid #333; width: 200px; text-align: center; padding-top: 8px; font-size: 11px; }
+  @media print { body { padding: 20px; } }
+</style></head><body>
+${content}
+</body></html>`;
 
-Pedimos que revise os dados cadastrais (em destaque amarelo), preencha as informações solicitadas (caso necessário), assine e nos envie de volta por aqui ou por e-mail.
+    const blob = new Blob([fullHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Contrato_${contrato.empresa.replace(/\s+/g, '_')}_${contrato.id}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-Ficamos à disposição para qualquer dúvida.
-
-Atenciosamente,
-${contratante.nome || 'Equipe Foco Completo'}
-${contratante.cidadeUf || ''}`;
-
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText(emailDraft);
-    setCopiedEmail(true);
-    if (onUpdateStatus && lead.contratoStatus === 'pendente') {
-      onUpdateStatus('enviado');
-    }
-    setTimeout(() => setCopiedEmail(false), 2500);
+  const handleWhatsApp = () => {
+    const msg = encodeURIComponent(`📄 Contrato Foco em Dados\n\nEmpresa: ${contrato.empresa}\nTipo: ${contrato.tipo}\nValor: ${valorFormatado}\n\nPor favor, revise e assine o contrato em anexo.`);
+    window.open(`https://wa.me/5511994411307?text=${msg}`, '_blank');
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex flex-col bg-neutral-900/80 backdrop-blur-sm">
-        {/* Header Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="bg-neutral-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-neutral-800 shadow-lg"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-neutral-100">
-                  Contrato de Prestação de Serviços
-                </h2>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-neutral-800 text-amber-300 border border-neutral-700">
-                  {lead.nome}
-                </span>
-              </div>
-              <p className="text-xs text-neutral-400">
-                Minuta A4 e Word (.docx travado) gerados automaticamente
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white text-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-amber-600" />
+            <span className="font-bold text-sm">Contrato — {contrato.empresa}</span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {onUpdateStatus && (
-              <div className="flex items-center gap-1.5 bg-neutral-800/80 p-1 rounded-xl border border-neutral-700">
-                <span className="text-xs text-neutral-400 pl-2 font-medium">Status:</span>
-                {(['pendente', 'enviado', 'assinado'] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => onUpdateStatus(st)}
-                    className={`text-xs px-2.5 py-1 rounded-lg font-medium transition capitalize cursor-pointer ${
-                      lead.contratoStatus === st
-                        ? st === 'assinado'
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : st === 'enviado'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-neutral-700 text-white shadow-xs'
-                        : 'text-neutral-400 hover:text-neutral-200'
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={() => setShowEmailDraft(!showEmailDraft)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition cursor-pointer ${
-                showEmailDraft ? 'bg-amber-500 text-black border-amber-400' : 'bg-neutral-800 hover:bg-neutral-600 text-white border-neutral-700'
-              }`}
-            >
-              <Mail className="w-4 h-4" />
-              {showEmailDraft ? 'Ocultar E-mail' : 'Rascunho de E-mail'}
+          <div className="flex items-center gap-2">
+            <button onClick={handleDownload} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-lg flex items-center gap-1 cursor-pointer">
+              <Download className="w-3 h-3" /> Download HTML
             </button>
-
-            <a
-              href={docxUrl}
-              onClick={() => {
-                if (onUpdateStatus && lead.contratoStatus === 'pendente') {
-                  onUpdateStatus('enviado');
-                }
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-md transition cursor-pointer"
-              title="Baixar versão Word (.docx) com campos editáveis"
-            >
-              <Download className="w-4 h-4" />
-              Baixar .DOCX
-            </a>
-
-            <button
-              onClick={() => {
-                const frame = document.getElementById('contract-iframe') as HTMLIFrameElement;
-                if (frame && frame.contentWindow) {
-                  frame.contentWindow.focus();
-                  frame.contentWindow.print();
-                } else {
-                  window.open(contractUrl, '_blank');
-                }
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-md transition cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              Imprimir / PDF
+            <button onClick={handleWhatsApp} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs rounded-lg flex items-center gap-1 cursor-pointer">
+              <Send className="w-3 h-3" /> Enviar WhatsApp
             </button>
-
-            <button
-              onClick={onClose}
-              className="p-2 text-neutral-400 hover:text-white rounded-xl hover:bg-neutral-800 transition cursor-pointer"
-              title="Fechar"
-            >
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="p-1.5 hover:bg-gray-200 rounded-lg cursor-pointer">
+              <X className="w-4 h-4" />
             </button>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Email Draft Drawer */}
-        {showEmailDraft && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-neutral-950 border-b border-neutral-800 px-6 py-4"
-          >
-            <div className="max-w-4xl mx-auto space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5" /> Rascunho para Envio ao Cliente (WhatsApp / E-mail)
-                </span>
-                <button
-                  onClick={handleCopyEmail}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
-                >
-                  {copiedEmail ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedEmail ? 'Copiado!' : 'Copiar Texto'}
-                </button>
-              </div>
-              <textarea
-                readOnly
-                value={emailDraft}
-                rows={6}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-xs text-neutral-300 font-mono resize-none focus:outline-hidden"
-              />
+        {/* Contract Preview */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div ref={printRef} className="max-w-xl mx-auto">
+            {/* Logo / Header */}
+            <div className="header">
+              <div className="logo">FOCO EM DADOS</div>
+              <div className="sub">Soluções Digitais para Empresas Locais</div>
             </div>
-          </motion.div>
-        )}
 
-        {/* Contract Preview Frame */}
-        <div className="flex-1 bg-neutral-900/60 p-4 sm:p-6 overflow-hidden flex justify-center items-center">
-          <div className="w-full max-w-4xl h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-neutral-300">
-            <iframe
-              id="contract-iframe"
-              src={contractUrl}
-              className="w-full h-full border-0"
-              title={`Contrato ${lead.nome}`}
-            />
+            <h1>CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h1>
+
+            <p style={{ fontSize: 12, textAlign: 'center', color: '#666' }}>
+              Contrato nº {contrato.id.toUpperCase()} • Celebrado em {hoje}
+            </p>
+
+            <div className="clausula">
+              <strong>CLÁUSULA 1ª — PARTES</strong><br />
+              <strong>CONTRATANTE:</strong> Foco em Dados LTDA, CNPJ: 00.000.000/0001-00<br />
+              <strong>CONTRATADO(A):</strong> {contrato.empresa}
+            </div>
+
+            <div className="clausula">
+              <strong>CLÁUSULA 2ª — OBJETO</strong><br />
+              Prestação de serviços de {contrato.tipo}, incluindo:
+              <ul style={{ margin: '8px 0', paddingLeft: 20, fontSize: 12 }}>
+                <li>Criação/redesign de site profissional otimizado para SEO</li>
+                <li>Integração com WhatsApp Business para atendimento automatizado</li>
+                <li>Agente de IA para atendimento 24/7</li>
+                <li>Hospedagem, manutenção e suporte técnico contínuo</li>
+                <li>Painel de métricas e analytics em tempo real</li>
+              </ul>
+            </div>
+
+            <div className="valor-box">
+              <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>VALOR TOTAL DO CONTRATO</div>
+              <div className="valor">{valorFormatado}</div>
+              <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>
+                {contrato.tipo.includes('SaaS')
+                  ? 'Mensalidade recorrente'
+                  : `Implantação: ${valorFormatado} + Mensalidade: ${mesalidade}/mês`}
+              </div>
+            </div>
+
+            <div className="clausula">
+              <strong>CLÁUSULA 3ª — ATENDIMENTO POR IA</strong><br />
+              O CONTRATANTE declara que utilizará agentes de inteligência artificial (Agente Hermes / OpenSquad) para
+              otimizar processos internos, incluindo prospecção, atendimento ao cliente e geração de conteúdo.
+              O uso da IA é complementar e não substitui o atendimento humano profissional.
+            </div>
+
+            <div className="clausula">
+              <strong>CLÁUSULA 4ª — VIGÊNCIA</strong><br />
+              O presente contrato terá vigência de 12 (doze) meses, contados a partir da data de assinatura,
+              com renovação automática por períodos iguais, salvo manifestação contrária de qualquer das partes
+              com antecedência mínima de 30 (trinta) dias.
+            </div>
+
+            <div className="clausula">
+              <strong>CLÁUSULA 5ª — GARANTIA</strong><br />
+              O CONTRATANTE oferece garantia de 30 (trinta) dias para ajustes e correções no site entregue,
+              sem custo adicional. Após este período, alterações estarão sujeitas a orçamento aparte.
+            </div>
+
+            {/* Signatures */}
+            <div className="assinatura">
+              <div className="line">
+                Foco em Dados<br /><span style={{ fontSize: 10, color: '#999' }}>Contratante</span>
+              </div>
+              <div className="line">
+                {contrato.empresa}<br /><span style={{ fontSize: 10, color: '#999' }}>Contratado(a)</span>
+              </div>
+            </div>
+
+            <div className="footer">
+              Foco em Dados • atendimento@focoemdados.com.br • (11) 99441-1307<br />
+              Este documento foi gerado automaticamente pelo sistema Foco em Dados.
+            </div>
           </div>
         </div>
       </div>
-    </AnimatePresence>
+    </div>
   );
 };
+
+export default ContractModal;

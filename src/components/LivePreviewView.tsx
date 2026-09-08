@@ -579,7 +579,7 @@ export const LivePreviewView: React.FC = () => {
               </div>
               <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 space-y-2">
                 <span className="text-xs font-bold text-white">Manutenção Mensal</span>
-                <div className="text-2xl font-extrabold text-white">R$ 39,90<span className="text-xs text-slate-400">/mês</span></div>
+                <div className="text-2xl font-extrabold text-white">R$ 197<span className="text-xs text-slate-400">/mês</span></div>
                 <p className="text-[10px] text-slate-400">Hospedagem + Suporte + Atualizações + IA</p>
               </div>
             </div>

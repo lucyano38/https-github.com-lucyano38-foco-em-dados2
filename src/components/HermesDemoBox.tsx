@@ -23,7 +23,7 @@ export const HermesDemoBox: React.FC<HermesDemoBoxProps> = ({ onUpgradeClick }) 
         siteAtual: 'bistrosabor.com.br (Sem mobile, nota 3.2)',
         redesignPreview: 'https://preview.focoemdados.com.br/bistro-sabor',
         mensagemIa: `Olá! Analisei o site do ${nicho} em ${cidade}. Identifiquei que o site atual não é responsivo e perde 60% dos clientes mobile. Preparamos um Redesign completo de alta conversão.`,
-        contratoGerado: 'Contrato de Prestação de Serviços de Redesign + Tráfego (R$ 1.500/mês + R$ 39,90 Foco em Dados)'
+        contratoGerado: 'Contrato de Prestação de Serviços de Redesign + Tráfego (R$ 997 implantação + R$ 197/mês Foco em Dados)'
       });
       setLoading(false);
     }, 1200);
@@ -117,7 +117,7 @@ export const HermesDemoBox: React.FC<HermesDemoBoxProps> = ({ onUpgradeClick }) 
           onClick={onUpgradeClick}
           className="bg-amber-500 text-[#0F172A] px-6 py-3 rounded-xl font-bold text-xs hover:bg-amber-400 transition cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.3)] shrink-0 flex items-center gap-2"
         >
-          Desbloquear Tudo por R$ 39,90/mês <ArrowRight className="w-4 h-4" />
+          Desbloquear Tudo por R$ 197/mês <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>
