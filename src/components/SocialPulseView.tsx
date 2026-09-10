@@ -10,21 +10,29 @@ const NICHOS = [
 
 const REDES_OPTIONS = ['Instagram', 'Facebook', 'LinkedIn', 'TikTok'];
 
-const UNSPLASH_QUERIES: Record<string, string> = {
-  'Restaurantes & Gastronomia': 'restaurant,food,dining',
-  'Odontologia & Estética': 'dental,clinic,healthcare',
-  'Advocacia & Direito': 'law,office,business',
-  'Barbearias & Estética': 'barbershop,style,grooming',
-  'Automotivo & Serviços': 'car,automotive,mechanic',
-  'Comércio Local': 'store,shopping,retail',
-  'Construção Civil': 'construction,building',
-  'Imobiliário': 'house,realestate,property',
-  'Educação & Cursos': 'education,learning,books',
-  'Tecnologia & SaaS': 'technology,laptop,coding',
-  'Saúde & Bem-estar': 'health,wellness,medical',
-  'Academia & Fitness': 'gym,fitness,workout',
-  'Pet Shop / Veterinário': 'pet,dog,cat',
+const UNSPLASH_PHOTOS: Record<string, string> = {
+  'Restaurantes & Gastronomia': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+  'Odontologia & Estética': 'https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&w=800&q=80',
+  'Advocacia & Direito': 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80',
+  'Barbearias & Estética': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80',
+  'Automotivo & Serviços': 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=800&q=80',
+  'Comércio Local': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+  'Construção Civil': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
+  'Imobiliário': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
+  'Educação & Cursos': 'https://images.unsplash.com/photo-1523050854058-8df90110c476?auto=format&fit=crop&w=800&q=80',
+  'Tecnologia & SaaS': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+  'Saúde & Bem-estar': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80',
+  'Academia & Fitness': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
+  'Pet Shop / Veterinário': 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=800&q=80',
 };
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80';
+
+function getUnsplashImageUrl(nicho: string, idx: number): string {
+  const directUrl = UNSPLASH_PHOTOS[nicho];
+  if (directUrl) return directUrl;
+  return FALLBACK_IMAGE;
+}
 
 const FORMATO_ICONS: Record<string, any> = {
   Carrossel: LayoutGrid,
@@ -77,8 +85,7 @@ function PublicationCard({ post, nicho, idx, copiedIdx, onCopy }: {
   const FormatIcon = FORMATO_ICONS[post.formato] || Image;
   const formatColor = FORMATO_COLORS[post.formato] || FORMATO_COLORS.Banner;
 
-  const unsplashQuery = UNSPLASH_QUERIES[nicho] || 'business,office';
-  const imageUrl = `https://source.unsplash.com/featured/600x600/?${unsplashQuery}&sig=${idx}`;
+  const imageUrl = getUnsplashImageUrl(nicho, idx);
 
   const fullCopy = `${post.legendaCompleta}\n\n${post.hashtags.join(' ')}`;
 
@@ -87,7 +94,15 @@ function PublicationCard({ post, nicho, idx, copiedIdx, onCopy }: {
       <div className="flex flex-col md:flex-row">
         {/* LEFT: Image Preview */}
         <div className="relative w-full md:w-64 h-48 md:h-auto bg-[#191a1b] flex-shrink-0 overflow-hidden">
-          <img src={imageUrl} alt="Preview da arte" className="w-full h-full object-cover opacity-80" loading="lazy" />
+          <img
+            src={imageUrl}
+            alt="Preview da arte"
+            className="w-full h-full object-cover opacity-80"
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = FALLBACK_IMAGE;
+            }}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           {/* Text overlay on image */}
           <div className="absolute bottom-3 left-3 right-3">
@@ -146,7 +161,25 @@ function PublicationCard({ post, nicho, idx, copiedIdx, onCopy }: {
                 {copiedIdx === idx ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                 {copiedIdx === idx ? 'Copiado!' : 'Copiar Legenda'}
               </button>
-              <button className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-[#8a8f98] text-[10px] font-bold flex items-center gap-1 cursor-pointer transition">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(imageUrl);
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `arte-${nicho.replace(/\s+/g, '-').toLowerCase()}-${idx + 1}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  } catch {
+                    window.open(imageUrl, '_blank');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-[#8a8f98] text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
+              >
                 <Download className="w-3 h-3" /> Baixar Arte
               </button>
             </div>

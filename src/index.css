@@ -146,3 +146,12 @@
 .glow-hover:hover { box-shadow: 0 0 25px rgba(212, 165, 116, 0.25); border-color: rgba(212, 165, 116, 0.5); }
 
 .text-glow { text-shadow: 0 0 16px rgba(212, 165, 116, 0.35); }
+
+/* Hide scrollbar for horizontal carousels */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

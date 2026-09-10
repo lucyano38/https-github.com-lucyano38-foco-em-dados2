@@ -1,22 +1,22 @@
 import React from 'react';
-import { CheckCircle2, Zap, ArrowRight, ShieldCheck, Sparkles, Globe, Server, Bot, ShoppingCart, Wrench } from 'lucide-react';
+import { CheckCircle2, Zap, ArrowRight, ShieldCheck, Sparkles, Globe, Server, ShoppingCart, Wrench } from 'lucide-react';
 
 const PLANS = [
   {
     id: 'starter', name: 'Starter', tag: 'Entrada', price: '97', period: '/mês',
-    description: 'Para profissionais autônomos e pequenos negócios.',
+    description: 'Automação básica do WhatsApp com agente inteligente.',
     features: ['1 Conexão WhatsApp Ativa', 'Até 1.000 conversas automatizadas/mês', 'Agendamento integrado Google Agenda', 'Exportação de contatos para Excel'],
     cta: 'Assinar Starter', popular: false,
   },
   {
     id: 'business', name: 'Business', tag: 'Crescimento', price: '197', period: '/mês',
-    description: 'Para empresas com equipe e múltiplos atendentes.',
+    description: 'Motor de Prospecção B2B + Agente Hermes completo.',
     features: ['WhatsApp + Instagram + Messenger', 'Conversas ilimitadas com Agente Hermes', 'Filtro Geográfico B2B e Radar de Prospecção', 'Transbordo para até 5 atendentes humanos'],
     cta: 'Assinar Business', popular: false,
   },
   {
-    id: 'premium', name: 'Premium Especial', tag: 'Exclusivo Anual', price: '197', period: '/mês*',
-    periodNote: '*Faturamento anual promocional por tempo limitado',
+    id: 'premium', name: 'Premium Anual', tag: 'Exclusivo', price: '997', period: '/ano',
+    periodNote: '',
     description: 'Acesso irrestrito a todos os módulos com condição histórica.',
     features: ['Tudo do plano Business incluso', 'Extração B2B Ilimitada (com e sem site)', 'Agente Hermes personalizado com a voz da sua marca', 'Suporte prioritário via WhatsApp VIP'],
     cta: 'Garantir Oferta Especial', popular: true,
@@ -29,8 +29,8 @@ interface PricingSectionProps {
 
 export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan }) => {
   return (
-    <section id="planos" className="py-24 px-4 md:px-12 relative border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-      <div className="max-w-7xl mx-auto space-y-16">
+    <section id="planos" className="py-24 px-4 md:px-12 relative border-t bg-slate-950/80 backdrop-blur-md overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+      <div className="max-w-7xl mx-auto space-y-16 relative z-10">
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
             style={{ border: '1px solid rgba(212,165,116,0.3)', background: 'rgba(212,165,116,0.1)', color: '#d4a574' }}>
@@ -139,7 +139,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan }) 
       {/* ═══════════════════════════════════════════════════════════
           TABELA DE SERVIÇOS SOB DEMANDA
           ═══════════════════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto pt-16 space-y-12">
+      <div className="max-w-7xl mx-auto pt-16 space-y-12 relative z-10">
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
             style={{ border: '1px solid rgba(212,165,116,0.3)', background: 'rgba(212,165,116,0.1)', color: '#d4a574' }}>
@@ -154,30 +154,30 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan }) 
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {[
             {
               icon: Globe, name: 'Site Simples (Landing Page)',
               desc: 'Página única profissional com captação de leads, WhatsApp integrado e SEO básico.',
-              price: '297', period: 'único', color: '#3b82f6',
+              price: '297', period: 'Taxa única', color: '#3b82f6',
             },
             {
               icon: Server, name: 'Site Institucional Completo',
               desc: 'Multi-página com sobre, serviços, depoimentos, blog e formulário de contato.',
-              price: '597', period: 'único', color: '#8b5cf6',
+              price: '597', period: 'Taxa única', color: '#8b5cf6',
             },
             {
               icon: ShoppingCart, name: 'Loja Virtual / E-commerce',
               desc: 'Catálogo de produtos, carrinho, pagamento integrado (Stripe/PIX) e painel de pedidos.',
-              price: '997', period: 'único', color: '#10b981',
+              price: '997', period: 'Taxa única', color: '#10b981',
             },
             {
-              icon: Bot, name: 'Automação WhatsApp com IA (Hermes)',
-              desc: 'Agente inteligente 24/7, respostas automáticas, qualificação de leads e agendamento.',
-              price: '197', period: '/mês', color: '#d4a574',
+              icon: Bot, name: 'Automação WhatsApp com IA',
+              desc: 'Agente inteligente com atendimento 24/7, qualificação de leads e transferência para humanos.',
+              price: '197', period: '/mês', color: '#f59e0b',
             },
             {
-              icon: Server, name: 'Hospedagem e Manutenção',
+              icon: Wrench, name: 'Hospedagem e Manutenção',
               desc: 'Servidor dedicado, SSL, backups diários, atualizações de segurança e suporte técnico.',
               price: '49,90', period: '/mês', color: '#06b6d4',
             },

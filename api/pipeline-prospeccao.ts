@@ -15,8 +15,11 @@ const NICHOS_SEARCH: Record<string, string[]> = {
   'saúde': ['clinica', 'hospital', 'farmacia', 'consultorio'],
   'advocacia': ['lawyer', 'advogado', 'escritorio de advocacia', 'cartorio'],
   'advogado': ['lawyer', 'advogado', 'escritorio de advocacia'],
-  'barbearia': ['hairdresser', 'barbearia', 'salao de beleza', 'estetica', 'beauty salon'],
-  'estética': ['beauty salon', 'salao de beleza', 'estetica', 'spa'],
+  'barbearia': ['barbearia', 'barber shop', 'hairdresser', 'salao de beleza', 'salão de beleza', 'estetica', 'beauty salon', 'cabeleireiro', 'barbeiro', 'hair salon'],
+  'estética': ['beauty salon', 'salao de beleza', 'salão de beleza', 'estetica', 'spa', 'estetica facial', 'centro de estética', 'clínica de estética', 'depilação', 'manicure pedicure'],
+  'salão': ['salao de beleza', 'salão de beleza', 'hairdresser', 'hair salon', 'barbearia', 'beauty salon', 'cabeleireiro', 'estetica'],
+  'cabelo': ['hairdresser', 'hair salon', 'barbearia', 'salao de beleza', 'cabeleireiro', 'barber shop'],
+  'beauty': ['beauty salon', 'salao de beleza', 'estetica', 'spa', 'hair salon', 'barbearia'],
   'automotivo': ['car repair', 'oficina mecanica', 'auto pecas', 'car wash', 'lavagem de carros'],
   'comércio': ['supermarket', 'supermercado', 'loja', 'convenience store', 'mercado'],
   'loja': ['loja', 'store', 'mercado', 'shopping'],
@@ -107,8 +110,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const seenIds = new Set<string>();
     const diag: string[] = [];
 
-    // Execute searches in parallel (max 5 concurrent)
-    const searchTermSlices = searchTerms.slice(0, 5);
+    // Execute searches in parallel (max 8 concurrent for richer coverage)
+    const searchTermSlices = searchTerms.slice(0, 8);
     const searchPromises = searchTermSlices.map(term => {
       const q = `${term} ${cidade.split('/')[0]}`;
       return searchNominatim(q, lat, lon, Math.ceil(limit / searchTermSlices.length));
@@ -136,6 +139,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     diag.push(`[Total] ${allResults.length} empresas dentro do raio`);
+
+    /* ── 2b. Composite fallback when too few results ── */
+    if (allResults.length < 5) {
+      const termLower = nicho.toLowerCase();
+      let compositeQuery = '';
+      const cidadeName = cidade.split('/')[0] || cidade;
+      if (termLower.includes('barbearia') || termLower.includes('barba') || termLower.includes('salão') || termLower.includes('salao') || termLower.includes('estética') || termLower.includes('estetica') || termLower.includes('beleza') || termLower.includes('cabelo')) {
+        compositeQuery = `Barbearia e Salão de Beleza em ${cidadeName}`;
+      } else if (termLower.includes('restaurante') || termLower.includes('gastronomia') || termLower.includes('food')) {
+        compositeQuery = `Restaurante e Lanchonete em ${cidadeName}`;
+      } else if (termLower.includes('academia') || termLower.includes('fitness') || termLower.includes('gym')) {
+        compositeQuery = `Academia e Fitness em ${cidadeName}`;
+      } else if (termLower.includes('pet') || termLower.includes('veterin')) {
+        compositeQuery = `Pet Shop e Veterinária em ${cidadeName}`;
+      }
+      if (compositeQuery) {
+        diag.push(`[Fallback] Busca composta: "${compositeQuery}"`);
+        const compResults = await searchNominatim(compositeQuery, lat, lon, Math.min(limit, 20));
+        for (const r of compResults) {
+          const placeId = r.place_id || r.osm_id;
+          if (seenIds.has(String(placeId))) continue;
+          seenIds.add(String(placeId));
+          const rLat = parseFloat(r.lat);
+          const rLon = parseFloat(r.lon);
+          if (isNaN(rLat) || isNaN(rLon)) continue;
+          const dist = haversine(lat, lon, rLat, rLon);
+          if (dist > raioMax) continue;
+          allResults.push({ ...r, _distancia: dist });
+        }
+        diag.push(`[Fallback] +${compResults.filter((r: any) => !seenIds.has(String(r.place_id || r.osm_id))).length} resultados compostos`);
+      }
+    }
 
     /* ── 3. Normalizar em leads ── */
     const leadsReais: any[] = [];

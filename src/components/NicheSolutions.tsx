@@ -51,14 +51,14 @@ export const NicheSolutions: React.FC<NicheSolutionsProps> = ({ onOpenPaywall })
   const IconComponent = current.icon;
 
   return (
-    <section className="py-16 relative z-10 max-w-6xl mx-auto px-4">
+    <section className="py-16 relative z-10 max-w-6xl mx-auto px-4 md:px-8">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-extrabold text-white mb-2">Soluções Sob Medida para o Seu Nicho</h2>
         <p className="text-xs text-slate-300">Aumente seu faturamento resolvendo gargalos reais de atendimento e prospecção.</p>
       </div>
 
-      {/* Abas com fundo sólido e alto contraste */}
-      <div className="flex justify-center gap-3 mb-8 overflow-x-auto pb-2">
+      {/* Abas com fundo sólido e alto contraste - Mobile carousel */}
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mb-8 pb-4 no-scrollbar md:grid md:grid-cols-4 md:overflow-visible md:snap-none md:pb-0">
         {(Object.keys(niches) as Array<keyof typeof niches>).map((key) => {
           const niche = niches[key];
           const Icon = niche.icon;
@@ -67,21 +67,21 @@ export const NicheSolutions: React.FC<NicheSolutionsProps> = ({ onOpenPaywall })
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs transition-all border ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-xs transition-all border min-w-[160px] flex-shrink-0 snap-center md:min-w-0 md:flex-1 text-ellipsis overflow-hidden whitespace-nowrap ${
                 isActive
                   ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/20'
                   : 'bg-slate-900/90 text-slate-300 border-slate-700/80 hover:bg-slate-800'
               }`}
             >
-              <Icon className="w-4 h-4" />
-              <span>{niche.title}</span>
+              <Icon className="w-4 h-4 shrink-0" />
+              <span className="text-ellipsis overflow-hidden whitespace-nowrap">{niche.title}</span>
             </button>
           );
         })}
       </div>
 
       {/* Card Principal Opaco com Leitura Nítida */}
-      <div className="bg-slate-900/95 border border-slate-700/80 rounded-2xl p-8 grid md:grid-cols-2 gap-8 items-center backdrop-blur-xl shadow-2xl">
+      <div className="bg-slate-900/95 border border-slate-700/80 rounded-2xl p-5 md:p-8 grid md:grid-cols-2 gap-6 md:gap-8 items-center backdrop-blur-xl shadow-2xl">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-xs font-semibold mb-4">
             <IconComponent className="w-4 h-4" />

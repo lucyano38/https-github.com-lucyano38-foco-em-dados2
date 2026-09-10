@@ -27,6 +27,7 @@ const NICHOS = [
 
 interface FontesInfo {
   overpass: number;
+  nominatim?: number;
   googlePlaces: number;
   cnaeBrasilAPI: number;
   total: number;
@@ -87,18 +88,13 @@ export const HermesGrowthEngineView: React.FC = () => {
   const [autopilotOpen, setAutopilotOpen] = useState(false);
   const [autopilotAtivo, setAutopilotAtivo] = useState(false);
   const [autopilotSpeed, setAutopilotSpeed] = useState<45000 | 90000 | 180000>(90000);
-  const [autopilotNichoIdx, setAutopilotNichoIdx] = useState(0);
-  const [autopilotCidadeIdx, setAutopilotCidadeIdx] = useState(0);
   const [autopilotRunCount, setAutopilotRunCount] = useState(0);
   const [autopilotLogs, setAutopilotLogs] = useState<string[]>([
     'Hermes Growth Engine inicializado.',
     'Aguardando ativação do Modo Autopiloto.',
   ]);
   const autopilotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autopilotNichoIdxRef = useRef(0);
-  const autopilotCidadeIdxRef = useRef(0);
 
-  const AUTOPILOT_CIDADES = ['Barueri/SP', 'Itupeva/SP', 'Campinas/SP', 'Jundiaí/SP', 'Sorocaba/SP'];
   const AUTOPILOT_SPEED_OPTIONS = [
     { value: 45000 as const, label: '⚡ Rápido (45s)' },
     { value: 90000 as const, label: '🔄 Normal (90s)' },
@@ -106,6 +102,12 @@ export const HermesGrowthEngineView: React.FC = () => {
   ];
 
   const activeNicho = customNicho.trim() || nicho;
+
+  // Refs that mirror the user's current form selections so autopilot uses them
+  const activeNichoRef = useRef(activeNicho);
+  const activeCidadeRef = useRef(cidade);
+  useEffect(() => { activeNichoRef.current = activeNicho; }, [activeNicho]);
+  useEffect(() => { activeCidadeRef.current = cidade; }, [cidade]);
 
   const updateStep = (id: string, status: PipelineStep['status']) => {
     setPipelineSteps(prev => prev.map(s => s.id === id ? { ...s, status } : s));
@@ -213,8 +215,9 @@ export const HermesGrowthEngineView: React.FC = () => {
   };
 
   const runAutopilotCycle = useCallback(async () => {
-    const nichoAtual = NICHOS[autopilotNichoIdxRef.current % NICHOS.length];
-    const cidadeAtual = AUTOPILOT_CIDADES[autopilotCidadeIdxRef.current % AUTOPILOT_CIDADES.length];
+    // Use user's current form selections instead of hardcoded rotation
+    const nichoAtual = activeNichoRef.current;
+    const cidadeAtual = activeCidadeRef.current;
     const ts = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     setAutopilotLogs(prev => [
@@ -228,7 +231,7 @@ export const HermesGrowthEngineView: React.FC = () => {
       const res = await fetch('/api/pipeline-prospeccao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho: nichoAtual, cidade: cidadeAtual, raio, maxResults: 15 }),
+        body: JSON.stringify({ nicho: nichoAtual, customNicho: customNicho.trim() || undefined, cidade: cidadeAtual, raio, maxResults: 15 }),
       });
       const text = await res.text();
       let data: any;
@@ -264,22 +267,16 @@ export const HermesGrowthEngineView: React.FC = () => {
         setAutopilotLogs(prev => [`✅ [${ts()}] ${Math.min(leadsCount, 5)} leads salvos no CRM automaticamente`, ...prev]);
       }
 
-      // Advance rotation
-      autopilotNichoIdxRef.current++;
-      if ((autopilotNichoIdxRef.current) % 3 === 0) {
-        autopilotCidadeIdxRef.current++;
-      }
+      // Advance cycle count (using user's form selections, no rotation needed)
       autopilotRunCountRef.current++;
-      setAutopilotNichoIdx(autopilotNichoIdxRef.current);
-      setAutopilotCidadeIdx(autopilotCidadeIdxRef.current);
       setAutopilotRunCount(autopilotRunCountRef.current);
 
-      setAutopilotLogs(prev => [`⏰ [${ts()}] Próximo: ${NICHOS[autopilotNichoIdxRef.current % NICHOS.length]} em ${AUTOPILOT_CIDADES[autopilotCidadeIdxRef.current % AUTOPILOT_CIDADES.length]}`, ...prev]);
+      setAutopilotLogs(prev => [`⏰ [${ts()}] Próximo: ${activeNichoRef.current} em ${activeCidadeRef.current}`, ...prev]);
 
     } catch (err: any) {
       setAutopilotLogs(prev => [`❌ [${ts()}] Erro: ${err.message || 'desconhecido'}`, ...prev]);
     }
-  }, [raio, ticketTarget, mrrTarget]);
+  }, [raio, ticketTarget, mrrTarget, customNicho]);
 
   const autopilotRunCountRef = useRef(0);
 
@@ -289,16 +286,14 @@ export const HermesGrowthEngineView: React.FC = () => {
     const ts = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     if (next) {
-      autopilotNichoIdxRef.current = 0;
-      autopilotCidadeIdxRef.current = 0;
       autopilotRunCountRef.current = 0;
       setAutopilotRunCount(0);
       setAutopilotLogs([
         `🚀 [${ts()}] ═══ AUTOPILOTO ATIVADO ═══`,
         `⚙️ Velocidade: ${autopilotSpeed / 1000}s por ciclo`,
-        `📋 Rotacionando ${NICHOS.length} nichos × ${AUTOPILOT_CIDADES.length} cidades`,
-        `🎯 Ticket: R$ ${ticketTarget} | MRR: R$ ${mrrTarget}/mês`,
-        `📍 Iniciando: ${NICHOS[0]} em ${AUTOPILOT_CIDADES[0]}`,
+        `🎯 Nicho: ${activeNichoRef.current}`,
+        `📍 Cidade: ${activeCidadeRef.current} (raio ${raio}km)`,
+        `💰 Ticket: R$ ${ticketTarget} | MRR: R$ ${mrrTarget}/mês`,
       ]);
       // Run first cycle immediately
       runAutopilotCycle();
@@ -574,11 +569,11 @@ export const HermesGrowthEngineView: React.FC = () => {
                 <div className="text-[10px] text-[#8a8f98]">Redesigns</div>
               </div>
               <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
-                <div className="text-[11px] font-bold text-blue-400 truncate">{NICHOS[autopilotNichoIdx % NICHOS.length].split(' ')[0]}</div>
+                <div className="text-[11px] font-bold text-blue-400 truncate">{activeNicho.split(' ')[0]}</div>
                 <div className="text-[10px] text-[#8a8f98]">Nicho Atual</div>
               </div>
               <div className="bg-[#010102] border border-white/[0.08] p-3 rounded-xl">
-                <div className="text-[11px] font-bold text-purple-400 truncate">{AUTOPILOT_CIDADES[autopilotCidadeIdx % AUTOPILOT_CIDADES.length].split('/')[0]}</div>
+                <div className="text-[11px] font-bold text-purple-400 truncate">{cidade.split('/')[0]}</div>
                 <div className="text-[10px] text-[#8a8f98]">Cidade Atual</div>
               </div>
             </div>

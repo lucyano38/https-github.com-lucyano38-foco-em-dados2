@@ -3009,7 +3009,7 @@ export default app;
     if (term.includes("advocacia") || term.includes("advogado") || term.includes("jurídic") || term.includes("juridic") || term.includes("escritório") || term.includes("escritorio"))
       return ["node[\"office\"=\"lawyer\"]","node[\"office\"=\"government\"]"].join("; ");
     if (term.includes("barbearia") || term.includes("barba") || term.includes("cabelo") || term.includes("salão") || term.includes("salao") || term.includes("estética") || term.includes("estetica") || term.includes("beleza"))
-      return ["node[\"shop\"=\"hairdresser\"]","node[\"shop\"=\"beauty\"]","node[\"shop\"=\"cosmetics\"]"].join("; ");
+      return ["node[\"shop\"=\"barber\"]","node[\"shop\"=\"beauty\"]","node[\"shop\"=\"hairdresser\"]","node[\"shop\"=\"cosmetics\"]","way[\"shop\"=\"barber\"]","way[\"shop\"=\"beauty\"]","way[\"shop\"=\"hairdresser\"]","relation[\"shop\"=\"barber\"]","relation[\"shop\"=\"beauty\"]","relation[\"shop\"=\"hairdresser\"]"].join("; ");
     if (term.includes("comércio") || term.includes("comercio") || term.includes("loja") || term.includes("varejo") || term.includes("mercado") || term.includes("supermercado"))
       return ["node[\"shop\"=\"supermarket\"]","node[\"shop\"=\"convenience\"]","node[\"shop\"=\"general\"]","node[\"shop\"=\"department_store\"]"].join("; ");
     if (term.includes("constru") || term.includes("obra") || term.includes("engenharia") || term.includes("arquitetura") || term.includes("material de construção"))
@@ -3088,12 +3088,12 @@ export default app;
 
       const lat = parseFloat(geoData[0].lat);
       const lon = parseFloat(geoData[0].lon);
-      const raioMetros = (parseInt(raio) || 15) * 1000;
+      const raioMetros = Math.min(parseInt(raio) || 15, 25) * 1000; // cap at 25km to avoid Overpass timeout
       const limit = Math.min(parseInt(maxResults) || 20, 50);
 
       const overpassFilter = getOverpassFilter(nicho, customNicho);
       const overpassQueries = overpassFilter.split(";").filter(Boolean).map(q => `${q}(around:${raioMetros},${lat},${lon})`);
-      const query = `[out:json][timeout:25];(${overpassQueries.join("; ")});out tags ${limit};`;
+      const query = `[out:json][timeout:25];(${overpassQueries.join("; ")});out body ${limit};>;out skel qt;`;
 
       let elements: any[] = [];
 
@@ -3105,13 +3105,22 @@ export default app;
         console.warn("[Pipeline] Overpass falhou:", (overpassErr as Error).message);
       }
 
-      // Fallback: Nominatim search
-      if (elements.length === 0) {
+      // Fallback: Nominatim search when Overpass returns too few results
+      if (elements.length < 5) {
         try {
           const searchNicho = customNicho || nicho;
-          const firstWord = searchNicho.split(" ")[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const termLower = searchNicho.toLowerCase();
+          // Richer fallback queries for barbearia/beauty niches
+          let nomQuery: string;
+          const cidadeName = cidade.split("/")[0] || cidade;
+          if (termLower.includes("barbearia") || termLower.includes("barba") || termLower.includes("salão") || termLower.includes("salao") || termLower.includes("estética") || termLower.includes("estetica") || termLower.includes("beleza") || termLower.includes("cabelo")) {
+            nomQuery = `Barbearia e Salão de Beleza em ${cidadeName}`;
+          } else {
+            const firstWord = searchNicho.split(" ")[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            nomQuery = `${firstWord} ${cidadeName}`;
+          }
           const nomRes = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(firstWord + " " + cidade)}&addressdetails=1&limit=${limit}`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(nomQuery)}&addressdetails=1&extratags=1&limit=${limit}`,
             { headers: { "User-Agent": "FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)" } }
           );
           const nomData = await nomRes.json();
@@ -3121,7 +3130,7 @@ export default app;
               lat: parseFloat(n.lat),
               lon: parseFloat(n.lon),
               tags: {
-                name: (n.display_name || "").split(",")[0] || firstWord,
+                name: (n.display_name || "").split(",")[0] || nomQuery,
                 phone: n.extratags?.phone || n.extratags?.["contact:phone"] || null,
                 website: n.extratags?.website || n.extratags?.["contact:website"] || null,
                 email: n.extratags?.email || n.extratags?.["contact:email"] || null,

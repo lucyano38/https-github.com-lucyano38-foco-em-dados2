@@ -73,7 +73,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
         loop 
         muted 
         playsInline 
-        className="fixed inset-0 w-full h-full object-cover z-0 opacity-40 pointer-events-none"
+        className="fixed inset-0 w-full h-full object-cover z-0 opacity-45 pointer-events-none"
       >
         <source src="/bg.mp4" type="video/mp4" />
       </video>
