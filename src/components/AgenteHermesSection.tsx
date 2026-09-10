@@ -64,7 +64,7 @@ export const AgenteHermesSection: React.FC = () => {
 
         <div className="text-center">
           <p className="text-xs text-slate-500">
-            Disponível no plano Premium · R$ 197/mês
+            Disponível no plano Business · R$ 197/mês
           </p>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Zap, ArrowRight, ShieldCheck, Sparkles, Globe, Server, ShoppingCart, Wrench } from 'lucide-react';
+import { CheckCircle2, Zap, ArrowRight, ShieldCheck, Sparkles, Globe, Server, ShoppingCart, Wrench, Bot } from 'lucide-react';
 
 const PLANS = [
   {
