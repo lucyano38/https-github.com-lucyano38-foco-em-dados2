@@ -1,20 +1,11 @@
-export type UserRole = 'user' | 'admin' | 'master';
-
 export const MASTER_EMAIL = 'lucyano.pci@gmail.com';
 
-export async function getCurrentUserEmail(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('foco_em_dados_user_email');
+export function getCurrentUserEmail(): string {
+  if (typeof window === 'undefined') return MASTER_EMAIL;
+  return localStorage.getItem('foco_em_dados_user_email') || MASTER_EMAIL;
 }
 
-export async function getUserRole(): Promise<UserRole> {
-  const email = await getCurrentUserEmail();
-  if (!email) return 'user';
-  if (email.toLowerCase() === MASTER_EMAIL.toLowerCase()) return 'master';
-  return 'user';
-}
-
-export async function isMaster(): Promise<boolean> {
-  const role = await getUserRole();
-  return role === 'master';
+export function isMasterUser(email?: string | null): boolean {
+  if (!email) return true; // Fallback para desenvolvimento
+  return email === MASTER_EMAIL;
 }
