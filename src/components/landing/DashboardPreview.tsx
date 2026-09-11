@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { TrendingUp, CreditCard, Bell, Settings, Activity, Layers, BarChart3, Globe2, RefreshCw, Users, ArrowUpRight } from 'lucide-react';
 
-interface DashboardPreviewProps {
-  onOpenDashboard?: () => void;
-}
-
-export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashboard }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'activity'>('overview');
+export const DashboardPreview: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = () => {
@@ -22,7 +17,7 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#d4a574] to-transparent opacity-60" />
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar UI navigation */}
+            {/* Sidebar UI navigation — purely visual */}
             <div className="w-full lg:w-60 space-y-5 hidden md:block shrink-0">
               <div className="h-11 rounded-xl flex items-center px-4 gap-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="w-2.5 h-2.5 rounded-full bg-[#d4a574] animate-pulse" />
@@ -31,27 +26,26 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 pointer-events-none select-none">
                 {[
-                  { icon: Layers, label: 'Visão Integrada', tab: 'overview' as const },
-                  { icon: Globe2, label: 'Radar B2B', tab: 'analytics' as const },
-                  { icon: Activity, label: 'Agente Hermes 24/7', tab: 'activity' as const },
-                  { icon: BarChart3, label: 'Pipeline de Leads', tab: 'overview' as const },
+                  { icon: Layers, label: 'Visão Integrada', active: true },
+                  { icon: Globe2, label: 'Radar B2B', active: false },
+                  { icon: Activity, label: 'Agente Hermes 24/7', active: false },
+                  { icon: BarChart3, label: 'Pipeline de Leads', active: false },
                 ].map((item) => (
-                  <button
+                  <div
                     key={item.label}
-                    onClick={() => setActiveTab(item.tab)}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left"
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left cursor-default transition-all duration-300"
                     style={{
-                      background: activeTab === item.tab ? 'rgba(212,165,116,0.15)' : 'rgba(255,255,255,0.05)',
-                      color: activeTab === item.tab ? '#d4a574' : '#8a8f98',
-                      border: `1px solid ${activeTab === item.tab ? 'rgba(212,165,116,0.3)' : 'rgba(255,255,255,0.05)'}`,
-                      boxShadow: activeTab === item.tab ? '0 0 12px rgba(212,165,116,0.15)' : 'none',
+                      background: item.active ? 'rgba(212,165,116,0.15)' : 'rgba(255,255,255,0.05)',
+                      color: item.active ? '#d4a574' : '#8a8f98',
+                      border: `1px solid ${item.active ? 'rgba(212,165,116,0.3)' : 'rgba(255,255,255,0.05)'}`,
+                      boxShadow: item.active ? '0 0 12px rgba(212,165,116,0.15)' : 'none',
                     }}
                   >
                     <item.icon className="w-4 h-4 text-[#d4a574]" />
                     <span>{item.label}</span>
-                  </button>
+                  </div>
                 ))}
               </div>
 
@@ -63,7 +57,7 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                     <span className="text-[11px] font-bold text-emerald-400">18ms</span>
                   </div>
                   <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                    <div className="bg-emerald-400 h-full w-[94%]" />
+                    <div className="bg-emerald-400 h-full w-[94%] animate-pulse" />
                   </div>
                   <div className="text-[10px] pt-1" style={{ color: '#62666d' }}>Operando no cluster SP-1</div>
                 </div>
@@ -83,27 +77,25 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleRefresh}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: refreshing ? '#d4a574' : '#8a8f98' }}
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-default"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#8a8f98' }}
                     title="Atualizar dados"
                   >
                     <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                  </button>
+                  </div>
 
-                  <button
-                    onClick={onOpenDashboard}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-default"
                     style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#8a8f98' }}
                     title="Configurações"
                   >
                     <Settings className="w-4 h-4" />
-                  </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Metrics Grid */}
+              {/* Metrics Grid — animated counters */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
                 {[
                   { label: 'Total de Leads', value: '12.845', trend: '+14.2% este mês', icon: Users, trendColor: '#10b981' },
@@ -113,7 +105,7 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                 ].map((metric) => (
                   <div
                     key={metric.label}
-                    className="p-5 rounded-2xl glow-hover transition-all"
+                    className="p-5 rounded-2xl glow-hover transition-all duration-300 hover:scale-[1.02]"
                     style={{
                       background: 'rgba(15,16,17,0.7)',
                       border: `1px solid ${metric.highlight ? 'rgba(212,165,116,0.4)' : 'rgba(255,255,255,0.08)'}`,
@@ -132,7 +124,7 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                 ))}
               </div>
 
-              {/* Main Illustration Placeholder */}
+              {/* Main Illustration — decorative with hover zoom */}
               <div className="relative h-64 md:h-80 w-full rounded-2xl overflow-hidden group/banner" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div
                   className="w-full h-full bg-cover bg-center group-hover/banner:scale-105 transition-transform duration-700"
@@ -146,7 +138,7 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                 <div className="absolute inset-0 bg-gradient-to-t from-[#010102]/90 via-[#010102]/30 to-transparent flex items-end p-6 md:p-8">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.5)', boxShadow: '0 0 15px rgba(212,165,116,0.3)' }}>
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center animate-pulse" style={{ background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.5)', boxShadow: '0 0 15px rgba(212,165,116,0.3)' }}>
                         <Activity className="w-6 h-6 text-[#d4a574]" />
                       </div>
                       <div>
@@ -159,14 +151,13 @@ export const DashboardPreview: React.FC<DashboardPreviewProps> = ({ onOpenDashbo
                       </div>
                     </div>
 
-                    <button
-                      onClick={onOpenDashboard}
-                      className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all"
+                    <div
+                      className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-default hover:scale-105 transition-all"
                       style={{ background: '#d4a574', color: '#1c1917', boxShadow: '0 0 15px rgba(212,165,116,0.3)' }}
                     >
                       <span>Acessar Dashboard</span>
                       <ArrowUpRight className="w-4 h-4" />
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>

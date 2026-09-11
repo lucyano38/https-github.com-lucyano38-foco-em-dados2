@@ -1,10 +1,6 @@
 import React from 'react';
 
-interface HeroProps {
-  onOpenPaywall: () => void;
-}
-
-export const Hero: React.FC<HeroProps> = ({ onOpenPaywall }) => {
+export const Hero: React.FC = () => {
   return (
     <section className="relative z-10 bg-transparent py-20 text-slate-100">
       <div className="max-w-5xl mx-auto px-4 text-center">
@@ -29,7 +25,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPaywall }) => {
         {/* Botões de Ação */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={onOpenPaywall}
+            onClick={() => {
+              const el = document.getElementById('demonstracao');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
             className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-sm transition-all shadow-xl shadow-amber-500/20 border border-amber-300 flex items-center justify-center gap-2"
           >
             <span>Testar Grátis Agora</span>

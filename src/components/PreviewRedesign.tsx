@@ -317,7 +317,7 @@ export default function PreviewRedesign() {
           <a href={waEmpresa} target="_blank" rel="noopener noreferrer"
             className="bg-stone-950 hover:bg-stone-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] border border-white/10">
             <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <span>Aprovar Este Site — R$ 197/mês</span>
+            <span>Aprovar Este Site — R$ 39,90/mês</span>
           </a>
         </div>
       </div>
@@ -444,7 +444,7 @@ export default function PreviewRedesign() {
                 <div className="text-[11px] text-stone-400 mt-1">Implantação (pagamento único)</div>
               </div>
               <div className="bg-stone-950 border border-white/10 rounded-2xl p-5 text-center">
-                <div className={`text-2xl font-extrabold ${theme.color}`}>R$ 197</div>
+                <div className={`text-2xl font-extrabold ${theme.color}`}>R$ 39,90</div>
                 <div className="text-[11px] text-stone-400 mt-1">Mensalidade Ecossistema + IA</div>
               </div>
             </div>

@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { Stethoscope, Scissors, Store, CheckCircle2, ArrowRight } from 'lucide-react';
 
-interface NicheSolutionsProps {
-  onOpenPaywall: () => void;
-}
-
-export const NicheSolutions: React.FC<NicheSolutionsProps> = ({ onOpenPaywall }) => {
+export const NicheSolutions: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'clinicas' | 'barbearias' | 'comercio'>('clinicas');
 
   const niches = {
@@ -103,14 +99,17 @@ export const NicheSolutions: React.FC<NicheSolutionsProps> = ({ onOpenPaywall })
           <div>
             <span className="text-xs text-amber-400 font-mono">[Status: Automação Ativa]</span>
             <p className="text-xs font-semibold text-slate-200 mt-2 mb-4">
-              Libere o ecossistema completo para o seu negócio por apenas R$ 197/mês.
+              Libere o ecossistema completo para o seu negócio por apenas R$ 39,90/mês.
             </p>
           </div>
           <button
-            onClick={onOpenPaywall}
+            onClick={() => {
+              const el = document.getElementById('servicos');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
             className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/20"
           >
-            <span>Assinar Acesso Completo (R$ 197)</span>
+            <span>Assinar Acesso Completo (R$ 39,90)</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

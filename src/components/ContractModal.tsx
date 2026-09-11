@@ -21,7 +21,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contrato, onClose 
 
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   const valorFormatado = `R$ ${contrato.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-  const mesalidade = contrato.tipo.includes('SaaS') ? valorFormatado : 'R$ 197,00';
+  const mesalidade = contrato.tipo.includes('SaaS') ? valorFormatado : 'R$ 39,90';
 
   const handleDownload = () => {
     const content = printRef.current?.innerHTML || '';

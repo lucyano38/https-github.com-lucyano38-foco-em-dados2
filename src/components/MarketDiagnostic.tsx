@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ArrowRight, Filter, Mail, TrendingUp } from 'lucide-react';
 
-interface MarketDiagnosticProps {
-  onOpenPaywall?: () => void;
-}
-
-export const MarketDiagnostic: React.FC<MarketDiagnosticProps> = ({ onOpenPaywall }) => {
+export const MarketDiagnostic: React.FC = () => {
   const [cidade, setCidade] = useState('');
   const [nicho, setNicho] = useState('Dentistas');
   const [resultado, setResultado] = useState<any>(null);
@@ -125,7 +121,10 @@ export const MarketDiagnostic: React.FC<MarketDiagnosticProps> = ({ onOpenPaywal
             <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex flex-col justify-between">
               <span className="text-xs text-emerald-400 font-bold block mb-1">Oportunidade de Venda</span>
               <button
-                onClick={onOpenPaywall}
+                onClick={() => {
+                  const el = document.getElementById('servicos');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg flex items-center justify-center gap-1 transition-all mt-2"
               >
                 <span>Desbloquear Lista Completa</span>

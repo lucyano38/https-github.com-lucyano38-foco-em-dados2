@@ -187,7 +187,7 @@ export const RedesignModal: React.FC<RedesignModalProps> = ({
             <p className="text-slate-300 leading-relaxed">
               <strong>Cliente:</strong> {lead.nome} ({lead.nicho})<br />
               <strong>Solução:</strong> {temSite ? 'Redesign Visual Completo (Antes x Depois) + Alta Conversão' : 'Criação de Presença Digital do Zero + Automação'}<br />
-              <strong>Investimento:</strong> R$ 997,00 (Implantação) + R$ 197/mês (Ecossistema + IA).
+              <strong>Investimento:</strong> R$ 997,00 (Implantação) + R$ 39,90/mês (Ecossistema + IA).
             </p>
             <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-emerald-400 font-mono text-[11px]">
               ✓ Link seguro do contrato e proposta gerado: https://focoemdados.com.br/proposta/{lead.id}

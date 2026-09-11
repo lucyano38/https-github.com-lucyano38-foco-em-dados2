@@ -59,7 +59,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-sm font-semibold" aria-label="Fechar">✕</button>
         
         <h2 className="text-xl font-bold tracking-tight mb-1">Acessar Foco em Dados PRO</h2>
-        <p className="text-xs text-slate-400 mb-6">Entre com sua conta ou cadastre-se para acessar o ecossistema (R$ 197/mês).</p>
+        <p className="text-xs text-slate-400 mb-6">Entre com sua conta ou cadastre-se para acessar o ecossistema (R$ 39,90/mês).</p>
 
         {errorMsg && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">

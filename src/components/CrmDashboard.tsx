@@ -44,8 +44,8 @@ const LEADS_INICIAIS: LeadItem[] = [
 ];
 
 const CLIENTES_INICIAIS: ClienteItem[] = [
-  { id: 'c1', empresa: 'Tech Soluções', responsavel: 'Felipe Rocha', telefone: '(11) 94444-5555', plano: 'PRO R$ 197', valorMensal: 197, dataEntrada: '10/01/2025', status: 'Ativo' },
-  { id: 'c2', empresa: 'Bistrô Sabor & Arte', responsavel: 'Camila', telefone: '(11) 93333-6666', plano: 'PRO R$ 197', valorMensal: 197, dataEntrada: '15/02/2025', status: 'Ativo' }
+  { id: 'c1', empresa: 'Tech Soluções', responsavel: 'Felipe Rocha', telefone: '(11) 94444-5555', plano: 'PRO R$ 39,90', valorMensal: 39.90, dataEntrada: '10/01/2025', status: 'Ativo' },
+  { id: 'c2', empresa: 'Bistrô Sabor & Arte', responsavel: 'Camila', telefone: '(11) 93333-6666', plano: 'PRO R$ 39,90', valorMensal: 39.90, dataEntrada: '15/02/2025', status: 'Ativo' }
 ];
 
 const CONTRATOS_INICIAIS: ContratoItem[] = [

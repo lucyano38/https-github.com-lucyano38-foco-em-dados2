@@ -8,7 +8,7 @@ import { Navbar } from './Navbar';
 import { Hero } from './Hero';
 import { DashboardPreview } from './landing/DashboardPreview';
 import { ConversionFunnel } from './landing/ConversionFunnel';
-import { PricingSection } from './landing/PricingSection';
+import { ServicesPricing } from './landing/PricingSection';
 import { FaqSection } from './landing/FaqSection';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
@@ -22,46 +22,13 @@ interface LandingProps {
 
 export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveTab, isPro }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [loadingCheckout, setLoadingCheckout] = useState(false);
 
-  const [usuarioLogado, setUsuarioLogado] = useState<{ nome: string; email: string } | null>(() => {
-    try {
-      const u = localStorage.getItem('foco_usuario');
-      return u ? JSON.parse(u) : null;
-    } catch {
-      return null;
-    }
-  });
-
-    const handleNavegacao = (mode) => {
-    localStorage.setItem("foco_em_dados_auth", "true");
-    localStorage.setItem("foco_em_dados_pro", "true");
+  const handleNavegacao = (mode) => {
     if (typeof onStart === "function") {
       onStart(mode);
       return;
     }
     window.location.href = "/?mode=" + mode;
-  };
-
-  const handleCheckoutStripe = async (plano: string) => {
-    try {
-      setLoadingCheckout(true);
-      const response = await fetch('/api/criar-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plano })
-      });
-      const data = await response.json();
-      if (data.url || data.urlCheckout) {
-        window.location.href = data.url || data.urlCheckout;
-      } else {
-        window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03';
-      }
-    } catch {
-      window.location.href = 'https://buy.stripe.com/5kQbJ1gwj8VI6Cf4Lq5Vu03';
-    } finally {
-      setLoadingCheckout(false);
-    }
   };
 
   return (
@@ -83,17 +50,16 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
       <Navbar
         activeTab={activeTab || ''}
         setActiveTab={setActiveTab || (() => {})}
-        onOpenPaywall={() => handleCheckoutStripe('starter')}
         onEnterApp={(mode) => handleNavegacao(mode)}
         isPro={isPro || false}
       />
 
       {/* HERO PRINCIPAL */}
-      <Hero onOpenPaywall={() => handleCheckoutStripe('starter')} />
+      <Hero />
 
       {/* DASHBOARD PREVIEW — métricas interativas */}
       <div className="relative z-10">
-        <DashboardPreview onOpenDashboard={() => handleNavegacao('analytics')} />
+        <DashboardPreview />
       </div>
 
       {/* FUNIL DE CONVERSÃO */}
@@ -167,21 +133,21 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
 
       {/* SOLUÇÕES POR NICHO */}
       <section id="automacao">
-        <NicheSolutions onOpenPaywall={() => handleCheckoutStripe('starter')} />
+        <NicheSolutions />
       </section>
 
       {/* DIAGNÓSTICO DE MERCADO */}
-      <MarketDiagnostic onOpenPaywall={() => handleCheckoutStripe('starter')} />
+      <MarketDiagnostic />
 
       {/* AGENTE HERMES */}
       <AgenteHermesSection />
 
       {/* CTA DE CAPTURA */}
-      <LeadCaptureCTA onOpenPaywall={() => handleCheckoutStripe('starter')} />
+      <LeadCaptureCTA />
 
-      {/* PLANOS SAAS */}
+      {/* SERVIÇOS SOB DEMANDA */}
       <div className="relative z-10">
-        <PricingSection onSelectPlan={(planId) => handleCheckoutStripe(planId)} />
+        <ServicesPricing />
       </div>
 
       {/* FAQ */}

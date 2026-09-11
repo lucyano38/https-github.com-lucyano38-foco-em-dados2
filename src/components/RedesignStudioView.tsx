@@ -244,7 +244,7 @@ export const RedesignStudioView: React.FC<RedesignStudioViewProps> = ({
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
             <div className="text-xs text-slate-300">
-              <strong>Investimento Único:</strong> R$ 997,00 (Implantação) + R$ 197/mês (Ecossistema + IA).
+              <strong>Investimento Único:</strong> R$ 997,00 (Implantação) + R$ 39,90/mês (Ecossistema + IA).
             </div>
             <button onClick={() => alert('PDF da Proposta Comercial gerado com sucesso!')} className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-2">
               <Download className="w-4 h-4 text-amber-400" /> Gerar Proposta em PDF

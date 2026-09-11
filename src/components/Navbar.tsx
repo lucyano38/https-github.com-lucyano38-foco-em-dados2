@@ -4,7 +4,6 @@ import { MASTER_EMAILS } from '../lib/constants';
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  onOpenPaywall: () => void;
   onEnterApp?: (mode: string) => void;
   isPro: boolean;
 }
@@ -12,7 +11,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
-  onOpenPaywall,
   onEnterApp,
   isPro,
 }) => {
@@ -39,8 +37,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (hasAccess) {
       if (onEnterApp) onEnterApp(mode);
       else setActiveTab(mode);
-    } else {
-      onOpenPaywall();
     }
   };
 
@@ -93,10 +89,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <button
-          onClick={() => hasAccess ? handleEnterApp('growth') : onOpenPaywall()}
+          onClick={() => handleEnterApp('growth')}
           className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"
         >
-          {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 197'}
+          {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 39,90'}
         </button>
       </div>
     </header>

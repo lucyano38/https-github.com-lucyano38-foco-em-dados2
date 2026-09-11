@@ -17,11 +17,10 @@ function fallbackReply(message: string): string {
     return `📋 Planos Foco em Dados:
 
 🆓 Grátis — Upload de planilha (até 100 linhas)
-💎 Starter — R$ 97/mês — prospecção básica + preview redesign
-🚀 Business — R$ 197/mês — ilimitado + CRM + redesigns
-⚡ Premium — R$ 39,90/mês — ECOSISTEMA COMPLETO
+💎 Plataforma PRO — R$ 39,90/mês — Acesso ilimitado a todas as ferramentas
+🛠️ Serviços sob demanda: Landing Page R$297, Site Institucional R$597, E-commerce R$997
 
-O plano Premium inclui: OpenSquad AI (5 agentes), Automação WhatsApp, CRM completo, Analytics, e todas as funcionalidades.
+O plano PRO inclui: Acesso ilimitado a todas as ferramentas, Automação WhatsApp, CRM completo, Analytics, e todas as funcionalidades.
 
 Quer testar? Acesse focoemdados.com.br e comece grátis!`;
   }
@@ -106,7 +105,7 @@ Como funciona:
 ✉️ Automação de mensagens WhatsApp
 🤖 Agentes IA (OpenSquad) no plano Premium
 
-Preços: Planos de R$ 39,90/mês a R$ 197/mês
+Preços: Plataforma PRO R$ 39,90/mês
 Site: focoemdados.com.br`;
   }
 
@@ -146,7 +145,7 @@ async function geminiReply(message: string, history: Array<{role: string; text: 
     const ai = new genai.GoogleGenAI({ apiKey });
 
     const SITE_CONTEXT = `Você é o assistente virtual do "Foco em Dados" (focoemdados.com.br).
-Plataforma de prospecção B2B com IA. Planos: Grátis, Starter R$97, Business R$197, Premium R$39,90/mês.
+Plataforma de prospecção B2B com IA. Plataforma PRO: R$39,90/mês. Serviços sob demanda: Landing Page R$297, Site Institucional R$597, E-commerce R$997, Automação WhatsApp R$197/mês, Hospedagem R$49,90/mês.
 Funcionalidades: Hermes Growth Engine (prospecção), Preview Redesign IA, CRM, OpenSquad AI.
 WhatsApp: 55 11 99441-1307. Responda em português, seja direto e persuasivo.`;
 

@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Send, CheckCircle, Zap } from 'lucide-react';
 
-interface LeadCaptureCTAProps {
-  onOpenPaywall?: () => void;
-}
-
-export const LeadCaptureCTA: React.FC<LeadCaptureCTAProps> = ({ onOpenPaywall }) => {
+export const LeadCaptureCTA: React.FC = () => {
   const [nome, setNome] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [nicho, setNicho] = useState('Clínica');

@@ -2,7 +2,7 @@ import { HermesGrowthEngineView } from "./components/HermesGrowthEngineView";
 import { SocialPulseView } from "./components/SocialPulseView";
 import { LivePreviewView } from "./components/LivePreviewView";
 import PreviewRedesign from "./components/PreviewRedesign";
-import { isMasterAdmin } from "./lib/constants";
+import { isMasterAdmin, MASTER_EMAILS } from "./lib/constants";
 import { PowerBIDashboard } from "./components/PowerBIDashboard";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -581,7 +581,7 @@ export const App: React.FC = () => {
   const { suggestedQuestions, loadingSuggestions, chooseSuggested, fetchSuggestedQuestions } = useNavigationSuggestions(question, setQuestion, runAnalysis);
   const chartData = useChartData();
   const { environmentId, setEnvironmentId, config, configError, fetchConfig, handleSendCrmToAnalyst } = useEnvironmentConfig();
-  const { leads, loading, fetchAppLeads, addLead, moveLead } = useAppLeads();
+  const { leads, loading, fetchLeads, addLead, moveLead } = useAppLeads();
   const { mrrTotal, proposalCount, redesignedCount } = useComputedStats(leads);
   const [selectedFilesForUpload, setSelectedFilesForUpload] = useState<File[]>([]);
 
@@ -634,10 +634,27 @@ export const App: React.FC = () => {
 
   // Verifica assinatura no Supabase antes de liberar o ecossistema completo
   const ensureProAccess = useCallback(async () => {
-    const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario') || 'lucyano.pci@gmail.com';
-    localStorage.setItem('foco_em_dados_pro', 'true');
-    localStorage.setItem('foco_em_dados_auth', 'true');
-    return true;
+    const email = localStorage.getItem('foco_em_dados_user_email') || '';
+    const usuario = localStorage.getItem('foco_usuario');
+    let parsedEmail = email;
+    if (!parsedEmail && usuario) {
+      try {
+        const parsed = JSON.parse(usuario);
+        parsedEmail = parsed.email || '';
+      } catch { parsedEmail = ''; }
+    }
+    // Master users always have access
+    if (MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase())) {
+      return true;
+    }
+    // Check subscription from Supabase
+    try {
+      const { checkUserSubscription } = await import('./lib/subscription');
+      const status = await checkUserSubscription();
+      return status.isPro;
+    } catch {
+      return false;
+    }
   }, []);
 
   // Atualiza o e-mail do usuário a partir do login modal/localStorage
@@ -650,7 +667,7 @@ export const App: React.FC = () => {
       const allowed = await ensureProAccess();
       if (!allowed) {
         window.alert(
-          'O ecossistema completo exige o plano PRO (R$ 197/mês). Faça login e assine para continuar.'
+          'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Faça login e assine para continuar.'
         );
         return;
       }
@@ -695,8 +712,8 @@ export const App: React.FC = () => {
   }, [fetchSuggestedQuestions]);
 
   const handleFetchAppLeads = useCallback(async () => {
-    await fetchAppLeads();
-  }, [fetchAppLeads]);
+    await fetchLeads();
+  }, [fetchLeads]);
 
   if (showLanding) {
     return (

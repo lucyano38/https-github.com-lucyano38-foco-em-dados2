@@ -25,7 +25,7 @@ function fallbackReply(message: string): string {
     return '📄 Contratos são gerados automaticamente no CRM com dados da empresa (Razão Social, CNPJ, Valor, Cláusulas). Visualize e baixe em PDF.';
   }
   if (m.includes('preço') || m.includes('plano') || m.includes('quanto')) {
-    return '💰 Planos: Starter R$ 97/mês | Business R$ 197/mês | Premium R$ 197/mês. Taxa de implantação: R$ 997 (única).';
+    return '💰 Plataforma PRO: R$ 39,90/mês — Acesso ilimitado a todas as ferramentas. Serviços sob demanda: Landing Page R$297, Site Institucional R$597, E-commerce R$997, Automação WhatsApp R$197/mês, Hospedagem R$49,90/mês.';
   }
   return `Interessante! Posso ajudar com:
 
