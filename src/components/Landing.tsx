@@ -10,6 +10,7 @@ import { DashboardPreview } from './landing/DashboardPreview';
 import { ConversionFunnel } from './landing/ConversionFunnel';
 import { ServicesPricing } from './landing/PricingSection';
 import { FaqSection } from './landing/FaqSection';
+import { TestimonialsSection } from './landing/TestimonialsSection';
 import { Zap, ShieldCheck, Check, Sparkles, MessageCircle, PlayCircle, TrendingUp, Users, ArrowRight, Bot, Cpu, Globe, BarChart3, Layers } from 'lucide-react';
 
 interface LandingProps {
@@ -153,6 +154,11 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
       {/* FAQ */}
       <div className="relative z-10">
         <FaqSection onAskQuestion={() => handleNavegacao('growth')} />
+      </div>
+
+      {/* PROVA SOCIAL — depoimentos com resultados reais */}
+      <div className="relative z-10">
+        <TestimonialsSection />
       </div>
 
       {/* Modal de Login */}
