@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { loginWithGoogle, loginWithGithub, loginWithMicrosoft } from '../lib/auth';
 
 export interface LoginModalProps {
