@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MASTER_EMAILS, isMasterAdmin } from '../lib/constants';
+import { hasProAccess } from '../lib/roles';
 
 interface NavbarProps {
   activeTab: string;
@@ -14,26 +14,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onEnterApp,
   isPro,
 }) => {
-  const [isMasterUser, setIsMasterUser] = useState(false);
-
-  useEffect(() => {
-    try {
-      const email = localStorage.getItem('foco_em_dados_user_email') || '';
-      const usuario = localStorage.getItem('foco_usuario');
-      let parsedEmail = email;
-      if (!parsedEmail && usuario) {
-        const parsed = JSON.parse(usuario);
-        parsedEmail = parsed.email || '';
-      }
-      setIsMasterUser(
-        isMasterAdmin(parsedEmail) || parsedEmail.toLowerCase() === 'lucyano.pci@gmail.com'
-      );
-    } catch {
-      setIsMasterUser(false);
-    }
-  }, []);
-
-  const hasAccess = isPro || isMasterUser;
+  const email = localStorage.getItem('foco_em_dados_user_email');
+  const hasAccess = hasProAccess(email, isPro);
 
   const handleEnterApp = (mode: string) => {
     if (hasAccess) {
@@ -74,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-300 hover:text-white hover:bg-slate-900'
               }`}
             >
-              CRM {!hasAccess && '🔒'}
+              CRM {hasAccess ? '' : '🔒'}
             </button>
 
             <button
@@ -85,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-300 hover:text-white hover:bg-slate-900'
               }`}
             >
-              Growth Engine {!hasAccess && '🔒'}
+              Growth Engine {hasAccess ? '' : '🔒'}
             </button>
           </nav>
         </div>
