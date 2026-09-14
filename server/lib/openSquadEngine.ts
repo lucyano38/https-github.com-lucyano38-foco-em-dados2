@@ -1,9 +1,7 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { GoogleGenAI } = require("@google/genai");
+import { GoogleGenAI } from "@google/genai";
 import { Lead } from "./crmStore.ts";
 
-let genAIClient: GoogleGenAI | null = null;
+let genAIClient: any | null = null;
 
 function getGenAI(): GoogleGenAI {
   if (!genAIClient) {
