@@ -6,7 +6,9 @@ dotenv.config({ path: [".env.local", ".env"] });
 
 import express from "express";
 import path from "path";
-import { GoogleGenAI } from "@google/genai";
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { GoogleGenAI } = require("@google/genai");
 import {
   createInteraction,
   streamInteraction,
