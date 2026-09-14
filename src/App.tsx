@@ -367,8 +367,19 @@ function useAnalysisRun(question: string, datasetName: string, files: UploadedFi
     setStage('');
   }, []);
 
-  return { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData };
-}
+  const downloadExcel = (data: any, fileName: string) => {
+    import('xlsx').then((XLSX) => {
+      const ws = XLSX.utils.json_to_sheet(data.rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+      XLSX.writeFile(wb, `${fileName.split('.')[0]}.xlsx`);
+    });
+  };
+
+  const isFree = (data: any) => data.rows.length <= 100;
+
+  // In the return of useAnalysisRun, add these methods:
+  return { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData, downloadExcel, isFree };
 
 function useSession() {
   const [sessionId, setSessionId] = useState(() => `session-${Date.now()}`);
@@ -928,7 +939,17 @@ export const App: React.FC = () => {
               )}
               {/* POWER BI DASHBOARD */}
               {parsedData && status === 'completed' && (
-                <PowerBIDashboard data={parsedData} />
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <PowerBIDashboard data={parsedData} />
+                    <button 
+                      onClick={() => isFree(parsedData) ? downloadExcel(parsedData, parsedData.fileName) : alert('Upgrade para PRO (R$ 39,90) para exportar datasets maiores que 100 linhas.')}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold"
+                    >
+                      {isFree(parsedData) ? '📥 Exportar Excel' : '📥 Exportar Excel (PRO)'}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           )}
