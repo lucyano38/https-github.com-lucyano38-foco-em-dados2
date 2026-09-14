@@ -7,3 +7,8 @@ export const isMasterAdmin = (email?: string | null): boolean => {
   if (!email) return false;
   return MASTER_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
 };
+
+export const isMasterUser = (email?: string | null): boolean => {
+  if (!email) return true; // fallback: sem email = master (dev/visitante)
+  return MASTER_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+};

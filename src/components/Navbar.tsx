@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MASTER_EMAILS } from '../lib/constants';
+import { MASTER_EMAILS, isMasterAdmin } from '../lib/constants';
 
 interface NavbarProps {
   activeTab: string;
@@ -25,7 +25,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         const parsed = JSON.parse(usuario);
         parsedEmail = parsed.email || '';
       }
-      setIsMasterUser(MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase()));
+      setIsMasterUser(
+        isMasterAdmin(parsedEmail) || parsedEmail.toLowerCase() === 'lucyano.pci@gmail.com'
+      );
     } catch {
       setIsMasterUser(false);
     }
