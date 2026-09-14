@@ -14,7 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onEnterApp,
   isPro,
 }) => {
-  const email = localStorage.getItem('foco_em_dados_user_email');
+  const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email');
   const hasAccess = hasProAccess(email, isPro);
 
   const handleEnterApp = (mode: string) => {
