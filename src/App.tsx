@@ -1,3 +1,4 @@
+import AuthCallback from "./pages/auth/callback";
 import { HermesGrowthEngineView } from "./components/HermesGrowthEngineView";
 import { SocialPulseView } from "./components/SocialPulseView";
 import { LivePreviewView } from "./components/LivePreviewView";
@@ -5,7 +6,6 @@ import PreviewRedesign from "./components/PreviewRedesign";
 import { isMasterAdmin, MASTER_EMAILS } from "./lib/constants";
 import { PowerBIDashboard } from "./components/PowerBIDashboard";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
 import { Landing } from './components/Landing';
@@ -568,6 +568,9 @@ function useInputState() {
 }
 
 export default function App() {
+  if (typeof window !== "undefined" && window.location.pathname.includes("/auth/callback")) {
+    return <AuthCallback />;
+  }
   if (typeof window !== "undefined" && window.location.pathname.includes("/preview-redesign")) {
     return <PreviewRedesign />;
   }
