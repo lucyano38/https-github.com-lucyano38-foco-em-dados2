@@ -380,6 +380,7 @@ function useAnalysisRun(question: string, datasetName: string, files: UploadedFi
 
   // In the return of useAnalysisRun, add these methods:
   return { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData, downloadExcel, isFree };
+}
 
 function useSession() {
   const [sessionId, setSessionId] = useState(() => `session-${Date.now()}`);
@@ -467,12 +468,7 @@ function useDragDrop(addFiles: (files: FileList | null) => void) {
   return { dragOver, onDragOver, onDragLeave, onDrop };
 }
 
-function useLandingGate() {
-  const [showLanding, setShowLanding] = useState(true);
-  return { showLanding, setShowLanding };
-}
-
-export function useAuthGuard(): {
+function useAuthGuard(): {
   handleLogin: () => void;
   setIsLoginOpen: React.Dispatch<React.SetStateAction<boolean>>;
 } {
@@ -481,6 +477,11 @@ export function useAuthGuard(): {
     setIsLoginOpen(true);
   }, []);
   return { handleLogin, setIsLoginOpen };
+}
+
+function useLandingGate() {
+  const [showLanding, setShowLanding] = useState(true);
+  return { showLanding, setShowLanding };
 }
 
 function useChartZoom() {
@@ -566,7 +567,7 @@ function useInputState() {
   return { question, setQuestion, datasetName, setDatasetName };
 }
 
-export const App: React.FC = () => {
+export default function App() {
   if (typeof window !== "undefined" && window.location.pathname.includes("/preview-redesign")) {
     return <PreviewRedesign />;
   }
@@ -580,7 +581,7 @@ export const App: React.FC = () => {
   const { sessionId, setSessionId, createUploadSessionId } = useSession();
   const uploadSessionId = useMemo(() => createUploadSessionId(), [createUploadSessionId]);
   const { question, setQuestion, datasetName, setDatasetName } = useInputState();
-  const { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData } = useAnalysisRun(question, datasetName, files);
+  const { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData, downloadExcel, isFree } = useAnalysisRun(question, datasetName, files);
   const { isSlideDeckOpen, setIsSlideDeckOpen } = useSlideDeck();
   const { isChatOpen, setIsChatOpen } = useChat();
   const { isSpeaking, toggleAudioSpeech } = useAudioSpeech();
@@ -1013,4 +1014,4 @@ export const App: React.FC = () => {
   );
 };
 
-export default App;
+// removed export default App;
