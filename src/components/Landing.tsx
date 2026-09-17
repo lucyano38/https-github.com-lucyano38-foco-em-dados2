@@ -53,6 +53,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
         setActiveTab={setActiveTab || (() => {})}
         onEnterApp={(mode) => handleNavegacao(mode)}
         isPro={isPro || false}
+        onOpenLogin={() => setIsLoginOpen(true)}
       />
 
       {/* HERO PRINCIPAL */}

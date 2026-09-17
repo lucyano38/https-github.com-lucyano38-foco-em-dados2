@@ -6,6 +6,7 @@ interface NavbarProps {
   setActiveTab: (tab: string) => void;
   onEnterApp?: (mode: string) => void;
   isPro: boolean;
+  onOpenLogin?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -13,6 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onEnterApp,
   isPro,
+  onOpenLogin,
 }) => {
   const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email');
   const hasAccess = hasProAccess(email, isPro);
@@ -21,6 +23,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (hasAccess) {
       if (onEnterApp) onEnterApp(mode);
       else setActiveTab(mode);
+    } else if (onOpenLogin) {
+      onOpenLogin();
     }
   };
 
@@ -72,12 +76,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
         </div>
 
-        <button
-          onClick={() => handleEnterApp('growth')}
-          className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"
-        >
-          {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 39,90'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onOpenLogin && onOpenLogin()}
+            className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg"
+          >
+            Entrar / Cadastrar
+          </button>
+          <button
+            onClick={() => handleEnterApp('growth')}
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"
+          >
+            {hasAccess ? '🚀 Acessar Painel PRO' : 'Assinar PRO — R$ 39,90'}
+          </button>
+        </div>
       </div>
     </header>
   );
