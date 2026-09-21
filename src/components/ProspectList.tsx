@@ -1,6 +1,6 @@
 import React from 'react';
 import { ProspectLead, ProspectCard } from './ProspectCard';
-import { useLeadAutomation } from '../lib/useLeadAutomation';
+import { useLeadAutomation } from '../hooks/useLeadAutomation';
 import { Sparkles, AlertCircle } from 'lucide-react';
 
 export interface ProspectListProps {

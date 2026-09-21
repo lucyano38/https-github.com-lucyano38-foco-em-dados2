@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 
 interface PayButtonProps {
   customerEmail: string;
@@ -24,7 +23,7 @@ export const PayButton: React.FC<PayButtonProps> = ({ customerEmail, planId, onS
       window.location.href = data.url;
       onSuccess?.(data.url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao processar pagamento');
+      alert(err instanceof Error ? err.message : 'Erro ao processar pagamento');
       setLoading(false);
     }
   };

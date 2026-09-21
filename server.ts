@@ -207,9 +207,9 @@ function cleanUpOldGenerations() {
   }
 }
 
+const app = express();
 async function startServer() {
-  const app = express();
-  const PORT = 3000;
+    const PORT = 3000;
 
   // Run initial cleanup on startup
   cleanUpOldGenerations();
@@ -2623,11 +2623,6 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
   }
 }
 
-startServer();
-
-// Export for Vercel serverless function
-export default app;
-
   /* ────────────────────────────────────────────────────────── */
   /*  n8n Webhook Integration Endpoint                         */
   /* ────────────────────────────────────────────────────────── */
@@ -3219,3 +3214,7 @@ export default app;
     ];
     return res.status(200).json({ sucesso: true, mensagem: "Pipeline executado com sucesso.", leads: leadsMapeados });
   });
+
+
+startServer();
+export default app;

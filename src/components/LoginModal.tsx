@@ -20,24 +20,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
       const redirectUrl = `${window.location.origin}/auth/callback`;
       const supabaseProvider = provider === 'azure' ? 'azure' : provider;
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+            const { data, error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider as any,
-        options: {
-          redirectTo: redirectUrl,
-        },
+        options: { redirectTo: redirectUrl },
       });
 
       if (error) {
         console.warn('Supabase OAuth não ativo/configurado, usando cliente de Auth alternativo:', error.message);
-        // Fallback Firebase Auth
         const fn = provider === 'google' ? loginWithGoogle
           : provider === 'github' ? loginWithGithub
           : loginWithMicrosoft;
         const result = await fn();
-        const user = result.user || result;
+        const user = (result as any).user || (result as any);
         if (user && user.email) {
-          localStorage.setItem('foco_em_dados_user_email', user.email);
-          localStorage.setItem('foco_usuario_email', user.email);
+          const email = user.email;
+          localStorage.setItem('foco_em_dados_user_email', email);
+          localStorage.setItem('foco_usuario_email', email);
         }
       }
 

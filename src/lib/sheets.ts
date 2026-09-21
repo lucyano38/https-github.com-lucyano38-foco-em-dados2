@@ -1,9 +1,9 @@
 
 import { google } from 'googleapis';
-import { getAccessToken } from './auth';
 
 export async function appendToSheet(spreadsheetId: string, range: string, values: any[][]) {
-  const accessToken = await getAccessToken();
+  // Use a simple token lookup from localStorage for now
+  const accessToken = localStorage.getItem('foco_em_dados_google_token');
   if (!accessToken) throw new Error('Not authenticated');
 
   const sheets = google.sheets({ version: 'v4' });

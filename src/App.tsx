@@ -45,7 +45,7 @@ import {
   Settings,
   BarChart3,
 } from 'lucide-react';
-import { Lead, UploadedFile, AnalysisReport, ActivityLog, SavedReport, ContratanteConfig, HostgatorConfig } from './types';
+import { Lead, UploadedFile, AnalysisReport, ActivityLog, ContratanteConfig, HostgatorConfig } from './types';
 import { MASTER_EMAIL } from './lib/roles';
 
 /* --------------------------- Landing --------------------------- */
@@ -193,7 +193,7 @@ function useAppLeads() {
 function useUploadedFiles() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-
+  
   const addFiles = useCallback((fileList: FileList | null) => {
     if (!fileList) return;
     const next = Array.from(fileList).map((file) => ({
@@ -213,7 +213,7 @@ function useUploadedFiles() {
 }
 
 function useAnalysisRun(question: string, datasetName: string, files: UploadedFile[]) {
-  const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
+  const [status, setStatus] = useState<string>('idle');
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -379,7 +379,7 @@ function useAnalysisRun(question: string, datasetName: string, files: UploadedFi
   const isFree = (data: any) => data.rows.length <= 100;
 
   // In the return of useAnalysisRun, add these methods:
-  return { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData, downloadExcel, isFree };
+  return { status: status as string, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData, downloadExcel, isFree };
 }
 
 function useSession() {
@@ -429,7 +429,7 @@ function useReportSaver() {
   const saveReportToFirestore = useCallback(async (report: AnalysisReport) => {
     try {
       const id = `report_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      const payload: SavedReport = {
+      const payload: any = {
         id,
         report: {
           ...report,
@@ -584,7 +584,7 @@ export default function App() {
   const { sessionId, setSessionId, createUploadSessionId } = useSession();
   const uploadSessionId = useMemo(() => createUploadSessionId(), [createUploadSessionId]);
   const { question, setQuestion, datasetName, setDatasetName } = useInputState();
-  const { status, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus, parsedData, downloadExcel, isFree } = useAnalysisRun(question, datasetName, files);
+  const { status: analysisStatus, report, logs, errorMsg, stage, runAnalysis, stop, reset, setStatus: setAnalysisStatus, parsedData, downloadExcel, isFree } = useAnalysisRun(question, datasetName, files);
   const { isSlideDeckOpen, setIsSlideDeckOpen } = useSlideDeck();
   const { isChatOpen, setIsChatOpen } = useChat();
   const { isSpeaking, toggleAudioSpeech } = useAudioSpeech();
@@ -716,11 +716,11 @@ export default function App() {
 
   const handleSendFollowUp = useCallback(
     (text: string) => {
-      if (status === 'running') return;
+      if ((analysisStatus as string) === 'running') return;
       setQuestion(text);
       runAnalysis();
     },
-    [status, setQuestion, runAnalysis]
+    [analysisStatus, setQuestion, runAnalysis]
   );
 
   const handleFetchSuggestions = useCallback(() => {
@@ -786,7 +786,7 @@ export default function App() {
 
       {ecosystemMode === 'analysis' ? (
         <main className="mx-auto max-w-screen-2xl w-full px-6 pt-6">
-          {status === 'idle' || status === 'uploading' ? (
+          {(analysisStatus as string) === 'idle' || (analysisStatus as string) === 'uploading' ? (
             <div className="space-y-6">
               {/* Header */}
               <div className="mb-8">
@@ -860,7 +860,7 @@ export default function App() {
 
                   <button
                     onClick={handleRun}
-                    disabled={!files.length || status === 'running'}
+                    disabled={!files.length || (analysisStatus as string) === 'running' || (analysisStatus as string) === 'uploading'}
                     className="w-full px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 text-xs font-bold hover:from-amber-400 hover:to-amber-300 shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all text-left flex items-center gap-3 group"
                   >
                     <div className="w-10 h-10 rounded-xl bg-slate-950/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -869,7 +869,7 @@ export default function App() {
                       </svg>
                     </div>
                     <div>
-                      <div className="font-bold">{status === 'running' ? 'Analisando...' : 'Executar análise'}</div>
+                      <div className="font-bold">{(analysisStatus as string) === 'running' || (analysisStatus as string) === 'uploading' ? 'Analisando...' : 'Executar análise'}</div>
                       <div className="text-[10px] text-slate-700 font-normal mt-0.5">IA analisa e gera insights</div>
                     </div>
                   </button>
@@ -946,7 +946,7 @@ export default function App() {
                 </div>
               )}
               {/* POWER BI DASHBOARD */}
-              {parsedData && status === 'completed' && (
+              {parsedData && analysisStatus === "completed" && (
                 <div className="space-y-4">
                   <div className="flex gap-4">
                     <PowerBIDashboard data={parsedData} />
@@ -969,7 +969,7 @@ export default function App() {
       ) : ecosystemMode === 'crm' ? (
         <div className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex-1 flex flex-col">
           <ErrorBoundary fallback={<div className="p-6 rounded-2xl border border-[#334155] bg-[#1e293b] text-[#94a3b8]">Falha ao carregar CRM Kanban.</div>}>
-            <CrmDashboard onSendToDataAnalyst={handleSendCrmToAnalyst} />
+            <CrmDashboard />
           </ErrorBoundary>
         </div>
       ) : ecosystemMode === 'growth' ? (

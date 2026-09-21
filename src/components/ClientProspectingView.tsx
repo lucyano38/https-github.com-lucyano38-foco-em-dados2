@@ -42,7 +42,8 @@ interface ProspectLead {
   address?: string;
 }
 
-import { NICHOS as COMMON_NICHES, CNAES as COMMON_CNAES } from '../lib/constants';
+const COMMON_NICHES = ['Restaurantes & Gastronomia', 'Odontologia & Estética', 'Advocacia & Direito', 'Barbearias & Estética', 'Automotivo & Serviços'];
+const COMMON_CNAES = [{ code: '8630-5/03', desc: 'Atividade médica ambulatorial' }, { code: '5611-2/01', desc: 'Restaurantes e similiares' }];
 
 export const ClientProspectingView: React.FC<{
   onLeadAddedToCrm?: (lead: any) => void;

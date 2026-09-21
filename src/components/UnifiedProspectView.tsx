@@ -36,7 +36,8 @@ import {
 } from '../types';
 import { SystemConfigModal } from './SystemConfigModal';
 import { TunnelShareModal } from './TunnelShareModal';
-import { NICHOS as COMMON_NICHES, CNAES as COMMON_CNAES } from '../lib/constants';
+const COMMON_NICHES = ['Restaurantes & Gastronomia', 'Odontologia & Estética', 'Advocacia & Direito', 'Barbearias & Estética', 'Automotivo & Serviços', 'Comércio Local', 'Construção Civil', 'Imobiliário', 'Tecnologia & SaaS', 'Saúde & Bem-estar'];
+const COMMON_CNAES = [{ code: '8630-5/03', desc: 'Atividade médica ambulatorial' }, { code: '5611-2/01', desc: 'Restaurantes e similiares' }];
 
 interface UnifiedProspectProps {
   onNavigateToCrm?: () => void;
@@ -292,21 +293,22 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
 
       if (data.generatedLeads && Array.isArray(data.generatedLeads)) {
         setGeneratedLeads(data.generatedLeads);
+        const newLeads = data.generatedLeads.map((g: any) => ({ id: g.id || `lead-${Date.now()}`, name: g.name || g.slug || '', slug: g.slug || '', category: g.category || '', city: g.city || '', cnaeCode: g.cnaeCode || '', cnaeDesc: g.cnaeDesc || '', phone: g.phone || '', whatsapp: g.whatsapp || '', email: g.email || '', instagram: g.instagram || '', instagramFollowers: g.instagramFollowers || '', linkedinSize: g.linkedinSize || '', rating: g.rating || 0, reviewsCount: g.reviewsCount || 0, revenueEst: g.revenueEst || '', websiteStatus: g.websiteStatus || '', address: g.address || '' }));
         setDeliverables((prev) => [
           ...prev,
-          { id: `del-${Date.now()}`, title: 'Lista de Leads', type: 'leads', content: data.generatedLeads },
+          { id: `del-${Date.now()}`, title: 'Lista de Leads', type: 'leads_list' as const, data: newLeads },
         ]);
       }
       if (data.scripts && Array.isArray(data.scripts)) {
         setDeliverables((prev) => [
           ...prev,
-          { id: `del-${Date.now()}`, title: 'Mensagens WhatsApp', type: 'scripts', content: data.scripts },
+          { id: `del-${Date.now()}`, title: 'Mensagens WhatsApp', type: 'whatsapp_scripts' as const, data: data.scripts },
         ]);
       }
       if (data.contract) {
         setDeliverables((prev) => [
           ...prev,
-          { id: `del-${Date.now()}`, title: 'Minuta de Contrato', type: 'contract', content: data.contract },
+          { id: `del-${Date.now()}`, title: 'Minuta de Contrato', type: 'contract_proposal' as const, data: data.contract },
         ]);
       }
     } catch (err: any) {
@@ -584,8 +586,8 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
         </div>
       </div>
 
-      {isConfigModalOpen && <SystemConfigModal isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} />}
-      {tunnelLead && <TunnelShareModal lead={tunnelLead} onClose={() => setTunnelLead(null)} />}
+      {isConfigModalOpen && <SystemConfigModal isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} selectedModel="" onSelectModel={() => {}} themeMode="dark" onSelectTheme={() => {}} totalDeliberationsCount={0} />}
+      {tunnelLead && <TunnelShareModal isOpen={!!tunnelLead} lead={tunnelLead} onClose={() => setTunnelLead(null)} />}
     </div>
   );
 };

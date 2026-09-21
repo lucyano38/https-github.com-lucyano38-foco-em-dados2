@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, Target, TrendingUp, DollarSign, Activity,
   Zap, TrendingDown, Clock, CheckCircle2, ArrowUpRight,
-  RefreshCw, Filter, BarChart3, Bot, AlertCircle, Play
+  RefreshCw, Filter, BarChart3, Bot, AlertCircle, Play,
+  FileCode, Plus, Search,
 } from 'lucide-react';
 
 // Tipo para métricas consolidadas do painel UA

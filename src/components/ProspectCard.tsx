@@ -9,6 +9,7 @@ export interface ProspectLead {
   nicho: string;
   siteAtual?: string;
   status: LeadStatus;
+  cidade?: string;
 }
 
 export interface ProspectCardProps {
