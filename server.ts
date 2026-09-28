@@ -1900,34 +1900,37 @@ for f in files:
         const targetNiche = niche || "Negócios Locais";
         const targetCity = city || "São Paulo - SP";
         const targetCnae = cnae || "4711-3/02";
-        const targetRadius = typeof radius === "number" && radius > 0 && radius <= 50000 ? radius : 5000;
+        const targetRadiusKm = typeof radius === "number" && radius > 0 && radius <= 100 ? radius : 50;
+        const targetRadiusMeters = targetRadiusKm * 1000;
         const activeSources = sources ? Object.entries(sources).filter(([_, v]) => v).map(([k]) => k).join(", ") : "Maps, Instagram, LinkedIn";
 
         let leads: any[] = [];
         try {
-          const ai = new GoogleGenAI({ apiKey: proces..._KEY });
-          const prompt = `Gere exatamente 4 empresas reais ou altamente realistas da categoria "${targetNiche}" localizadas em "${targetCity}" dentro de um raio de ${targetRadius} metros (CNAE: "${targetCnae}").
-  Use como fontes de dados de enriquecimento: ${activeSources}.
+          const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+          if (!apiKey) throw new Error('GEMINI_API_KEY não configurada');
+          const ai = new GoogleGenAI({ apiKey });
+          const prompt = `Gere exatamente 4 empresas reais ou altamente realistas da categoria "${targetNiche}" localizadas em "${targetCity}" (CNAE: "${targetCnae}").
+          Use como fontes de dados de enriquecimento: ${activeSources}.
 
-  Para cada empresa, retorne um objeto JSON contendo:
-  - name (string)
-  - category (string)
-  - city (string)
-  - cnaeCode (string)
-  - cnaeDesc (string)
-  - phone (string)
-  - whatsapp (string)
-  - email (string)
-  - instagram (string, ex: @handle)
-  - instagramFollowers (string, ex: 12.4k)
-  - linkedinSize (string, ex: 11-50 funcionários)
-  - rating (number, ex: 4.8)
-  - reviewsCount (number, ex: 142)
-  - revenueEst (string, ex: R$ 100k - 250k/mês)
-  - websiteStatus (string, ex: Sem Automação WhatsApp / Site Desatualizado)
-  - address (string)
+          Para cada empresa, retorne um objeto JSON contendo:
+          - name (string)
+          - category (string)
+          - city (string)
+          - cnaeCode (string)
+          - cnaeDesc (string)
+          - phone (string)
+          - whatsapp (string)
+          - email (string)
+          - instagram (string, ex: @handle)
+          - instagramFollowers (string, ex: 12.4k)
+          - linkedinSize (string, ex: 11-50 funcionários)
+          - rating (number, ex: 4.8)
+          - reviewsCount (number, ex: 142)
+          - revenueEst (string, ex: R$ 100k - 250k/mês)
+          - websiteStatus (string, ex: Sem Automação WhatsApp / Site Desatualizado)
+          - address (string)
 
-  Retorne APENAS um array JSON válido, sem texto adicional.`;
+          Retorne APENAS um array JSON válido, sem texto adicional.`;
 
         let response;
         try {
