@@ -137,7 +137,7 @@ export const ClientProspectingView: React.FC<{
         // Mock geolocation for now - in a real app, use Geolocation API
         const lat = -23.5505; // São Paulo
         const lng = -46.6333;
-        const res = await fetch(`/api/nearby-search?lat=${lat}&lng=${lng}&radius=${radius}&type=spa`);
+        const res = await fetch(`/api/nearby-search?lat=${lat}&lng=${lng}&radius=${radius}&type=${encodeURIComponent(activeNiche)}`);
         const data = await res.json();
         if (data.results) {
           foundLeads = data.results.map((place: any) => ({
@@ -170,6 +170,7 @@ export const ClientProspectingView: React.FC<{
           niche: activeNiche,
           city: cityInput.trim(),
           cnae: activeCnae,
+          radius: parseInt(radius) || 5000,
           sources
         })
       });

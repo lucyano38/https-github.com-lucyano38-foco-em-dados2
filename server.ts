@@ -1895,38 +1895,39 @@ for f in files:
   /*  Multi-Source Prospecting API (Google Maps, Instagram, CNAE) */
   /* ────────────────────────────────────────────────────────── */
   app.post("/api/prospecting/search", async (req, res) => {
-    try {
-      const { niche, city, cnae, sources } = req.body;
-      const targetNiche = niche || "Negócios Locais";
-      const targetCity = city || "São Paulo - SP";
-      const targetCnae = cnae || "4711-3/02";
-      const activeSources = sources ? Object.entries(sources).filter(([_, v]) => v).map(([k]) => k).join(", ") : "Maps, Instagram, LinkedIn";
-
-      let leads: any[] = [];
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const prompt = `Gere exatamente 4 empresas reais ou altamente realistas da categoria "${targetNiche}" localizadas em "${targetCity}" (CNAE: "${targetCnae}").
-Use como fontes de dados de enriquecimento: ${activeSources}.
+        const { niche, city, cnae, radius, sources } = req.body;
+        const targetNiche = niche || "Negócios Locais";
+        const targetCity = city || "São Paulo - SP";
+        const targetCnae = cnae || "4711-3/02";
+        const targetRadius = typeof radius === "number" && radius > 0 && radius <= 50000 ? radius : 5000;
+        const activeSources = sources ? Object.entries(sources).filter(([_, v]) => v).map(([k]) => k).join(", ") : "Maps, Instagram, LinkedIn";
 
-Para cada empresa, retorne um objeto JSON contendo:
-- name (string)
-- category (string)
-- city (string)
-- cnaeCode (string)
-- cnaeDesc (string)
-- phone (string)
-- whatsapp (string)
-- email (string)
-- instagram (string, ex: @handle)
-- instagramFollowers (string, ex: 12.4k)
-- linkedinSize (string, ex: 11-50 funcionários)
-- rating (number, ex: 4.8)
-- reviewsCount (number, ex: 142)
-- revenueEst (string, ex: R$ 100k - 250k/mês)
-- websiteStatus (string, ex: Sem Automação WhatsApp / Site Desatualizado)
-- address (string)
+        let leads: any[] = [];
+        try {
+          const ai = new GoogleGenAI({ apiKey: proces..._KEY });
+          const prompt = `Gere exatamente 4 empresas reais ou altamente realistas da categoria "${targetNiche}" localizadas em "${targetCity}" dentro de um raio de ${targetRadius} metros (CNAE: "${targetCnae}").
+  Use como fontes de dados de enriquecimento: ${activeSources}.
 
-Retorne APENAS um array JSON válido, sem texto adicional.`;
+  Para cada empresa, retorne um objeto JSON contendo:
+  - name (string)
+  - category (string)
+  - city (string)
+  - cnaeCode (string)
+  - cnaeDesc (string)
+  - phone (string)
+  - whatsapp (string)
+  - email (string)
+  - instagram (string, ex: @handle)
+  - instagramFollowers (string, ex: 12.4k)
+  - linkedinSize (string, ex: 11-50 funcionários)
+  - rating (number, ex: 4.8)
+  - reviewsCount (number, ex: 142)
+  - revenueEst (string, ex: R$ 100k - 250k/mês)
+  - websiteStatus (string, ex: Sem Automação WhatsApp / Site Desatualizado)
+  - address (string)
+
+  Retorne APENAS um array JSON válido, sem texto adicional.`;
 
         let response;
         try {
@@ -2031,7 +2032,7 @@ Retorne APENAS um array JSON válido, sem texto adicional.`;
         slug: `lead-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`
       }));
 
-      res.json({ leads: processed });
+      res.json({ leads: processed, raioMeters: targetRadius });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -3217,4 +3218,4 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
 
 
 startServer();
-export default app;
+export default startServer;
