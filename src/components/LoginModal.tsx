@@ -49,7 +49,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
         // Usuário cancelou ou fechou a janela do popup
         return;
       }
-      if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request') {
+      if (err?.code === 'auth/api-key-expired' || (err?.message && err.message.includes('api-key-expired'))) {
+        setErrorMessage('A chave de API do Firebase expirou no Google Cloud (auth/api-key-expired). Renove a chave no Firebase Console ou acesse via Acesso Direto Master abaixo.');
+      } else if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request') {
         setErrorMessage('O pop-up de login foi bloqueado pelo seu navegador. Por favor, permita pop-ups para autenticar.');
       } else if (err?.code === 'auth/account-exists-with-different-credential') {
         setErrorMessage('Já existe uma conta associada a este e-mail com outro método de login.');
@@ -61,6 +63,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMasterBypass = () => {
+    const masterEmail = 'lucyano.pci@gmail.com';
+    localStorage.setItem('foco_em_dados_user_email', masterEmail);
+    localStorage.setItem('foco_usuario_email', masterEmail);
+    localStorage.setItem('foco_usuario', JSON.stringify({
+      email: masterEmail,
+      displayName: 'Lucyano (Master)',
+      uid: 'master-developer'
+    }));
+    if (onLoginProvider) {
+      onLoginProvider('master');
+    }
+    onClose();
+    // Notifica listeners locais
+    window.dispatchEvent(new Event('storage'));
   };
 
   return (
@@ -119,10 +138,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           </button>
         </div>
 
+        <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
+          <button
+            onClick={handleMasterBypass}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+          >
+            <span>⚡ Entrar com Acesso Master (lucyano.pci@gmail.com)</span>
+          </button>
+        </div>
+
         <button 
           onClick={onClose} 
           disabled={loading}
-          className="mt-5 text-xs text-slate-400 hover:text-slate-200 text-center w-full transition-colors cursor-pointer"
+          className="mt-4 text-xs text-slate-400 hover:text-slate-200 text-center w-full transition-colors cursor-pointer"
         >
           Cancelar
         </button>
