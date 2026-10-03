@@ -108,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={async () => {
                   const { logout } = await import('../lib/auth');
                   await logout();
-                  window.location.reload();
+                  setEmail(null);
                 }}
                 className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded transition-colors cursor-pointer"
                 title="Sair da conta"

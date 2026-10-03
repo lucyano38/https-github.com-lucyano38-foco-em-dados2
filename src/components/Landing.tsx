@@ -24,12 +24,10 @@ interface LandingProps {
 export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveTab, isPro }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  const handleNavegacao = (mode) => {
+  const handleNavegacao = (mode: string) => {
     if (typeof onStart === "function") {
-      onStart(mode);
-      return;
+      onStart(mode as any);
     }
-    window.location.href = "/?mode=" + mode;
   };
 
   return (
@@ -168,7 +166,6 @@ export const Landing: React.FC<LandingProps> = ({ onStart, activeTab, setActiveT
         onClose={() => setIsLoginOpen(false)}
         onLoginProvider={() => {
           setIsLoginOpen(false);
-          handleNavegacao('prospecting');
         }}
       />
     </div>
