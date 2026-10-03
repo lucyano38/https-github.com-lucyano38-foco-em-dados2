@@ -129,7 +129,7 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
   const [selectedCard, setSelectedCard] = useState<CollabCard>(COLLAB_CARDS[0]);
   const [niche, setNiche] = useState('Restaurantes & Gastronomia');
   const [city, setCity] = useState('São Paulo - SP');
-  const [radius, setRadius] = useState('5000');
+  const [radius, setRadius] = useState('');
   const [selectedCnae, setSelectedCnae] = useState(COMMON_CNAES[0].code);
   const [customCnae, setCustomCnae] = useState('');
   const [sources, setSources] = useState({ maps: true, instagram: true, linkedin: true, cnae: true });
@@ -447,7 +447,7 @@ export const UnifiedProspectView: React.FC<UnifiedProspectProps> = ({
                 <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Cidade</label>
                 <input value={city} onChange={(e) => setCity(e.target.value)} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
                 <label className="text-xs font-semibold text-[#8a8f98] mt-2 mb-1 block">Raio (metros)</label>
-                <input value={radius} onChange={(e) => setRadius(e.target.value)} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
+                <input value={radius} onChange={(e) => setRadius(e.target.value)} placeholder="Ex: 5000" className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8] placeholder-[#555]" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Ticket alvo (R$)</label>

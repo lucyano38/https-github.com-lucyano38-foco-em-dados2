@@ -52,7 +52,7 @@ export const ClientProspectingView: React.FC<{
   const [selectedNiche, setSelectedNiche] = useState(COMMON_NICHES[0]);
   const [customNiche, setCustomNiche] = useState('');
   const [cityInput, setCityInput] = useState('São Paulo - SP');
-  const [radius, setRadius] = useState('5000');
+  const [radius, setRadius] = useState('');
   const [selectedCnae, setSelectedCnae] = useState(COMMON_CNAES[0].code);
   const [customCnae, setCustomCnae] = useState('');
   const [sources, setSources] = useState({ maps: true, instagram: true, linkedin: true });
@@ -133,11 +133,11 @@ export const ClientProspectingView: React.FC<{
     setIsSearching(true);
     try {
       let foundLeads: ProspectLead[] = [];
-      if (radius && parseInt(radius) > 0) {
-        // Mock geolocation for now - in a real app, use Geolocation API
-        const lat = -23.5505; // São Paulo
-        const lng = -46.6333;
-        const res = await fetch(`/api/nearby-search?lat=${lat}&lng=${lng}&radius=${radius}&type=${encodeURIComponent(activeNiche)}`);
+      const effectiveRadius = radius && parseInt(radius) > 0 ? (parseInt(radius) * 1000).toString() : '5000';
+      // Mock geolocation for now - in a real app, use Geolocation API
+      const lat = -23.5505; // São Paulo
+      const lng = -46.6333;
+      const res = await fetch(`/api/nearby-search?lat=${lat}&lng=${lng}&radius=${effectiveRadius}&type=${encodeURIComponent(activeNiche)}`);
         const data = await res.json();
         if (data.results) {
           foundLeads = data.results.map((place: any) => ({
@@ -170,7 +170,7 @@ export const ClientProspectingView: React.FC<{
           niche: activeNiche,
           city: cityInput.trim(),
           cnae: activeCnae,
-          radius: parseInt(radius) || 5000,
+          radius: (parseInt(radius) || 5) * 1000,
           sources
         })
       });
@@ -320,8 +320,8 @@ export const ClientProspectingView: React.FC<{
             <input
               type="number"
               placeholder="Ex: 5"
-              value={Math.round(parseInt(radius) / 1000)}
-              onChange={(e) => setRadius((parseInt(e.target.value) * 1000).toString())}
+              value={radius}
+              onChange={(e) => setRadius(e.target.value)}
               className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-serenity-gold"
             />
           </div>

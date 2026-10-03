@@ -66,7 +66,11 @@ export const HermesGrowthEngineView: React.FC = () => {
   const [nicho, setNicho] = useState(NICHOS[0]);
   const [customNicho, setCustomNicho] = useState('');
   const [cidade, setCidade] = useState('Barueri/SP');
-  const [raio, setRaio] = useState(10);
+  const [raio, setRaio] = useState<number | ''>('');
+  const getRaioValue = useCallback(() => {
+    if (typeof raio === 'number' && raio > 0) return raio;
+    return 10;
+  }, [raio]);
   const [ticketTarget, setTicketTarget] = useState(1500);
   const [mrrTarget, setMrrTarget] = useState(200);
   const [focus, setFocus] = useState('Conversão Mobile e WhatsApp');
@@ -130,7 +134,7 @@ export const HermesGrowthEngineView: React.FC = () => {
       const res = await fetch('/api/pipeline-prospeccao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho, customNicho: customNicho.trim() || undefined, cidade, raio, maxResults: 30 }),
+        body: JSON.stringify({ nicho, customNicho: customNicho.trim() || undefined, cidade, raio: getRaioValue(), maxResults: 30 }),
       });
 
       const text = await res.text();
@@ -227,11 +231,12 @@ export const HermesGrowthEngineView: React.FC = () => {
     ]);
 
     try {
-      setAutopilotLogs(prev => [`🔍 [${ts()}] Buscando "${nichoAtual}" em ${cidadeAtual} (raio ${raio}km)...`, ...prev]);
+      const raioAtual = getRaioValue();
+      setAutopilotLogs(prev => [`🔍 [${ts()}] Buscando "${nichoAtual}" em ${cidadeAtual} (raio ${raioAtual}km)...`, ...prev]);
       const res = await fetch('/api/pipeline-prospeccao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nicho: nichoAtual, customNicho: customNicho.trim() || undefined, cidade: cidadeAtual, raio, maxResults: 15 }),
+        body: JSON.stringify({ nicho: nichoAtual, customNicho: customNicho.trim() || undefined, cidade: cidadeAtual, raio: raioAtual, maxResults: 15 }),
       });
       const text = await res.text();
       let data: any;
@@ -292,7 +297,7 @@ export const HermesGrowthEngineView: React.FC = () => {
         `🚀 [${ts()}] ═══ AUTOPILOTO ATIVADO ═══`,
         `⚙️ Velocidade: ${autopilotSpeed / 1000}s por ciclo`,
         `🎯 Nicho: ${activeNichoRef.current}`,
-        `📍 Cidade: ${activeCidadeRef.current} (raio ${raio}km)`,
+        `📍 Cidade: ${activeCidadeRef.current} (raio ${getRaioValue()}km)`,
         `💰 Ticket: R$ ${ticketTarget} | MRR: R$ ${mrrTarget}/mês`,
       ]);
       // Run first cycle immediately
@@ -371,7 +376,46 @@ export const HermesGrowthEngineView: React.FC = () => {
             <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Cidade</label>
             <input value={cidade} onChange={e => setCidade(e.target.value)} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
             <label className="text-xs font-semibold text-[#8a8f98] mt-2 mb-1 block">Raio (km)</label>
-            <input type="number" value={raio} onChange={e => setRaio(Number(e.target.value))} className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8]" />
+            <div className="space-y-1.5">
+              <input
+                type="number"
+                value={raio}
+                onChange={e => {
+                  const val = e.target.value;
+                  setRaio(val === '' ? '' : Math.max(1, Number(val)));
+                }}
+                placeholder="Ex: 10"
+                min="1"
+                max="100"
+                className="w-full rounded-xl bg-[#010102] border border-white/[0.08] px-3 py-2 text-xs text-[#f7f8f8] placeholder-[#555] focus:border-[#d4a574] focus:outline-none transition-colors"
+              />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[5, 10, 15, 25, 50].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRaio(r)}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition cursor-pointer ${
+                      raio === r
+                        ? 'bg-[#d4a574] text-[#1c1917] font-bold shadow-sm'
+                        : 'bg-white/[0.04] text-[#8a8f98] hover:text-white hover:bg-white/[0.08] border border-white/[0.05]'
+                    }`}
+                  >
+                    {r} km
+                  </button>
+                ))}
+                {raio !== '' && (
+                  <button
+                    type="button"
+                    onClick={() => setRaio('')}
+                    className="text-[10px] text-[#8a8f98] hover:text-red-400 ml-auto transition-colors cursor-pointer"
+                    title="Limpar campo"
+                  >
+                    ✕ Limpar
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
           <div>
             <label className="text-xs font-semibold text-[#8a8f98] mb-1 block">Ticket alvo (R$)</label>
