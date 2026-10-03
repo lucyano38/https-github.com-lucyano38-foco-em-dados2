@@ -464,7 +464,7 @@ export default function PreviewRedesign() {
                 {[
                   { nome: 'Vercel', desc: 'Hospedagem frontend (grátis)', href: 'https://vercel.com/?ref=focoemdados' },
                   { nome: 'Stripe', desc: 'Pagamentos online (3,99%)', href: 'https://stripe.com/?ref=focoemdados' },
-                  { nome: 'Supabase', desc: 'Backend & database (grátis)', href: 'https://supabase.com/?ref=focoemdados' },
+                  { nome: 'Firebase', desc: 'Backend & database (grátis)', href: 'https://firebase.google.com/?ref=focoemdados' },
                   { nome: 'n8n', desc: 'Automação de workflows', href: 'https://n8n.io/?ref=focoemdados' },
                 ].map((aff, i) => (
                   <a key={i} href={aff.href} target="_blank" rel="noopener noreferrer"

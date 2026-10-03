@@ -2675,10 +2675,7 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
   });
 
   /* ────────────────────────────────────────────────────────── */
-  /*  Supabase Prospect Save Endpoint                          */
-  /* ────────────────────────────────────────────────────────── */
-  /* ────────────────────────────────────────────────────────── */
-  /*  In-memory Prospect Storage (Substitui Supabase)          */
+  /*  In-memory Prospect Storage & Save Endpoint               */
   /* ────────────────────────────────────────────────────────── */
   const prospeccoesStore: Array<{
     id: string;

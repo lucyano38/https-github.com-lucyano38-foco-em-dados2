@@ -7,7 +7,7 @@ Direcionar automaticamente qualquer melhoria, alteração de código ou estraté
 ## Matriz de Seleção de Ferramentas por Tarefa
 
 1. **Stitch**
-   - **Uso:** Pipelines de dados, automação de webhooks (Stripe/Supabase), conexões de APIs e integração de fluxos do banco com CRMs externos.
+   - **Uso:** Pipelines de dados, automação de webhooks (Stripe/Firebase), conexões de APIs e integração de fluxos do banco com CRMs externos.
 
 2. **Pomelli**
    - **Uso:** Guia de marca (branding), paletas de cores, identidade visual, anúncios para o plano PRO (R$ 39,90) e padrões estéticos para sites de clientes (R$ 297 a R$ 997).

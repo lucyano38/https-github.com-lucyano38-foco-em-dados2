@@ -89,12 +89,12 @@ export const AFFILIATES: AffiliateItem[] = [
     preco: '€ 20/mês',
   },
   {
-    id: 'supabase',
-    nome: 'Supabase',
-    descricao: 'Backend-as-a-Service: PostgreSQL, Auth, Storage e Realtime para apps.',
+    id: 'firebase',
+    nome: 'Firebase',
+    descricao: 'Plataforma Google: Auth, Firestore Database, Storage e Hosting para aplicações web.',
     categoria: 'ferramenta',
-    url: 'https://supabase.com/?ref=focoemdados',
-    preco: 'Grátis até 500MB DB',
+    url: 'https://firebase.google.com/',
+    preco: 'Grátis no plano Spark',
   },
   {
     id: 'canva-pro',
