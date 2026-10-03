@@ -16,7 +16,29 @@ export const Navbar: React.FC<NavbarProps> = ({
   isPro,
   onOpenLogin,
 }) => {
-  const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email');
+  const [email, setEmail] = useState<string | null>(() =>
+    localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email') || null
+  );
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    import('../lib/auth').then(({ subscribeToAuthChanges }) => {
+      unsubscribe = subscribeToAuthChanges((user) => {
+        if (user?.email) {
+          setEmail(user.email);
+        } else {
+          setEmail(
+            localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email') || null
+          );
+        }
+      });
+    }).catch(() => {});
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
   const hasAccess = hasProAccess(email, isPro);
 
   const handleEnterApp = (mode: string) => {
@@ -77,12 +99,31 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => onOpenLogin && onOpenLogin()}
-            className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg"
-          >
-            Entrar / Cadastrar
-          </button>
+          {email ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline max-w-[140px] truncate" title={email}>
+                {email}
+              </span>
+              <button
+                onClick={async () => {
+                  const { logout } = await import('../lib/auth');
+                  await logout();
+                  window.location.reload();
+                }}
+                className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded transition-colors cursor-pointer"
+                title="Sair da conta"
+              >
+                Sair
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onOpenLogin && onOpenLogin()}
+              className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg cursor-pointer"
+            >
+              Entrar / Cadastrar
+            </button>
+          )}
           <button
             onClick={() => handleEnterApp('growth')}
             className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/20"

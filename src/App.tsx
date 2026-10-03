@@ -89,10 +89,6 @@ function useAppLeads() {
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     try {
-      if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
-        setLeads([]);
-        return;
-      }
       const response = await fetch('/api/leads');
       const text = await response.text();
       const data = text ? JSON.parse(text) : [];
@@ -634,44 +630,71 @@ export default function App() {
         const parsed = JSON.parse(usuario);
         parsedEmail = parsed.email || '';
       }
-      if (!parsedEmail) return true; // Fallback dev / visitante padrão para liberar acesso Master
+      if (!parsedEmail) return false;
       return MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase()) || parsedEmail.toLowerCase() === 'lucyano.pci@gmail.com';
-    } catch { return true; }
+    } catch { return false; }
   }, []);
 
   const [isMasterUser, setIsMasterUser] = useState(() => checkMasterUser());
+  const [isPro, setIsPro] = useState<boolean>(() => checkMasterUser());
 
-  // Re-verifica master user quando entra no app
+  // Sincroniza com Firebase Auth e valida assinatura
   useEffect(() => {
-    if (!showLanding) {
-      setIsMasterUser(checkMasterUser());
-    }
-  }, [showLanding, checkMasterUser]);
+    let unsubscribeAuth: (() => void) | undefined;
+    import('./lib/auth').then(({ subscribeToAuthChanges }) => {
+      unsubscribeAuth = subscribeToAuthChanges(async (user) => {
+        if (user?.email) {
+          localStorage.setItem('foco_em_dados_user_email', user.email);
+          localStorage.setItem('foco_usuario_email', user.email);
+          setUserEmail(user.email);
+          const isMaster = checkMasterUser();
+          setIsMasterUser(isMaster);
+          try {
+            const { checkUserSubscription } = await import('./lib/subscription');
+            const sub = await checkUserSubscription();
+            setIsPro(sub.isPro);
+          } catch {
+            setIsPro(isMaster);
+          }
+        } else {
+          const isMaster = checkMasterUser();
+          setIsMasterUser(isMaster);
+          setIsPro(isMaster);
+        }
+      });
+    }).catch(() => {});
 
-  // Verifica assinatura no Supabase antes de liberar o ecossistema completo
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+    };
+  }, [checkMasterUser]);
+
+  // Verifica assinatura no Firebase antes de liberar o ecossistema completo
   const ensureProAccess = useCallback(async () => {
-    const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email') || '';
-    const usuario = localStorage.getItem('foco_usuario');
-    let parsedEmail = email;
-    if (!parsedEmail && usuario) {
-      try {
-        const parsed = JSON.parse(usuario);
-        parsedEmail = parsed.email || '';
-      } catch { parsedEmail = ''; }
-    }
-    // Master users or empty local storage (default admin mode) always have access
-    if (!parsedEmail || MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase()) || parsedEmail.toLowerCase() === 'lucyano.pci@gmail.com') {
-      return true;
-    }
-    // Check subscription from Supabase
     try {
       const { checkUserSubscription } = await import('./lib/subscription');
       const status = await checkUserSubscription();
+      setIsPro(status.isPro);
       return status.isPro;
-    } catch {
-      return true; // Fallback para manter o ecossistema destravado
+    } catch (err) {
+      console.warn('[Auth] Falha ao consultar Firebase, checando credenciais:', err);
+      const email = localStorage.getItem('foco_em_dados_user_email') || localStorage.getItem('foco_usuario_email') || '';
+      let parsedEmail = email;
+      if (!parsedEmail) {
+        const usuario = localStorage.getItem('foco_usuario');
+        if (usuario) {
+          try {
+            parsedEmail = JSON.parse(usuario)?.email || '';
+          } catch {}
+        }
+      }
+      if (parsedEmail && (MASTER_EMAILS.map(e => e.toLowerCase()).includes(parsedEmail.toLowerCase()) || parsedEmail.toLowerCase() === 'lucyano.pci@gmail.com')) {
+        setIsPro(true);
+        return true;
+      }
+      return false;
     }
-  }, []);
+  }, [checkMasterUser]);
 
   // Atualiza o e-mail do usuário a partir do login modal/localStorage
   const refreshUserEmail = useCallback(() => {
@@ -692,6 +715,24 @@ export default function App() {
       setShowLanding(false);
     },
     [ensureProAccess],
+  );
+
+  const handleSwitchMode = useCallback(
+    async (mode: string) => {
+      if (mode === 'analysis') {
+        setEcosystemMode('analysis');
+        return;
+      }
+      const allowed = await ensureProAccess();
+      if (!allowed) {
+        window.alert(
+          'O ecossistema completo exige o plano PRO (R$ 39,90/mês). Faça login e assine para continuar.'
+        );
+        return;
+      }
+      setEcosystemMode(mode);
+    },
+    [ensureProAccess]
   );
 
   const handleSelectMessage = useCallback(
@@ -738,7 +779,7 @@ export default function App() {
         onUploadFile={handleUploadFile}
         activeTab={ecosystemMode}
         setActiveTab={handleStart}
-        isPro={true}
+        isPro={isPro}
       />
     );
   }
@@ -757,7 +798,7 @@ export default function App() {
             >
               {SITE_TITLE}
             </button>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#d4a574]/10 text-[#d4a574] border border-[#d4a574]/20 uppercase tracking-widest">PRO</span>
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#d4a574]/10 text-[#d4a574] border border-[#d4a574]/20 uppercase tracking-widest">{isPro ? 'PRO' : 'FREE'}</span>
           </div>
 
           <div className="flex-1 max-w-md hidden md:block">
@@ -772,10 +813,10 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto py-1">
-            <button onClick={() => setEcosystemMode('analysis')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🏠 Dashboard</button>
-            <button onClick={() => setEcosystemMode('crm')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>👥 CRM</button>
-            <button onClick={() => setEcosystemMode('growth')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'growth' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🚀 Growth Engine</button>
-            <button onClick={() => setEcosystemMode('social')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'social' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>📈 Pulso Social</button>
+            <button onClick={() => handleSwitchMode('analysis')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'analysis' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🏠 Dashboard</button>
+            <button onClick={() => handleSwitchMode('crm')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'crm' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>👥 CRM {isPro ? '' : '🔒'}</button>
+            <button onClick={() => handleSwitchMode('growth')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'growth' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>🚀 Growth Engine {isPro ? '' : '🔒'}</button>
+            <button onClick={() => handleSwitchMode('social')} className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${ecosystemMode === 'social' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>📈 Pulso Social {isPro ? '' : '🔒'}</button>
           </div>
         </div>
       </nav>

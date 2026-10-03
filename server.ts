@@ -2677,48 +2677,48 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
   /* ────────────────────────────────────────────────────────── */
   /*  Supabase Prospect Save Endpoint                          */
   /* ────────────────────────────────────────────────────────── */
+  /* ────────────────────────────────────────────────────────── */
+  /*  In-memory Prospect Storage (Substitui Supabase)          */
+  /* ────────────────────────────────────────────────────────── */
+  const prospeccoesStore: Array<{
+    id: string;
+    nome: string;
+    nicho: string;
+    siteAtual: string;
+    status: string;
+    criado_em: string;
+  }> = [
+    { id: "1", nome: "Clínica Sorriso Perfeito", nicho: "Saúde e Odontologia", siteAtual: "sorrisoperfeito-antigo.com.br", status: "novo", criado_em: new Date().toISOString() },
+    { id: "2", nome: "Auto Peças Rodagem", nicho: "Automotivo", siteAtual: "rodagempecas.com", status: "contatado", criado_em: new Date().toISOString() },
+    { id: "3", nome: "Empório dos Doces Artesanais", nicho: "Confeitaria", siteAtual: "emporiodoces.com.br", status: "proposta_enviada", criado_em: new Date().toISOString() }
+  ];
+
   app.post("/api/salvar-prospeccao", async (req, res) => {
     try {
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-      if (!supabaseUrl || !supabaseKey) {
-        return res.status(500).json({ error: "Credenciais do Supabase não configuradas no servidor." });
-      }
-
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
       const { nome, nicho, siteAtual, status } = req.body;
 
       if (!nome || !nicho) {
         return res.status(400).json({ error: "Nome e nicho são obrigatórios." });
       }
 
-      const { data, error } = await supabase
-        .from("prospeccoes")
-        .insert([
-          { 
-            nome, 
-            nicho, 
-            site_atual: siteAtual || null, 
-            status: status || "novo",
-            criado_em: new Date().toISOString() 
-          }
-        ])
-        .select();
+      const novoLead = {
+        id: String(Date.now()),
+        nome,
+        nicho,
+        siteAtual: siteAtual || "",
+        status: status || "novo",
+        criado_em: new Date().toISOString()
+      };
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      prospeccoesStore.unshift(novoLead);
 
       return res.status(200).json({
         status: "sucesso",
-        mensagem: "Lead salvo com sucesso no Supabase!",
-        dados: data,
+        mensagem: "Lead salvo com sucesso no banco de dados!",
+        dados: [novoLead],
       });
     } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar no banco.";
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar lead.";
       return res.status(500).json({ status: "erro", mensagem: errorMessage });
     }
   });
@@ -2781,50 +2781,14 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
   });
 
   /* ────────────────────────────────────────────────────────── */
-  /*  Supabase Prospect List Endpoint                          */
+  /*  Prospect List Endpoint                                   */
   /* ────────────────────────────────────────────────────────── */
   app.get("/api/listar-prospeccoes", async (req, res) => {
-      res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", "application/json");
     try {
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-      if (!supabaseUrl || !supabaseKey) {
-        // Fallback simulado caso o Supabase não esteja configurado localmente ainda
-        return res.status(200).json({
-          status: "sucesso",
-          dados: [
-            { id: "1", nome: "Clínica Sorriso Perfeito", nicho: "Saúde e Odontologia", siteAtual: "sorrisoperfeito-antigo.com.br", status: "novo" },
-            { id: "2", nome: "Auto Peças Rodagem", nicho: "Automotivo", siteAtual: "rodagempecas.com", status: "contatado" },
-            { id: "3", nome: "Empório dos Doces Artesanais", nicho: "Confeitaria", siteAtual: "emporiodoces.com.br", status: "proposta_enviada" }
-          ]
-        });
-      }
-
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      const { data, error } = await supabase
-        .from("prospeccoes")
-        .select("*")
-        .order("criado_em", { ascending: false });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Mapeia colunas do banco (ex: site_atual -> siteAtual) se necessário
-      const formatados = (data || []).map((item: any) => ({
-        id: String(item.id),
-        nome: item.nome,
-        nicho: item.nicho,
-        siteAtual: item.site_atual || item.siteAtual || "",
-        status: item.status || "novo"
-      }));
-
       return res.status(200).json({
         status: "sucesso",
-        dados: formatados,
+        dados: prospeccoesStore,
       });
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao listar do banco.";
@@ -3087,7 +3051,8 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
 
       const lat = parseFloat(geoData[0].lat);
       const lon = parseFloat(geoData[0].lon);
-      const raioMetros = Math.min(parseInt(raio) || 15, 25) * 1000; // cap at 25km to avoid Overpass timeout
+      const raioKmVal = typeof raio === "number" && raio > 0 ? raio : parseInt(raio) || 15;
+      const raioMetros = Math.min(raioKmVal, 100) * 1000; // supports up to 100km raio without ignoring user selection
       const limit = Math.min(parseInt(maxResults) || 20, 50);
 
       const overpassFilter = getOverpassFilter(nicho, customNicho);
@@ -3162,7 +3127,7 @@ if(CLIENTES.length)mostra(CLIENTES[0]);
         const dLon = (elLon - lon) * Math.PI / 180;
         const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat * Math.PI / 180) * Math.cos(elLat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
         const distancia = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        if (distancia > (parseInt(raio) || 15)) continue;
+        if (distancia > raioKmVal) continue;
 
         const phone = el.tags.phone || el.tags["contact:phone"] || null;
         const website = el.tags.website || el.tags["contact:website"] || null;

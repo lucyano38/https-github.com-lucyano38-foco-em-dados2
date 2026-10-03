@@ -1,6 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-import { supabaseServiceRole } from './supabaseClient';
-
 export type CheckoutCreateBody = {
   planId?: string;
   leadSlug?: string;

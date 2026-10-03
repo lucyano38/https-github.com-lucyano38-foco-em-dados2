@@ -53,7 +53,7 @@ if (mode === 'dist') {
   const files = ['src/App.tsx', 'src/main.tsx', 'src/index.css', 'src/pages/index.tsx',
                  'src/components/Landing.tsx', 'src/components/Navbar.tsx', 'src/components/CookieBanner.tsx',
                  'src/components/ErrorBoundary.tsx', 'src/lib/auth.ts', 'src/lib/constants.ts',
-                 'src/lib/supabaseClient.ts', 'vite.config.ts', 'tsconfig.json', 'index.html'];
+                 'src/lib/firebase.ts', 'vite.config.ts', 'tsconfig.json', 'index.html'];
   for (const f of files) assert(f, fs.existsSync(path.join(__dirname, f)), f);
 
   const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');

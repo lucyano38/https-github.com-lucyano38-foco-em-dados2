@@ -182,7 +182,7 @@ export const AutomatedIndicatorsView: React.FC = () => {
             <Database className="w-4 h-4 text-[#d4a574]" /> Armazenamento & Fallback
           </div>
           <p className="text-[#8a8f98] leading-relaxed">
-            Dados inseridos e cacheados localmente com fallback automático para Supabase/Firebase em caso de oscilação na API externa.
+            Dados inseridos e cacheados localmente com fallback automático para Firebase/Firestore em caso de oscilação na API externa.
           </p>
         </div>
         <div className="space-y-2">
