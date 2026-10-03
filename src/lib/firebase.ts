@@ -25,6 +25,7 @@ const isValidValue = (val?: string) =>
 const firebaseConfig = {
   apiKey: isValidValue(import.meta.env.VITE_FIREBASE_API_KEY) || (firebaseConfigFallback as any)?.apiKey,
   authDomain: isValidValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || (firebaseConfigFallback as any)?.authDomain,
+  databaseURL: isValidValue(import.meta.env.VITE_FIREBASE_DATABASE_URL) || (firebaseConfigFallback as any)?.databaseURL,
   projectId: isValidValue(import.meta.env.VITE_FIREBASE_PROJECT_ID) || (firebaseConfigFallback as any)?.projectId,
   storageBucket: isValidValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || (firebaseConfigFallback as any)?.storageBucket,
   messagingSenderId: isValidValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || (firebaseConfigFallback as any)?.messagingSenderId,
