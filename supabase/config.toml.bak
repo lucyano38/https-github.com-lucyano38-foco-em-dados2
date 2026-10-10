@@ -1,0 +1,86 @@
+[project]
+name = "varejobi"
+ref = "ioijbixifvbosythznhh"
+
+[api]
+enabled = true
+port = 54321
+
+[auth]
+enabled = true
+site_url = "https://focoemdados.com.br"
+additional_redirect_urls = ["http://localhost:5173", "http://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_confirmations = false
+enable_autoconfirm = true
+
+[auth.sessions]
+timebox = 86400
+inactivity_timeout = 7200
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+
+[functions]
+enabled = true
+verify_jwt = false
+import_map = "./supabase/functions/import_map.json"
+
+[functions.process-upload]
+verify_jwt = false
+
+[functions.generate-insights]
+verify_jwt = false
+
+[functions.generate-forecast]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.scheduled-reports]
+verify_jwt = false
+
+[functions.chatbot-rag]
+verify_jwt = false
+
+[functions.sync-integration]
+verify_jwt = false
+
+[functions.upload]
+verify_jwt = false
+
+[functions.get-auth-url]
+verify_jwt = false
+
+[functions.auth-callback]
+verify_jwt = false
+
+[functions.churn-predictor]
+verify_jwt = false
+
+[functions.insights]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
+
+[functions.get-qr]
+verify_jwt = false
+
+[functions.stripe-create-checkout]
+verify_jwt = false
+
+[functions.auth-register]
+verify_jwt = false
+
+[analytics]
+enabled = false

@@ -1,157 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* DESIGN BASE — referência Linear/Stripe mantendo identidade Foco em Dados */
 @theme {
-  --font-display: "Cormorant Garamond", "EB Garamond", serif;
-  --font-sans: "Inter", "Geist", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
-  /* Surface system: escuridão como meio nativo, sem preto puro */
-  --color-app-bg: #010102;             /* canvas quase preto */
-  --color-app-surface: #0f1011;        /* painel/header */
-  --color-app-card: #191a1b;           /* superfície elevada */
-  --color-app-elevated: #28282c;       /* hover/flutuante */
-  --color-app-border: rgba(255,255,255,0.05);
-  --color-app-border-standard: rgba(255,255,255,0.08);
-
-  /* Text system */
-  --color-app-text: #f7f8f8;
-  --color-app-text-secondary: #d0d6e0;
-  --color-app-text-muted: #8a8f98;
-  --color-app-text-subtle: #62666d;
-
-  /* Brand */
-  --color-app-primary: #d4a574;
-  --color-app-primary-hover: #e2b98a;
-  --color-app-cta: #c89556;
-  --color-app-ink: #1c1917;
-
-  /* Status */
-  --color-app-success: #10b981;
-  --color-app-warning: #eab308;
-  --color-app-danger: #ef4444;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-@layer base {
-  html { color-scheme: dark; }
+body {
+  background-color: #030712;
+  color: #f8fafc;
+}
+
+.mesh-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: radial-gradient(circle at 0% 0%, #1e1b4b 0%, transparent 50%), 
+              radial-gradient(circle at 100% 100%, #312e81 0%, transparent 50%), 
+              radial-gradient(circle at 50% 50%, #0f172a 0%, transparent 100%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+}
+
+@media print {
   body {
-    background: var(--color-app-bg);
-    color: var(--color-app-text);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    line-height: 1.6;
+    background-color: white !important;
+    color: black !important;
   }
-  h1, h2, h3, h4 {
-    font-family: var(--font-display);
-    letter-spacing: -0.018em;
-    line-height: 1.15;
-    color: var(--color-app-text);
+  .mesh-bg {
+    display: none !important;
   }
-  h1 { font-weight: 600; }
-  h2, h3, h4 { font-weight: 500; }
-  /* Global surface tokens used by internal pages */
-  :root {
-    --surface-0: var(--color-app-bg);
-    --surface-1: var(--color-app-surface);
-    --surface-2: var(--color-app-card);
-    --surface-3: var(--color-app-elevated);
+  header, .tour-chat, #pricing, #features, button, aside {
+    display: none !important;
   }
-}
-
-@layer utilities {
   .glass-panel {
-    backdrop-filter: blur(12px) saturate(140%);
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    background: rgba(15, 16, 17, 0.7);
-    border: 1px solid var(--color-app-border-standard);
+    border: 1px solid #e2e8f0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
   }
-
-  .card-tactile {
-    background: linear-gradient(180deg, var(--color-app-card) 0%, var(--color-app-surface) 100%);
-    border: 1px solid var(--color-app-border-standard);
-    border-radius: 14px;
-    transition: all 0.2s ease-in-out;
+  * {
+    color: black !important;
   }
-  .card-tactile:hover {
-    border-color: rgba(212, 165, 116, 0.25);
-    transform: translateY(-1px);
-    background: linear-gradient(180deg, #1f1d1a 0%, #191a1b 100%);
+  .text-slate-400, .text-indigo-400, .text-indigo-300, .text-indigo-50 {
+    color: #475569 !important;
   }
-
-  .btn-primary {
-    background: linear-gradient(180deg, var(--color-app-primary) 0%, var(--color-app-cta) 100%);
-    color: var(--color-app-ink);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    padding: 0.625rem 1.25rem;
-    font-weight: 500;
-    letter-spacing: 0.005em;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 1px 2px rgba(0, 0, 0, 0.3);
+  .recharts-wrapper * {
+    color: inherit !important;
   }
-  .btn-primary:hover { filter: brightness(1.05); }
-  .btn-primary:active { transform: translateY(0.5px); }
-
-  .btn-ghost {
-    background: rgba(255, 255, 255, 0.02);
-    color: var(--color-app-text-secondary);
-    border: 1px solid var(--color-app-border-standard);
-    border-radius: 10px;
-    padding: 0.5rem 1rem;
-    transition: all 0.2s ease-in-out;
-  }
-  .btn-ghost:hover {
-    color: var(--color-app-text);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .input-human {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--color-app-border-standard);
-    color: var(--color-app-text);
-    border-radius: 10px;
-    padding: 0.625rem 0.875rem;
-    transition: all 0.2s ease-in-out;
-  }
-  .input-human:focus {
-    outline: none;
-    border-color: rgba(212, 165, 116, 0.5);
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .surface-ghost {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--color-app-border-standard);
-  }
-  .surface-ghost-hover:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-}
-
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.animate-float { animation: float 6s ease-in-out infinite; }
-
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-app-bg); }
-::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-
-/* Landing page — glow & text effects */
-@keyframes pulseGlow { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.03); } }
-.animate-pulse-glow { animation: pulseGlow 4s ease-in-out infinite; }
-
-.glow-hover { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-.glow-hover:hover { box-shadow: 0 0 25px rgba(212, 165, 116, 0.25); border-color: rgba(212, 165, 116, 0.5); }
-
-.text-glow { text-shadow: 0 0 16px rgba(212, 165, 116, 0.35); }
-
-/* Hide scrollbar for horizontal carousels */
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
 }

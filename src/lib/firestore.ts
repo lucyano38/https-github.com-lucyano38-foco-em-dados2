@@ -1,199 +1,97 @@
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc,
-  Timestamp,
-} from 'firebase/firestore';
-import { db } from './firebase';
-import { AnalysisReport, Lead } from '../types';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { app } from '../firebase-config';
 
-export { db };
-
-const REPORTS_COLLECTION = 'analysis_reports';
-const LEADS_COLLECTION = 'leads';
-
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-export interface SavedReport {
-  id: string;
-  report: AnalysisReport;
-}
+// Inicializa a instância do Firestore a partir do app Firebase já configurado
+export const db = getFirestore(app);
 
 /**
- * Saves an AnalysisReport to Firebase Firestore (with fallback to localStorage).
+ * Garante que o perfil do usuário exista no banco de dados. 
+ * Necessário antes de inserir subcoleções devido às regras de segurança do Firestore.
  */
-export async function saveReport(report: AnalysisReport): Promise<string> {
-  const reportId = 'report_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+export const ensureUserProfile = async (uid: string, email: string, displayName?: string | null) => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  
+  if (!userSnap.exists()) {
+    // Cria o documento do usuário
+    const userData: any = {
+      uid,
+      email,
+      currentPlan: 'free',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    
+    if (displayName) {
+      userData.displayName = displayName;
+    }
+    
+    await setDoc(userRef, userData);
+  } else {
+    // Se já existir, atualiza apenas a data de modificação e nome, se aplicável
+    const updateData: any = {
+      updatedAt: serverTimestamp()
+    };
+    if (displayName) {
+      updateData.displayName = displayName;
+    }
+    
+    await updateDoc(userRef, updateData);
+  }
+};
 
-  const payload: AnalysisReport = {
-    ...report,
-    title: (report.title || 'Analysis Report').slice(0, 500),
-    dataset_name: (report.dataset_name || 'Dataset').slice(0, 500),
-    question: (report.question || '').slice(0, 5000),
-    executive_summary: (report.executive_summary || '').slice(0, 5000),
-    generated_at: (report.generated_at || new Date().toISOString()).slice(0, 128),
+/**
+ * Salva os metadados de uma planilha enviada/selecionada.
+ */
+export const saveFileMetadata = async (
+  userId: string, 
+  fileId: string, 
+  filename: string, 
+  storageUrl: string, 
+  sizeBytes?: number
+) => {
+  const fileRef = doc(db, 'users', userId, 'files', fileId);
+  
+  const fileData: any = {
+    userId,
+    filename,
+    storageUrl,
+    processingStatus: 'completed', // 'pending' | 'processing' | 'completed' | 'failed'
+    uploadedAt: serverTimestamp()
   };
+  
+  if (sizeBytes !== undefined) {
+    fileData.sizeBytes = sizeBytes;
+  }
+  
+  await setDoc(fileRef, fileData);
+};
 
-  try {
-    const docRef = doc(db, REPORTS_COLLECTION, reportId);
-    await setDoc(docRef, {
-      id: reportId,
-      report: payload,
-      updatedAt: Timestamp.now()
+/**
+ * Salva ou atualiza uma configuração de dashboard de um usuário.
+ */
+export const saveDashboardConfig = async (
+  userId: string,
+  dashboardId: string,
+  name: string,
+  layoutConfig: string // Deve ser uma string JSON com a configuração do layout/gráficos
+) => {
+  const dashboardRef = doc(db, 'users', userId, 'dashboards', dashboardId);
+  const dashboardSnap = await getDoc(dashboardRef);
+  
+  if (!dashboardSnap.exists()) {
+    await setDoc(dashboardRef, {
+      userId,
+      name,
+      layoutConfig,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     });
-    console.log(`[Firebase] Report ${reportId} successfully saved to Firestore.`);
-    return reportId;
-  } catch (err) {
-    console.error('[Firebase] Error saving report to Firestore, falling back to localStorage:', err);
-    try {
-      const local = localStorage.getItem('saved_reports');
-      const list = local ? JSON.parse(local) : [];
-      list.push({ id: reportId, report: payload });
-      localStorage.setItem('saved_reports', JSON.stringify(list));
-    } catch (e) {
-      console.error('Error saving to localStorage:', e);
-    }
-    return reportId;
-  }
-}
-
-/**
- * Fetches all saved reports from Firebase Firestore (with fallback to localStorage).
- */
-export async function getReports(): Promise<SavedReport[]> {
-  try {
-    const colRef = collection(db, REPORTS_COLLECTION);
-    const snapshot = await getDocs(colRef);
-
-    if (snapshot.empty) {
-      const local = localStorage.getItem('saved_reports');
-      if (local) {
-        const list = JSON.parse(local);
-        if (Array.isArray(list) && list.length > 0) {
-          for (const item of list) {
-            if (item.id && item.report) {
-              await setDoc(doc(db, REPORTS_COLLECTION, item.id), {
-                id: item.id,
-                report: item.report,
-                updatedAt: Timestamp.now()
-              });
-            }
-          }
-          return list.sort((a: SavedReport, b: SavedReport) => {
-            const dateA = a.report.generated_at || '';
-            const dateB = b.report.generated_at || '';
-            return dateB.localeCompare(dateA);
-          });
-        }
-      }
-      return [];
-    }
-
-    const reports: SavedReport[] = [];
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (data && data.report) {
-        reports.push({
-          id: data.id || docSnap.id,
-          report: data.report as AnalysisReport
-        });
-      }
+  } else {
+    await updateDoc(dashboardRef, {
+      name,
+      layoutConfig,
+      updatedAt: serverTimestamp()
     });
-
-    return reports.sort((a, b) => {
-      const dateA = a.report.generated_at || '';
-      const dateB = b.report.generated_at || '';
-      return dateB.localeCompare(dateA);
-    });
-  } catch (err) {
-    console.error('[Firebase] Error fetching reports from Firestore, falling back to localStorage:', err);
-    try {
-      const local = localStorage.getItem('saved_reports');
-      const list = local ? JSON.parse(local) : [];
-      return list.sort((a: SavedReport, b: SavedReport) => {
-        const dateA = a.report.generated_at || '';
-        const dateB = b.report.generated_at || '';
-        return dateB.localeCompare(dateA);
-      });
-    } catch (e) {
-      return [];
-    }
   }
-}
-
-/**
- * Deletes a saved report by ID from Firebase Firestore and localStorage.
- */
-export async function deleteReport(reportId: string): Promise<void> {
-  try {
-    const docRef = doc(db, REPORTS_COLLECTION, reportId);
-    await deleteDoc(docRef);
-    console.log(`[Firebase] Report ${reportId} deleted from Firestore.`);
-  } catch (err) {
-    console.error('[Firebase] Error deleting report from Firestore:', err);
-  }
-
-  try {
-    const local = localStorage.getItem('saved_reports');
-    if (local) {
-      const list = JSON.parse(local);
-      const updated = list.filter((r: SavedReport) => r.id !== reportId);
-      localStorage.setItem('saved_reports', JSON.stringify(updated));
-    }
-  } catch (e) {
-    console.error('Error deleting from localStorage:', e);
-  }
-}
-
-/**
- * Saves a lead to Firebase Firestore.
- */
-export async function saveLead(lead: Lead): Promise<void> {
-  try {
-    const docRef = doc(db, LEADS_COLLECTION, lead.slug);
-    await setDoc(docRef, { ...lead, updatedAt: Timestamp.now() });
-    console.log(`[Firebase] Lead ${lead.slug} successfully saved to Firestore.`);
-  } catch (err) {
-    console.error('[Firebase] Error saving lead to Firestore:', err);
-  }
-}
-
-/**
- * Fetches all leads from Firebase Firestore.
- */
-export async function getLeads(): Promise<Lead[]> {
-  try {
-    const colRef = collection(db, LEADS_COLLECTION);
-    const snapshot = await getDocs(colRef);
-    const leads: Lead[] = [];
-    snapshot.forEach((docSnap) => {
-      leads.push(docSnap.data() as Lead);
-    });
-    return leads;
-  } catch (err) {
-    console.error('[Firebase] Error fetching leads from Firestore:', err);
-    return [];
-  }
-}
-
-/**
- * Deletes a lead by slug from Firebase Firestore.
- */
-export async function deleteLead(slug: string): Promise<void> {
-  try {
-    const docRef = doc(db, LEADS_COLLECTION, slug);
-    await deleteDoc(docRef);
-    console.log(`[Firebase] Lead ${slug} deleted from Firestore.`);
-  } catch (err) {
-    console.error('[Firebase] Error deleting lead from Firestore:', err);
-  }
-}
+};

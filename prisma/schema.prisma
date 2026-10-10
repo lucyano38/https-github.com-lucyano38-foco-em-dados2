@@ -1,0 +1,436 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanTier {
+  FREE
+  STARTER
+  PRO
+  BUSINESS
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  incomplete
+  incomplete_expired
+}
+
+enum PaymentGateway {
+  stripe
+  pagseguro
+  pix
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  chargeback
+}
+
+enum UploadStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum ChatbotPlatform {
+  whatsapp
+  instagram
+  webchat
+}
+
+enum ChatbotStatus {
+  draft
+  active
+  paused
+  archived
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum AffiliateStatus {
+  active
+  suspended
+  blocked
+}
+
+enum ReferralStatus {
+  pending
+  converted
+  commission_paid
+  cancelled
+}
+
+enum NotificationChannel {
+  email
+  whatsapp
+  push
+  in_app
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  passwordHash   String?        @map("password_hash")
+  name           String?
+  avatarUrl      String?        @map("avatar_url")
+  googleId       String?        @unique @map("google_id")
+  planId         String?        @map("plan_id")
+  plan           Plan?          @relation(fields: [planId], references: [id])
+  planTier       PlanTier       @default(FREE) @map("plan_tier")
+  role           String         @default("user")
+  status         String         @default("active")
+  emailVerified  Boolean        @default(false) @map("email_verified")
+  lastLoginAt    DateTime?      @map("last_login_at")
+  metadata       Json           @default("{}")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  subscriptions     Subscription[]
+  payments          Payment[]
+  dashboards        Dashboard[]
+  dataUploads       DataUpload[]
+  chatbots          Chatbot[]
+  affiliate         Affiliate?
+  tickets           Ticket[]
+  emailSequences    EmailSequence[]
+  usageLogs         UsageLog[]
+  notifications     Notification[]
+  refreshTokens     RefreshToken[]
+  oauthStates       OAuthState[]
+
+  @@map("users")
+}
+
+model Plan {
+  id                   String    @id @default(cuid())
+  name                 String
+  tier                 PlanTier  @unique
+  description          String?
+  priceMonthly         Decimal   @map("price_monthly")
+  priceYearly          Decimal   @map("price_yearly")
+  stripePriceIdMonthly String?   @map("stripe_price_id_monthly")
+  stripePriceIdYearly  String?   @map("stripe_price_id_yearly")
+  limitsDashboards     Int       @default(1) @map("limits_dashboards")
+  limitsRows           Int       @default(500) @map("limits_rows")
+  limitsMarketplaces   Int       @default(0) @map("limits_marketplaces")
+  limitsChatbots       Int       @default(0) @map("limits_chatbots")
+  limitsApiCalls       Int       @default(0) @map("limits_api_calls")
+  limitsStorageMb      Int       @default(10) @map("limits_storage_mb")
+  featuresJson         Json      @default("[]") @map("features_json")
+  isActive             Boolean   @default(true) @map("is_active")
+  sortOrder            Int       @default(0) @map("sort_order")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  users           User[]
+  subscriptions   Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @map("user_id")
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId               String             @map("plan_id")
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  status               SubscriptionStatus @default(trialing)
+  trialStart           DateTime?          @map("trial_start")
+  trialEnd             DateTime?          @map("trial_end")
+  currentPeriodStart   DateTime           @default(now()) @map("current_period_start")
+  currentPeriodEnd     DateTime           @map("current_period_end")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  stripeSubscriptionId String?            @map("stripe_subscription_id")
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  pagseguroPlanToken   String?            @map("pagseguro_plan_token")
+  metadata             Json               @default("{}")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  payments       Payment[]
+  usageLogs      UsageLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                  String        @id @default(cuid())
+  userId              String        @map("user_id")
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId      String?       @map("subscription_id")
+  subscription        Subscription? @relation(fields: [subscriptionId], references: [id])
+  amount              Decimal
+  currency            String        @default("BRL")
+  status              PaymentStatus @default(pending)
+  gateway             PaymentGateway
+  gatewayPaymentId    String?       @map("gateway_payment_id")
+  gatewayInvoiceUrl   String?       @map("gateway_invoice_url")
+  paymentMethod       String?       @map("payment_method")
+  billingPeriodStart  DateTime?     @map("billing_period_start")
+  billingPeriodEnd    DateTime?     @map("billing_period_end")
+  metadata            Json          @default("{}")
+  createdAt           DateTime      @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([gatewayPaymentId])
+  @@map("payments")
+}
+
+model Dashboard {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  configJson   Json      @default("{}") @map("config_json")
+  dataSource   String    @default("upload") @map("data_source")
+  isFavorite   Boolean   @default(false) @map("is_favorite")
+  lastViewedAt DateTime? @map("last_viewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("dashboards")
+}
+
+model DataUpload {
+  id               String       @id @default(cuid())
+  userId           String       @map("user_id")
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename         String
+  originalName     String       @map("original_name")
+  filePath         String       @map("file_path")
+  fileSize         Int          @map("file_size")
+  mimeType         String?      @map("mime_type")
+  rowCount         Int          @default(0) @map("row_count")
+  columnCount      Int          @default(0) @map("column_count")
+  detectedColumns  Json         @default("[]") @map("detected_columns")
+  status           UploadStatus @default(pending)
+  errorMessage     String?      @map("error_message")
+  processedAt      DateTime?    @map("processed_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("data_uploads")
+}
+
+model Chatbot {
+  id                  String         @id @default(cuid())
+  userId              String         @map("user_id")
+  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  description         String?
+  scriptJson          Json           @default("{}") @map("script_json")
+  platform            ChatbotPlatform @default(webchat)
+  phoneNumber         String?        @map("phone_number")
+  avatarUrl           String?        @map("avatar_url")
+  status              ChatbotStatus  @default(draft)
+  totalConversations  Int            @default(0) @map("total_conversations")
+  lastActiveAt        DateTime?      @map("last_active_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  conversations ChatbotConversation[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("chatbots")
+}
+
+model ChatbotConversation {
+  id             String    @id @default(cuid())
+  chatbotId      String    @map("chatbot_id")
+  chatbot        Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  userIdentifier String?   @map("user_identifier")
+  messages       Json      @default("[]")
+  isActive       Boolean   @default(true) @map("is_active")
+  metadata       Json      @default("{}")
+  startedAt      DateTime  @default(now()) @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("chatbot_conversations")
+}
+
+model Template {
+  id            String    @id @default(cuid())
+  name          String
+  category      String
+  description   String?
+  configJson    Json      @default("{}") @map("config_json")
+  thumbnailUrl  String?   @map("thumbnail_url")
+  price         Decimal   @default(0)
+  isFree        Boolean   @default(false) @map("is_free")
+  downloadCount Int       @default(0) @map("download_count")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("templates")
+}
+
+model Affiliate {
+  id             String          @id @default(cuid())
+  userId         String          @unique @map("user_id")
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referralCode   String          @unique @map("referral_code")
+  commissionRate Decimal         @default(25.00) @map("commission_rate")
+  totalEarned    Decimal         @default(0) @map("total_earned")
+  totalPaid      Decimal         @default(0) @map("total_paid")
+  payoutMethod   String?         @map("payout_method")
+  payoutDetails  Json            @default("{}") @map("payout_details")
+  status         AffiliateStatus @default(active)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  referrals AffiliateReferral[]
+
+  @@map("affiliates")
+}
+
+model AffiliateReferral {
+  id               String         @id @default(cuid())
+  affiliateId      String         @map("affiliate_id")
+  affiliate        Affiliate      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  referredUserId   String?        @map("referred_user_id")
+  referredEmail    String?        @map("referred_email")
+  status           ReferralStatus @default(pending)
+  commissionRate   Decimal        @default(25.00) @map("commission_rate")
+  commissionAmount Decimal        @default(0) @map("commission_amount")
+  paidAt           DateTime?      @map("paid_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  @@index([affiliateId])
+  @@index([status])
+  @@map("affiliate_referrals")
+}
+
+model Ticket {
+  id         String         @id @default(cuid())
+  userId     String         @map("user_id")
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject    String
+  message    String
+  category   String         @default("billing")
+  status     TicketStatus   @default(open)
+  priority   TicketPriority @default(low)
+  assignedTo String?        @map("assigned_to")
+  resolvedAt DateTime?      @map("resolved_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("tickets")
+}
+
+model EmailSequence {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sequenceType String    @map("sequence_type")
+  step         Int       @default(1)
+  subject      String?
+  body         String?
+  sentAt       DateTime? @map("sent_at")
+  openedAt     DateTime? @map("opened_at")
+  clickedAt    DateTime? @map("clicked_at")
+  metadata     Json      @default("{}")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([sequenceType])
+  @@map("email_sequences")
+}
+
+model UsageLog {
+  id             String       @id @default(cuid())
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String?      @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  feature        String
+  quantity       Int          @default(1)
+  date           DateTime     @default(now())
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([feature, date])
+  @@map("usage_logs")
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String?
+  channel   NotificationChannel @default(in_app)
+  isRead    Boolean            @default(false) @map("is_read")
+  metadata  Json               @default("{}")
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([type])
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model OAuthState {
+  id          String    @id @default(cuid())
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id])
+  provider    String
+  state       String    @unique
+  redirectUri String?   @map("redirect_uri")
+  metadata    Json      @default("{}")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("oauth_states")
+}

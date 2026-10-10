@@ -1,3186 +1,1424 @@
-import dotenv from "dotenv";
-// Load local environment overrides (.env.local takes precedence over .env).
-// In hosted environments (e.g. AI Studio) the API key is injected directly,
-// so a missing file here is fine.
-dotenv.config({ path: [".env.local", ".env"] });
-
 import express from "express";
 import path from "path";
-import { GoogleGenAI } from "@google/genai";
-import {
-  createInteraction,
-  streamInteraction,
-  API_BASE_URL,
-} from "./server/lib/agentClient.ts";
-import { extractJsonBlocks } from "./server/lib/jsonExtractor.ts";
-import fs from "fs";
-import crypto from "crypto";
 import multer from "multer";
-import * as XLSX from "xlsx";
-import {
-  getLeads,
-  upsertLead,
-  deleteLead,
-  getConfig,
-  saveConfig,
-  exportLeadsToCsv,
-  getWebhooks,
-  saveWebhook,
-  deleteWebhook,
-  getWebhookLogs,
-  clearWebhookLogs,
-  testWebhook,
-  testWebhookUrl,
-  dispatchWebhookEvent,
-} from "./server/lib/crmStore.ts";
-import { generateContractHtml } from "./server/lib/contractGenerator.ts";
-import { generateContractDocxBuffer } from "./server/lib/contractDocxGenerator.ts";
-import {
-  suggestBusinessQuestions,
-  chatAboutData,
-  auditCrmPipeline,
-  generateExecutiveSlideDeck,
-} from "./server/lib/geminiAssistant.ts";
-import { runOpenSquadMission } from "./server/lib/openSquadEngine.ts";
-import {
-  generateClientTunnelPresentationHtml,
-  generateDynamicRedesignHtml,
-  generateSvgQrCode,
-} from "./server/lib/tunnelEngine.ts";
+import Papa from "papaparse";
+import XLSX from "xlsx";
+import { GoogleGenAI } from "@google/genai";
+import { createServer as createViteServer } from "vite";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
+import crypto from "crypto";
+import Stripe from "stripe";
+import QRCode from "qrcode";
+import cors from "cors";
+import authRouter from "./src/routes/auth";
+import { getCnaeCodes, getGooglePlacesTerms } from "./src/services/prospecting";
 
-async function getGcpAccessToken(): Promise<string | null> {
-  try {
-    const res = await fetch(
-      "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
-      {
-        headers: { "Metadata-Flavor": "Google" },
-      },
-    );
-    if (res.ok) {
-      const data: any = await res.json();
-      return data.access_token || null;
-    }
-  } catch (err) {
-    console.warn(
-      "[getGcpAccessToken] Could not fetch token from metadata server:",
-      err,
-    );
+// Initialize Firebase Admin 
+// (Requires GOOGLE_APPLICATION_CREDENTIALS env var with service account path in production)
+try {
+  if (!getApps().length) {
+    initializeApp();
   }
-  return null;
+} catch (error) {
+  console.log("Firebase Admin initialization skipped (needs credentials in production).");
 }
 
-function extractTarInMemory(tarBuffer: Buffer): Record<string, Buffer> {
-  const files: Record<string, Buffer> = {};
-  let offset = 0;
+const db = getApps().length ? getFirestore() : null;
 
-  while (offset + 512 <= tarBuffer.length) {
-    let isEnd = true;
-    for (let i = 0; i < 512; i++) {
-      if (tarBuffer[offset + i] !== 0) {
-        isEnd = false;
-        break;
-      }
-    }
-    if (isEnd) break;
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
-    let name = "";
-    for (let i = 0; i < 100; i++) {
-      const charCode = tarBuffer[offset + i];
-      if (charCode === 0) break;
-      name += String.fromCharCode(charCode);
-    }
-    name = name.trim();
+function tryParseNumber(val: any): number | null {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return val;
+  if (typeof val !== 'string') return null;
 
-    let sizeStr = "";
-    for (let i = 124; i < 136; i++) {
-      const charCode = tarBuffer[offset + i];
-      if (charCode === 0 || charCode === 32) continue;
-      sizeStr += String.fromCharCode(charCode);
-    }
-    const size = parseInt(sizeStr, 8);
+  // Remove currency, spaces, percent sign and letters
+  let cleaned = val.replace(/[\sR\$\€\£\%\a-zA-Z]/g, '').trim();
+  if (cleaned === '') return null;
 
-    const typeflag = tarBuffer[offset + 156];
-    const isRegularFile = typeflag === 0 || typeflag === 48;
+  // Replaces dot thousand-separator and comma decimal-separator if Brazilian-style
+  const lastDot = cleaned.lastIndexOf('.');
+  const lastComma = cleaned.lastIndexOf(',');
 
-    offset += 512; // skip header
-
-    if (name && isRegularFile && !isNaN(size) && size > 0) {
-      if (offset + size <= tarBuffer.length) {
-        files[name] = tarBuffer.subarray(offset, offset + size);
-      }
-    }
-
-    const paddedSize = Math.ceil(size / 512) * 512;
-    offset += paddedSize;
-  }
-
-  return files;
-}
-
-function extractEnvironmentId(interaction: any): string | undefined {
-  if (!interaction || typeof interaction !== "object") return undefined;
-  const environment = interaction.environment;
-  const candidates = [
-    environment?.env_id,
-    environment?.environment_id,
-    environment?.id,
-    environment?.name,
-    interaction.environment_id,
-    interaction.env_id,
-  ];
-  const value = candidates.find(
-    (candidate) => typeof candidate === "string" && candidate.trim(),
-  );
-  if (typeof value !== "string") return undefined;
-  return value.replace(/^environments?\//, "").replace(/^environment-/, "");
-}
-
-function extractInteractionId(interaction: any): string | undefined {
-  if (!interaction || typeof interaction !== "object") return undefined;
-  const value =
-    interaction.name || interaction.id || interaction.interaction_id;
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-type AgentSource =
-  | { type: "inline"; content: string; target: string }
-  | { type: "gcs"; source: string; target: string }
-  | { type: "repository"; source: string; target: string };
-
-function loadAgentFiles(dir: string, basePath: string): AgentSource[] {
-  let files: AgentSource[] = [];
-  if (!fs.existsSync(dir)) return files;
-
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    const targetPath = path.posix.join(basePath, entry.name);
-    if (entry.isDirectory()) {
-      files = files.concat(loadAgentFiles(fullPath, targetPath));
+  if (lastComma > lastDot) {
+    // E.g. 1.500,50 -> 1500.50
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // E.g. 1,500.50 -> 1500.50
+    cleaned = cleaned.replace(/,/g, '');
+  } else if (lastComma !== -1) {
+    // Only commas, check if it's decimal (one comma) or thousand separator (multiple commas)
+    const commaCount = (cleaned.match(/,/g) || []).length;
+    if (commaCount === 1) {
+      cleaned = cleaned.replace(',', '.');
     } else {
-      files.push({
-        type: "inline",
-        content: fs.readFileSync(fullPath, "utf-8"),
-        target: targetPath,
-      });
+      cleaned = cleaned.replace(/,/g, '');
     }
   }
-  return files;
+
+  const parsed = Number(cleaned);
+  return isNaN(parsed) ? null : parsed;
 }
 
-const activeGenerations = new Map<string, AbortController>();
-
-function cleanUpOldGenerations() {
-  const outputDir = path.join(process.cwd(), "output");
-  if (!fs.existsSync(outputDir)) return;
-
-  const maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours threshold
-  const now = Date.now();
-
-  try {
-    const items = fs.readdirSync(outputDir);
-    for (const item of items) {
-      if (item.startsWith(".")) continue; // ignore hidden items
-      const itemPath = path.join(outputDir, item);
-      const stats = fs.statSync(itemPath);
-
-      if (stats.isDirectory()) {
-        const age = now - stats.mtimeMs;
-        if (age > maxAgeMs) {
-          console.log(
-            `[cleanup] Directory ${item} is older than 24 hours (${Math.round(age / 1000 / 60 / 60)} hrs). Deleting to prevent storage bloat.`,
-          );
-          try {
-            fs.rmSync(itemPath, { recursive: true, force: true });
-            const zipPath = `${itemPath}.zip`;
-            if (fs.existsSync(zipPath)) {
-              fs.unlinkSync(zipPath);
-            }
-          } catch (itemErr) {
-            console.error(`[cleanup] Failed to delete ${itemPath}:`, itemErr);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error("[cleanup] Error cleaning up old generations:", err);
-  }
-}
-
-const app = express();
 async function startServer() {
-    const PORT = 3000;
+  const app = express();
+  app.use(cors());
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
-  // Run initial cleanup on startup
-  cleanUpOldGenerations();
-
-  app.use(express.json({ limit: "50mb" }));
-  app.use("/output", express.static(path.join(process.cwd(), "output")));
-
-  // API routes FIRST
-  app.post("/api/cancel-show", (req, res) => {
-    const { generationId } = req.body;
-    if (generationId && activeGenerations.has(generationId)) {
-      console.log(`[cancel-show] Human requested abort for ${generationId}`);
-      activeGenerations.get(generationId)?.abort();
-      activeGenerations.delete(generationId);
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ error: "Not found or already completed" });
+  // Lazy init Gemini
+  const getAI = () => {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("A chave GEMINI_API_KEY não foi configurada nas variáveis de ambiente. Por favor, adicione-a.");
     }
-  });
+    return new GoogleGenAI({ apiKey: key });
+  };
 
-  app.get("/api/download-proxy", async (req, res) => {
-    const targetUrl = req.query.url as string;
-    if (!targetUrl) {
-      res.status(400).send("Missing url parameter");
-      return;
-    }
-    try {
-      const parsedUrl = new URL(targetUrl);
-      if (!parsedUrl.hostname.endsWith("storage.googleapis.com") && !parsedUrl.hostname.endsWith("googleusercontent.com")) {
-        res.status(403).send("Forbidden: Domain not allowed");
-        return;
-      }
-      const response = await fetch(targetUrl);
-      if (!response.ok) {
-        res
-          .status(response.status)
-          .send(`Failed to fetch: ${response.statusText}`);
-        return;
-      }
-      res.setHeader(
-        "Content-Type",
-        response.headers.get("Content-Type") || "application/octet-stream",
-      );
-      res.setHeader("Access-Control-Allow-Origin", "*");
-
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      res.send(buffer);
-    } catch (err) {
-      console.error("Download proxy failed:", err);
-      res
-        .status(500)
-        .send(
-          `Internal server error: ${err instanceof Error ? err.message : String(err)}`,
-        );
-    }
-  });
-
-  const QUOTA_CACHE_FILE = path.join(
-    process.cwd(),
-    "output",
-    "quota_cache.json",
-  );
-  const DEFAULT_QUOTA_LIMIT = 999999;
-
-  function getQuotaLimit(): number {
-    const limitStr = process.env.DAILY_QUOTA_LIMIT;
-    if (limitStr) {
-      const parsed = parseInt(limitStr, 10);
-      if (!isNaN(parsed)) {
-        return parsed;
-      }
-    }
-    return DEFAULT_QUOTA_LIMIT;
-  }
-
-  function getTodayStr(): string {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  let isFirebaseAdminInitialized = false;
-
-  function ensureFirebaseAdmin() {
-    // Firebase is disabled
-  }
-
-  async function getUserHash(req: express.Request): Promise<string | null> {
-    // Fallback during local development or unauthenticated preview testing
-    return "dev-user-hash";
-  }
-
-  function getQuotaCount(userHash: string | null): number {
-    if (!userHash) return 0;
-    try {
-      const outputDir = path.dirname(QUOTA_CACHE_FILE);
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-      if (fs.existsSync(QUOTA_CACHE_FILE)) {
-        const data = fs.readFileSync(QUOTA_CACHE_FILE, "utf-8");
-        const cache = JSON.parse(data);
-        const cacheKey = `${getTodayStr()}_${userHash}`;
-        return cache[cacheKey] || 0;
-      }
-    } catch (err) {
-      console.error("Error reading quota cache:", err);
-    }
-    return 0;
-  }
-
-  function incrementQuotaCount(userHash: string | null): void {
-    if (!userHash) return;
-    try {
-      const outputDir = path.dirname(QUOTA_CACHE_FILE);
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-      let cache: Record<string, number> = {};
-      if (fs.existsSync(QUOTA_CACHE_FILE)) {
-        try {
-          const data = fs.readFileSync(QUOTA_CACHE_FILE, "utf-8");
-          cache = JSON.parse(data);
-        } catch (e) {
-          console.error("Error parsing quota file cache on increment:", e);
-        }
-      }
-      const cacheKey = `${getTodayStr()}_${userHash}`;
-      cache[cacheKey] = (cache[cacheKey] || 0) + 1;
-      fs.writeFileSync(
-        QUOTA_CACHE_FILE,
-        JSON.stringify(cache, null, 2),
-        "utf-8",
-      );
-    } catch (err) {
-      console.error("Error incrementing quota cache:", err);
-    }
-  }
-
-  // Automated Indicators Endpoints (BCB / IPCA / SELIC with fallback cache & 6h schedule support)
-  const INDICATORS_CACHE_FILE = path.join(process.cwd(), "output", "indicators_cache.json");
-
-  app.get("/api/indicators", async (req, res) => {
-    try {
-      let bcbData: any[] = [];
-      let source = "BCB API (SGS 11 - Selic)";
-
-      try {
-        const response = await fetch(
-          "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/12?formato=json",
-          { signal: AbortSignal.timeout(5000) },
-        );
-
-        const contentType = response.headers.get("content-type") || "";
-        if (response.ok && contentType.includes("application/json")) {
-          bcbData = await response.json();
-        } else {
-          throw new Error(`Unexpected BCB response: ${response.status} ${contentType}`);
-        }
-      } catch (err) {
-        console.warn("[indicators] External BCB API fetch failed, falling back to cache:", err);
-      }
-
-      if (!bcbData || bcbData.length === 0) {
-        if (fs.existsSync(INDICATORS_CACHE_FILE)) {
-          const cached = JSON.parse(fs.readFileSync(INDICATORS_CACHE_FILE, "utf-8"));
-          return res.json(cached);
-        }
-        bcbData = [
-          { data: "01/01/2026", valor: "11.25" },
-          { data: "01/02/2026", valor: "11.75" },
-          { data: "01/03/2026", valor: "12.00" },
-          { data: "01/04/2026", valor: "12.25" },
-          { data: "01/05/2026", valor: "12.75" },
-          { data: "01/06/2026", valor: "13.25" },
-        ];
-      }
-
-      const payload = {
-        status: "success",
-        source,
-        lastUpdate: new Date().toLocaleString("pt-BR"),
-        indicators: [
-          {
-            title: "Taxa Selic (BCB)",
-            current: bcbData[bcbData.length - 1]?.valor || "13.25",
-            unit: "% a.a.",
-            trend: "+0.5% vs último mês",
-            history: bcbData.map((item: any) => ({ date: item.data, value: parseFloat(item.valor) }))
-          },
-          {
-            title: "IPCA (Inflação Oficial)",
-            current: "4.45",
-            unit: "% 12m",
-            trend: "-0.12% estabilizado",
-            history: [
-              { date: "Jan", value: 4.60 },
-              { date: "Fev", value: 4.55 },
-              { date: "Mar", value: 4.50 },
-              { date: "Abr", value: 4.48 },
-              { date: "Mai", value: 4.45 },
-            ]
-          },
-          {
-            title: "PIB Projetado (Focus)",
-            current: "2.18",
-            unit: "% crescimento",
-            trend: "Revisado para cima",
-            history: [
-              { date: "Q1", value: 2.05 },
-              { date: "Q2", value: 2.10 },
-              { date: "Q3", value: 2.15 },
-              { date: "Q4", value: 2.18 },
-            ]
-          }
-        ]
-      };
-
-      try {
-        const outputDir = path.dirname(INDICATORS_CACHE_FILE);
-        if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(INDICATORS_CACHE_FILE, JSON.stringify(payload, null, 2), "utf-8");
-      } catch (e) {
-        /* ignore cache write error */
-      }
-
-      res.json(payload);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || "Failed to fetch indicators" });
-    }
-  });
-
-  app.get("/api/indicators/status", (req, res) => {
-    let lastUpdateStr = "Hoje às 06:00";
-    try {
-      if (fs.existsSync(INDICATORS_CACHE_FILE)) {
-        const stats = fs.statSync(INDICATORS_CACHE_FILE);
-        const d = new Date(stats.mtime);
-        lastUpdateStr = `Hoje às ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-      }
-    } catch {
-      /* ignore */
-    }
-    res.json({
-      status: "ok",
-      lastUpdate: lastUpdateStr,
-      source: "BCB / IBGE API Integration",
-      frequency: "A cada 6 horas (Automático)",
-      active: true
-    });
-  });
-
-  app.get("/api/quota", async (req, res) => {
-    if (process.env.NODE_ENV !== "production") {
-      return res.json({ used: 0, limit: 999999 });
-    }
-    const userHash = await getUserHash(req);
-    const limit = getQuotaLimit();
-    if (!userHash) {
-      return res.json({ used: 0, limit });
-    }
-    const count = getQuotaCount(userHash);
-    return res.json({ used: count, limit });
-  });
-
-  const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
-  });
-
-  const uploadSingle = upload.single("file");
-
-  app.post(
-    "/api/upload",
-    (req, res, next) => {
-      uploadSingle(req, res, (err) => {
-        if (err) {
-          if (err instanceof multer.MulterError) {
-            if (err.code === "LIMIT_FILE_SIZE") {
-              return res
-                .status(400)
-                .json({
-                  error: "File is too large. The maximum allowed size is 50MB.",
-                });
-            }
-            return res
-              .status(400)
-              .json({ error: `Upload error: ${err.message}` });
-          }
-          return res
-            .status(500)
-            .json({
-              error: err.message || "An unknown error occurred during upload.",
-            });
-        }
-        next();
-      });
-    },
-    async (req, res) => {
-      try {
-        if (!req.file) {
-          return res.status(400).json({ error: "No file uploaded" });
-        }
-
-        // Inline limit: 1 MB per file
-        const MAX_INLINE_SIZE = 1 * 1024 * 1024; // 1 MB
-        if (req.file.size > MAX_INLINE_SIZE) {
-          return res.status(400).json({
-            error: `File "${req.file.originalname}" is ${(req.file.size / (1024 * 1024)).toFixed(2)} MB, which exceeds the 1MB inline limit. For CSV files larger than 1MB, please use the "Paste a GCS URI" option!`,
-          });
-        }
-
-        let content = "";
-        let finalFileName = req.file.originalname;
-        const lowerName = req.file.originalname.toLowerCase();
-
-        if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
-          try {
-            const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            content = XLSX.utils.sheet_to_csv(worksheet);
-            finalFileName = req.file.originalname.replace(/\.xlsx?$/i, ".csv");
-          } catch (excelErr: any) {
-            return res.status(400).json({ error: `Erro ao processar planilha Excel: ${excelErr.message}` });
-          }
-        } else if (lowerName.endsWith(".json")) {
-          try {
-            const rawJson = JSON.parse(req.file.buffer.toString("utf-8"));
-            if (Array.isArray(rawJson)) {
-              const worksheet = XLSX.utils.json_to_sheet(rawJson);
-              content = XLSX.utils.sheet_to_csv(worksheet);
-              finalFileName = req.file.originalname.replace(/\.json$/i, ".csv");
-            } else {
-              content = req.file.buffer.toString("utf-8");
-            }
-          } catch (jsonErr: any) {
-            return res.status(400).json({ error: `JSON inválido: ${jsonErr.message}` });
-          }
-        } else {
-          content = req.file.buffer.toString("utf-8");
-        }
-
-        const safeOriginalName = finalFileName.replace(
-          /[^a-zA-Z0-9._-]/g,
-          "_",
-        );
-        let gsUri: string | undefined = undefined;
-        let url: string | undefined = undefined;
-
-        console.log(
-          `[api/upload] Processed dataset upload for ${safeOriginalName} (${content.length} chars)`,
-        );
-        return res.json({
-          name: finalFileName,
-          content,
-          size: content.length,
-          gsUri,
-          url,
-        });
-      } catch (err: any) {
-        console.error("[api/upload] CSV upload failed:", err);
-        res
-          .status(500)
-          .json({ error: `Upload failed: ${err.message || err}` });
-      }
-    },
-  );
-
-  async function deleteGcsFiles(files: any[]) {
-    // Disabled
-  }
-
-  app.get("/api/download-file", async (req, res) => {
-    return res.status(500).send("GCS bucket is not configured on Firebase Admin");
-  });
-
-  app.post("/api/clear-files", async (req, res) => {
-    return res.json({ success: true });
-  });
-
-  app.post("/api/analyze", async (req, res) => {
-    // Run background cleanup whenever a new analysis is requested to optimize disk space
-    cleanUpOldGenerations();
-
-    const {
-      question,
-      files,
-      datasetName = "Dataset",
-      generationId,
-      environmentId,
-      googleToken,
-    } = req.body;
-
-    if (!question || typeof question !== "string" || question.trim() === "") {
-      return res
-        .status(400)
-        .json({ error: "Missing required field: question" });
-    }
-
-    // Reusing the environment is sufficient. Do not chain to the prior
-    // interaction because the report can be retrieved before that interaction
-    // has formally completed in the hosted runtime.
-    const isFollowUp = !!environmentId;
-    const uploadedFiles: Array<{ name: string; content?: string; gsUri?: string }> =
-      Array.isArray(files)
-        ? files.filter(
-            (f: any) =>
-              f &&
-              typeof f.name === "string" &&
-              ((typeof f.content === "string" && f.content.trim() !== "") ||
-                (typeof f.gsUri === "string" && f.gsUri.trim() !== "")),
-          )
-        : [];
-    if (!isFollowUp && uploadedFiles.length === 0) {
-      return res.status(400).json({ error: "Provide at least one CSV file." });
-    }
-
-    console.log(`[analyze] Checking daily quota.`);
+  // Helper to execute Gemini generation with retries and fallback
+  const generateContentWithRetryAndFallback = async (params: {
+    model?: string;
+    fallbackModel?: string;
+    contents: any;
+    config?: any;
+    maxRetries?: number;
+  }) => {
+    const primary = params.model || "gemini-2.0-flash";
+    const second = "gemini-flash-latest";
+    const third = params.fallbackModel || "gemini-3.1-flash-lite";
     
-    const userHash = await getUserHash(req);
-    const count = getQuotaCount(userHash);
-    if (count >= 5) {
-      return res.status(429).json({ error: "Limite diário de 5 prospecções/análises atingido." });
+    // Build a unique chain of models to try in sequence
+    const modelsToTry = [primary];
+    if (!modelsToTry.includes(second)) modelsToTry.push(second);
+    if (!modelsToTry.includes(third)) modelsToTry.push(third);
+
+    let lastError: any = null;
+
+    for (const currentModel of modelsToTry) {
+      let delay = 800;
+      const maxAttemptsForModel = 2; // Try each model up to 2 times (initial + 1 retry if transient)
+      
+      for (let attempt = 0; attempt < maxAttemptsForModel; attempt++) {
+        try {
+          console.log(`[Gemini API] Tentando gerar conteúdo com o modelo: ${currentModel} (Tentativa ${attempt + 1}/${maxAttemptsForModel})`);
+          const result = await getAI().models.generateContent({
+            model: currentModel,
+            contents: params.contents,
+            config: params.config,
+          });
+          console.log(`[Gemini API] Sucesso com o modelo: ${currentModel}`);
+          return result;
+        } catch (error: any) {
+          lastError = error;
+          const status = error.status || error.code || (error.response && error.response.status);
+          const isTransient = status === "UNAVAILABLE" || status === 503 || (error.message && error.message.includes("503")) || (error.message && error.message.includes("UNAVAILABLE"));
+          
+          console.warn(`[Gemini API] Erro no modelo ${currentModel} (Tentativa ${attempt + 1}/${maxAttemptsForModel}):`, error.message || error);
+          
+          if (attempt < maxAttemptsForModel - 1 && isTransient) {
+            // Wait a bit before retrying the same model
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            delay *= 2;
+          } else {
+            // Break loop to go to next model in the chain
+            break;
+          }
+        }
+      }
     }
-    incrementQuotaCount(userHash);
+    
+    // If all models in the chain failed, throw the last error
+    throw lastError || new Error("Todos os modelos Gemini do fallback falharam.");
+  };
 
-    const effectiveDatasetName = datasetName;
+  // Init Stripe
+  let stripe: Stripe | null = null;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  let operacaoModo = "NÃO CONFIGURADO (Chave ausente)";
 
-    const gcsFiles = uploadedFiles.filter((f) => f.gsUri);
-    const hasGcsFiles = gcsFiles.length > 0;
-    let gcsToken: string | null = null;
-    let gcsInstructions = "";
-    if (hasGcsFiles) {
-      gcsToken = await getGcpAccessToken();
-      gcsInstructions = `The user uploaded ${gcsFiles.length} file(s) to Google Cloud Storage. First, you MUST run \`python /.agents/download_gcs.py\` to download them to /.agents/data/ before doing anything else.`;
-    }
-
-    let prompt = "";
-
-    if (isFollowUp) {
-      prompt = `You are an expert data analyst continuing an analysis of the dataset "${effectiveDatasetName}".
-
-
-FOLLOW-UP BUSINESS QUESTION:
-${question}
-
-
-EXECUTE IMMEDIATELY:
-- Your first response MUST be one code_execution call. Do not explain, plan, quote these instructions, or print code as text.
-- In that one call, discover source files with glob.glob('./workspace/data/*.csv'), clear prior files under data/analysis/ and charts/, analyze the question with Pandas, save result CSVs, and optionally create up to three charts with the existing make_chart.py script.
-- Do not delete source CSVs, profile.json, or the existing report.json before the replacement report is ready.
-- Do not import seaborn, scipy, statsmodels, or other unlisted packages. Use Pandas, NumPy, and the provided chart script.
-- If the data cannot answer the question or analysis fails, write data/analysis/limitations.csv with columns limitation, detail, and required_data.
-- ALWAYS finish the same code_execution call by running:
- python3 /.agents/skills/reporting/scripts/build_report.py --workspace ./workspace --question "${question.replace(/"/g, '\\"')}" --dataset-name "${effectiveDatasetName.replace(/"/g, '\\"')}"
-- After the tool output contains "Report saved", return one short sentence and make no more tool calls.`;
+  if (stripeKey) {
+    stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' as any });
+    if (stripeKey.startsWith("sk_live")) {
+      operacaoModo = "LIVE";
+    } else if (stripeKey.startsWith("sk_test")) {
+      operacaoModo = "TEST";
     } else {
-      const fileNames = uploadedFiles.map((f) => f.name).join(", ");
-      const dataSourceInstructions = `The user provided ${uploadedFiles.length} CSV file(s). ${gcsInstructions} The files will be located at /.agents/data/. Copy them all into ./workspace/data/ before profiling: \`cp /.agents/data/*.csv ./workspace/data/\`. Provided file(s): ${fileNames}.`;
-
-      prompt = `You are an expert data analyst. Dataset name: "${effectiveDatasetName}".
-
-
-DATA SOURCE:
-${dataSourceInstructions}
-
-
-BUSINESS QUESTION:
-${question}
-
-
-WORKFLOW REQUIREMENT:
-You MUST follow this workflow in order. Keep the run short: use one Python script for profiling and one Python script for the requested analysis instead of creating many exploratory scripts. You MUST NOT finish your response until all steps are completed and 'build_report.py' prints that report.json was saved.
-HARD LIMIT: You have at most 10 code-execution calls for the entire run. Use one setup call, one combined profiling call, one combined analysis call, up to three chart calls, and one report call. Do not run ad hoc inspection, describe, correlation, validation, package-check, or report-preview commands. Put required calculations into the two scripts. Once build_report.py prints "Report saved", immediately conclude without another tool call.
-
-
-1. STAGE & SET UP: Create directories, copy the data, and install the core requirements immediately. Do not assume matplotlib is installed:
-  mkdir -p ./workspace/data ./workspace/charts ./workspace/data/analysis && \
-  cp /.agents/data/*.csv ./workspace/data/ && \
-  pip install -r /.agents/requirements.txt --break-system-packages --prefer-binary --no-cache-dir
-  Install scikit-learn separately only if the question genuinely requires an ML model.
-
-
-2. EXPLORE: Write and run one concise Pandas profiling script that understands the columns and types and writes './workspace/data/profile.json'. The data-explorer skill is agent-driven; there is no profile_data.py supplied by the skill.
-
-
-3. ANALYZE & SAVE: Write and execute a Python pandas script to perform the data aggregations and calculations needed to answer the question.
-  CRITICAL: You MUST save any result tables as CSV files under './workspace/data/analysis/' (e.g., './workspace/data/analysis/streak_data.csv'). Do NOT save files in other folders.
-
-
-4. VISUALIZE: Create high-quality PNG charts for your findings. Run the visualization script on your saved analysis CSVs:
-  python3 /.agents/skills/visualization/scripts/make_chart.py --workspace ./workspace --data data/analysis/<your_csv>.csv --type <bar|line|scatter|pie|heatmap> --x <col> --y <col> --title "<Chart Title>" --output charts/<chart_name>.png
-
-
-5. BUILD REPORT: Compile everything into the final interactive report JSON by running:
-  python3 /.agents/skills/reporting/scripts/build_report.py --workspace ./workspace --question "${question.replace(/"/g, '\\"')}" --dataset-name "${effectiveDatasetName.replace(/"/g, '\\"')}"
-
-
-CRITICAL RULE FOR RE-ENTRANCY & COMPLETION:
-The frontend UI depends 100% on './workspace/data/report.json' to render the charts and tables on the screen. If you output your final textual response or stop calling tools before running step 5 (build_report.py), the user will see a completely blank dashboard!
-Therefore, please make sure to run both 'make_chart.py' and 'build_report.py' successfully in the sandbox before concluding your turn.
-
-
-*SANDBOX TOOL TIP:* Since you run in a Python code_execution sandbox, you should run all shell commands (like directory creation, make_chart.py, or build_report.py scripts) by prefixing them with a "!" in your code cells or by using Python's 'os.system()' or 'subprocess' modules. Do not output plain bash commands or hallucinate external tool calls.
-
-
-Example of the required execution order:
-\`\`\`python
-import os
-# Stage data and install core dependencies first
-os.system("mkdir -p ./workspace/data ./workspace/charts ./workspace/data/analysis && cp /.agents/data/*.csv ./workspace/data/ && pip install -r /.agents/requirements.txt --break-system-packages --prefer-binary --no-cache-dir")
-
-
-# Explore and profile using Pandas here, then write ./workspace/data/profile.json directly.
-# Do not call a nonexistent profiling helper script.
-
-
-# Analyze & Save CSV
-import pandas as pd
-df = pd.read_csv('./workspace/data/...')
-# ... perform calculations ...
-df.to_csv('./workspace/data/analysis/results.csv', index=False)
-
-
-# Visualize PNG chart
-os.system("python3 /.agents/skills/visualization/scripts/make_chart.py --workspace ./workspace --data data/analysis/results.csv --type bar --x col1 --y col2 --title 'Title' --output charts/my_chart.png")
-
-
-# Compile report immediately after charts (deterministic and network-free)
-os.system("""python3 /.agents/skills/reporting/scripts/build_report.py --workspace ./workspace --question "${question.replace(/"/g, '\\"')}" --dataset-name "${effectiveDatasetName.replace(/"/g, '\\"')}" """)
-\`\`\``;
+      operacaoModo = "CONFIGURAÇÃO INVÁLIDA";
     }
+  }
 
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    });
+  // Log de segurança de auditoria requerido
+  console.log(`Modo de Operação: ${operacaoModo}`);
 
-    const sendEvent = (event: any) => {
-      res.write(`data: ${JSON.stringify(event)}\n\n`);
-    };
-    let reportDelivered = false;
-    let streamFailed = false;
-    const sendError = (message: string) => {
-      streamFailed = true;
-      sendEvent({ type: "error", message });
-    };
-    let sentSessionEnvironmentId: string | undefined;
-    const sendSessionEnvironment = (environmentIdValue: string | undefined) => {
-      if (
-        !environmentIdValue ||
-        environmentIdValue === sentSessionEnvironmentId
-      )
-        return;
-      sentSessionEnvironmentId = environmentIdValue;
-      sendEvent({ type: "session", environmentId: environmentIdValue });
-    };
-    sendSessionEnvironment(
-      typeof environmentId === "string" ? environmentId : undefined,
-    );
-
-    // Send a heartbeat every 15 seconds to keep the connection alive
-    // (useful for proxies like VS Code port forwarding that drop idle connections)
-    const heartbeatInterval = setInterval(() => {
-      res.write(`:\n\n`); // SSE comment/ping
-    }, 15000);
-
-    let isFinished = false;
-    const abortController = new AbortController();
-
-    if (generationId) {
-      activeGenerations.set(generationId, abortController);
-    }
-
-    req.on("aborted", () => {
-      if (!isFinished) {
-        console.log(
-          `[analyze] Client aborted request. Agent will continue running in background unless explicitly cancelled.`,
-        );
-      }
-      clearInterval(heartbeatInterval);
-    });
-    req.on("close", () => {
-      clearInterval(heartbeatInterval);
-    });
-
+  // ==========================================
+  // STRIPE WEBHOOK (Needs raw body)
+  // ==========================================
+  app.post("/api/webhooks/stripe", express.raw({ type: 'application/json' }), async (req, res) => {
     try {
-      let agentFiles: AgentSource[] = [];
-      if (isFollowUp) {
-        console.log(
-          `[analyze] Continuing session in active environment: "${environmentId}" without interaction chaining.`,
-        );
-        sendEvent({
-          type: "info",
-          message: "Continuing session in active environment...",
-        });
-      } else {
-        console.log(
-          `[analyze] Request received. dataset: "${effectiveDatasetName}", source: ${uploadedFiles.length} uploaded file(s), question: "${question.substring(0, 80)}...", generationId: "${generationId}"`,
-        );
-        console.log(
-          `[analyze] GEMINI_API_KEY presence verified: ${!!process.env.GEMINI_API_KEY}`,
-        );
-        sendEvent({
-          type: "info",
-          message: "Provisioning analysis environment...",
-        });
+      const sig = req.headers['stripe-signature'];
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-        console.log(
-          `[analyze] Loading agent files from filesystem path: ${path.join(process.cwd(), "agent")}`,
-        );
-        agentFiles = loadAgentFiles(
-          path.join(process.cwd(), "agent"),
-          "/.agents",
-        );
-
-        // Add user dataset files (inline CSVs or GCS URIs)
-        uploadedFiles.forEach((f) => {
-          const safeName = path.posix
-            .basename(f.name)
-            .replace(/[^a-zA-Z0-9._-]/g, "_");
-          if (f.content) {
-            agentFiles.push({
-              type: "inline",
-              content: f.content,
-              target: `/.agents/data/${safeName}`,
-            });
-          } else if (f.gsUri) {
-            agentFiles.push({
-              type: "gcs",
-              source: f.gsUri,
-              target: "/.agents/data",
-            });
-          }
-        });
-
-        // Uploads are fetched from GCS inside the sandbox via /.agents/download_gcs.py.
-        if (hasGcsFiles) {
-          const protocol = req.headers["x-forwarded-proto"] || "http";
-          const host = req.headers.host || "localhost:3000";
-          const serverUrl = `${protocol}://${host}`;
-
-          const gcsFilesToDownload = gcsFiles.map((f) => {
-            const safeName = path.posix
-              .basename(f.name)
-              .replace(/[^a-zA-Z0-9._-]/g, "_");
-            let gcsPath = "";
-            const uri = f.gsUri || "";
-            if (uri.startsWith("gs://")) {
-              const parts = uri.slice(5).split("/", 1);
-              gcsPath = uri.slice(5 + parts[0].length + 1);
-            }
-            return {
-              source: f.gsUri,
-              filename: gcsPath,
-              target: `/.agents/data/${safeName}`,
-            };
-          });
-
-          const gcsDownloadScript = `
-import urllib.request
-import urllib.parse
-import os
-
-
-files = [
-${gcsFilesToDownload.map((f) => `    {"source": "${f.source}", "filename": "${f.filename}", "target": "${f.target}"}`).join(",\n")}
-]
-
-
-server_url = "${serverUrl}"
-token = ${gcsToken ? `"${gcsToken}"` : "None"}
-os.makedirs("/.agents/data", exist_ok=True)
-
-
-for f in files:
-   filename = f["filename"]
-   # 1. First attempt: Download via the secure local Express download proxy (works without direct GCS access or public permission)
-   proxy_url = f"{server_url}/api/download-file?filename={urllib.parse.quote(filename)}"
-   print(f"Attempting download for {filename} via proxy: {proxy_url}")
-   try:
-       req = urllib.request.Request(proxy_url)
-       with urllib.request.urlopen(req) as response, open(f["target"], "wb") as out:
-           out.write(response.read())
-       print(f"Successfully downloaded {filename} via Express proxy")
-       continue
-   except Exception as proxy_err:
-       print(f"Express proxy download failed: {proxy_err}. Falling back to direct GCS download...")
-
-
-   # 2. Second attempt / fallback: Direct GCS API download
-   uri = f["source"]
-   if uri.startswith("gs://"):
-       parts = uri[5:].split("/", 1)
-       bucket = parts[0]
-       obj = parts[1]
-       encoded_obj = urllib.parse.quote(obj)
-       url_json = f"https://storage.googleapis.com/storage/v1/b/{bucket}/o/{encoded_obj}?alt=media"
-       url_xml = f"https://storage.googleapis.com/{bucket}/{encoded_obj}"
-      
-       success = False
-       for url in [url_json, url_xml]:
-           req = urllib.request.Request(url)
-           if token:
-               req.add_header("Authorization", "Bearer " + token)
-           try:
-               with urllib.request.urlopen(req) as response, open(f["target"], "wb") as out:
-                   out.write(response.read())
-               print(f"Successfully downloaded {f['source']} from {url}")
-               success = True
-               break
-           except Exception as e:
-               print(f"Failed download from {url}: {e}")
-       if not success:
-           print(f"Failed all download attempts for {f['source']}")
-`;
-          agentFiles.push({
-            type: "inline",
-            content: gcsDownloadScript,
-            target: `/.agents/download_gcs.py`,
-          });
-        }
-        console.log(
-          `[analyze] Finished loading agent files (source: ${uploadedFiles.length} uploaded file(s)). Count: ${agentFiles.length}`,
-        );
+      if (!stripe || !endpointSecret || !sig || typeof sig !== 'string') {
+        return res.status(400).send("Stripe não configurado corretamente.");
       }
 
-      if (!gcsToken) {
-        gcsToken = await getGcpAccessToken();
-      }
-      console.log(
-        `[analyze] Retrieved GCS access token: ${gcsToken ? "yes (length: " + gcsToken.length + ")" : "no"}`,
-      );
-
-      console.log(
-        `[analyze] Calling createInteraction with prompt: "${prompt.substring(0, 100)}..."`,
-      );
-      const response = await createInteraction({
-        prompt,
-        stream: true,
-        inlineSources: isFollowUp
-          ? undefined
-          : agentFiles.length > 0
-            ? agentFiles
-            : undefined,
-        environmentId: isFollowUp ? environmentId : undefined,
-        gcsToken: gcsToken || undefined,
-        signal: abortController.signal,
-      });
-
-      console.log(
-        `[analyze] Gemini API responded. HTTP Status: ${response.status} ${response.statusText}`,
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          `[analyze] Gemini API Non-2xx response. Error Payload: ${errorText}`,
-        );
-
-        let displayMessage = `Agent API error: ${response.status} - ${errorText}`;
-        try {
-          const parsed = JSON.parse(errorText);
-          if (parsed?.error?.message) {
-            displayMessage = parsed.error.message;
-          }
-        } catch (e) {
-          // ignore parsing error, stick to default
-        }
-
-        const isQuotaError =
-          response.status === 429 ||
-          errorText.toLowerCase().includes("quota") ||
-          errorText.toLowerCase().includes("too_many_requests") ||
-          errorText.toLowerCase().includes("resource_exhausted") ||
-          displayMessage.toLowerCase().includes("quota") ||
-          displayMessage.toLowerCase().includes("too_many_requests");
-
-        const isEnvNotFoundError =
-          response.status === 404 ||
-          errorText.toLowerCase().includes("not_found") ||
-          errorText.toLowerCase().includes("environment not found") ||
-          displayMessage.toLowerCase().includes("environment not found") ||
-          displayMessage.toLowerCase().includes("not found or not accessible");
-
-        if (isQuotaError) {
-          displayMessage = `Gemini API Quota Limit Reached: ${displayMessage}. The shared free-tier Google Gemini API Key has run out of request quota. To resolve this, go to Settings > Secrets inside AI Studio to verify your personal Gemini API key or set up billing.`;
-        } else if (isEnvNotFoundError) {
-          displayMessage = `The previous analysis session has expired or the remote environment has been recycled due to inactivity. Please start a fresh analysis session by uploading your CSV files again.`;
-        }
-
-        sendError(displayMessage);
-        res.end();
-        return;
-      }
-
-      console.log(
-        `[analyze] Response remains ok. Constructing SSE stream reader...`,
-      );
-      let accumulatedText = "";
-      let envId: string | undefined = environmentId;
-      let interactionId: string | undefined;
-      let reportArtifactReady = false;
-
-      let eventCount = 0;
-      for await (const event of streamInteraction(response)) {
-        eventCount++;
-        console.log(
-          `[analyze] SSE yields streaming event #${eventCount}: type="${event.type}"`,
-        );
-        if (event.type === "done") {
-          console.log(
-            `[analyze] Received explicit "done" marker from interaction stream.`,
-          );
-          break;
-        }
-        if (event.type === "interaction") {
-          envId = extractEnvironmentId(event.interaction) || envId;
-          interactionId =
-            extractInteractionId(event.interaction) || interactionId;
-          sendSessionEnvironment(envId);
-          console.log(
-            `[analyze] Interaction created. Environment ID: "${envId}", interaction ID: "${interactionId}"`,
-          );
-        }
-        if (event.type === "complete") {
-          envId = extractEnvironmentId(event.interaction) || envId;
-          interactionId =
-            extractInteractionId(event.interaction) || interactionId;
-          sendSessionEnvironment(envId);
-          console.log(
-            `[analyze] Interaction completed. Extracted environment ID: "${envId}"`,
-          );
-          const usage = event.interaction?.usage as any;
-          if (usage) {
-            console.log(
-              `[agent] Token usage: ${usage.total_tokens} total tokens (${usage.total_input_tokens} input, ${usage.total_output_tokens} output, ${usage.total_thought_tokens || 0} thought, ${usage.total_cached_tokens || 0} cached)`,
-            );
-          }
-
-          // Fallback extraction: iterate and combine text from all elements of the steps array
-          const stepsObj = event.interaction?.steps as any[];
-          if (Array.isArray(stepsObj)) {
-            let combinedStepsText = "";
-            for (const step of stepsObj) {
-              const isReasoningStep =
-                step.type === "thinking" ||
-                step.type === "thought" ||
-                step.type === "reasoning";
-              if (!isReasoningStep && Array.isArray(step.content)) {
-                for (const part of step.content) {
-                  if (part && typeof part === "object") {
-                    if (part.type === "text" && part.text) {
-                      combinedStepsText += part.text;
-                    } else if (part.text && part.type !== "thought") {
-                      combinedStepsText += part.text;
-                    }
-                  } else if (typeof part === "string") {
-                    combinedStepsText += part;
-                  }
-                }
-              }
-            }
-            if (
-              combinedStepsText &&
-              combinedStepsText.length > accumulatedText.length
-            ) {
-              console.log(
-                `[analyze] Dynamic steps recovery: Reconstructed text of length ${combinedStepsText.length} exceeds accumulated text of length ${accumulatedText.length}. Restoring fallback text.`,
-              );
-              accumulatedText = combinedStepsText;
-            }
-          }
-        }
-
-        // Log events to the terminal as well
-        if (event.type === "thinking")
-          console.log(
-            `[agent] thinking delta: ${event.text?.substring(0, 30)}...`,
-          );
-        else if (event.type === "tool_call") {
-          console.log(`[agent] tool_call: ${event.name}`);
-          console.log(
-            `[agent] args:`,
-            JSON.stringify(event.arguments, null, 2),
-          );
-        } else if (event.type === "tool_result") {
-          console.log(`[agent] tool_result for tool: ${event.name}`);
-          if (
-            event.result?.includes("Report saved to") &&
-            event.result.includes("report.json")
-          ) {
-            reportArtifactReady = true;
-            console.log(
-              "[analyze] Agent confirmed report.json was saved in the sandbox.",
-            );
-          }
-        } else if (event.type === "text") {
-          console.log(
-            `[agent] text output segment: ${event.text?.substring(0, 30)}...`,
-          );
-        }
-
-        sendEvent(event);
-
-        if (event.type === "text" && event.text) {
-          accumulatedText += event.text;
-        }
-        if (reportArtifactReady && envId) {
-          console.log(
-            "[analyze] report.json is ready; stopping stream consumption and retrieving the sandbox snapshot.",
-          );
-          break;
-        }
-      }
-
-      // If the hosted SSE connection closed before interaction.completed,
-      // recover the environment ID from the interaction resource itself.
-      if (!envId && interactionId) {
-        try {
-          const interactionPath = interactionId.startsWith("interactions/")
-            ? interactionId
-            : `interactions/${interactionId}`;
-          const interactionRes = await fetch(
-            `${API_BASE_URL}/${interactionPath}`,
-            {
-              headers: {
-                "x-goog-api-key": process.env.GEMINI_API_KEY || "",
-                "Api-Revision": "2026-05-20",
-                "x-goog-api-client": "applet-ai-data-analyst/1.0.0",
-              },
-            },
-          );
-          if (interactionRes.ok) {
-            const interactionData = await interactionRes.json();
-            envId = extractEnvironmentId(interactionData);
-            sendSessionEnvironment(envId);
-            console.log(
-              `[analyze] Recovered environment ID from interaction resource: "${envId}"`,
-            );
-          } else {
-            console.warn(
-              `[analyze] Could not recover interaction metadata: ${interactionRes.status} ${interactionRes.statusText}`,
-            );
-          }
-        } catch (metadataErr) {
-          console.warn(
-            "[analyze] Interaction metadata recovery failed:",
-            metadataErr,
-          );
-        }
-      }
-
-      // Fallback: if the agent emitted the report JSON inline in its text output, parse it.
-      if (accumulatedText) {
-        try {
-          const blocks = extractJsonBlocks(accumulatedText);
-          const reportBlock = blocks
-            .reverse()
-            .find(
-              (b: any) =>
-                b &&
-                typeof b === "object" &&
-                (b.executive_summary || b.insights || b.title),
-            );
-          if (reportBlock) {
-            reportDelivered = true;
-            sendEvent({ type: "report_data", data: reportBlock });
-          }
-        } catch (e) {
-          console.error(
-            "Failed to parse JSON blocks fallback from accumulated text:",
-            e,
-          );
-        }
-      }
-
-      if (envId) {
-        sendEvent({
-          type: "info",
-          message: reportArtifactReady
-            ? "Report created. Retrieving dashboard files..."
-            : "Retrieving report and charts from the analysis environment...",
-        });
-        try {
-          const downloadUrl = `${API_BASE_URL}/files/environment-${envId}:download?alt=media`;
-          let res: Response | null = null;
-          for (let attempt = 1; attempt <= 5; attempt++) {
-            res = await fetch(downloadUrl, {
-              headers: { "x-goog-api-key": process.env.GEMINI_API_KEY || "" },
-            });
-            if (
-              res.ok ||
-              ![404, 409, 425].includes(res.status) ||
-              attempt === 5
-            )
-              break;
-            console.log(
-              `[analyze] Environment snapshot not ready (attempt ${attempt}/5). Retrying...`,
-            );
-            await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
-          }
-
-          if (res?.ok) {
-            const arrayBuffer = await res.arrayBuffer();
-            const tarBuffer = Buffer.from(arrayBuffer);
-            const extractedFiles = extractTarInMemory(tarBuffer);
-
-            let report: any = null;
-            // Map of chart basename -> chart image URL
-            const chartImages: Record<string, string> = {};
-
-            // Prepare run directory for chart image output
-            let runId = "gen-" + Math.random().toString(36).substring(2, 10);
-            if (typeof generationId === "string" && /^[A-Za-z0-9_-]+$/.test(generationId)) {
-              runId = generationId;
-            }
-            const outputDirRoot = path.join(process.cwd(), "output");
-            let chartRunDir = path.join(outputDirRoot, runId, "charts");
-            if (fs.existsSync(chartRunDir)) {
-              runId = `${runId}-${Date.now()}`;
-              chartRunDir = path.join(outputDirRoot, runId, "charts");
-            }
-            fs.mkdirSync(chartRunDir, { recursive: true });
-
-            for (const [filePath, fileContent] of Object.entries(
-              extractedFiles,
-            )) {
-              const normalized = filePath.replace(/^\.\//, "");
-              if (
-                normalized.endsWith("data/report.json") ||
-                normalized.endsWith("/report.json") ||
-                normalized === "report.json"
-              ) {
-                try {
-                  report = JSON.parse(fileContent.toString("utf8"));
-                } catch (err) {
-                  console.error(
-                    "Failed to parse report.json from memory:",
-                    err,
-                  );
-                }
-              } else if (
-                normalized.includes("charts/") &&
-                /\.(png|jpg|jpeg)$/i.test(normalized)
-              ) {
-                let base = normalized.split("/").pop() as string;
-                if (!/^[A-Za-z0-9_.-]+\.(png|jpe?g)$/i.test(base)) {
-                  const ext = base.split(".").pop() || "png";
-                  base = `chart-${Object.keys(chartImages).length + 1}.${ext}`;
-                }
-                const targetFilePath = path.join(chartRunDir, base);
-                try {
-                  fs.writeFileSync(targetFilePath, fileContent);
-                  chartImages[base] = `/output/${runId}/charts/${base}`;
-                } catch (writeErr) {
-                  console.error(`Failed to write chart ${base} to disk:`, writeErr);
-                }
-              }
-            }
-
-            const reportMatchesCurrentQuestion =
-              typeof report?.question === "string" &&
-              report.question.trim().toLowerCase() ===
-                question.trim().toLowerCase();
-            if (
-              isFollowUp &&
-              !reportArtifactReady &&
-              !reportMatchesCurrentQuestion
-            ) {
-              console.warn(
-                "[analyze] Follow-up stream ended without producing a replacement report. Preserving the existing dashboard.",
-              );
-              sendError(
-                "The follow-up analysis stopped before it could update the dashboard. Your previous report has been preserved; please try the question again.",
-              );
-              return;
-            }
-
-            if (!report) {
-              console.log(
-                "[analyze] report.json was not found in the tar archive. Generating server-side fallback report...",
-              );
-              const displayTables: any[] = [];
-
-              for (const [filePath, fileContent] of Object.entries(
-                extractedFiles,
-              )) {
-                const normalized = filePath.replace(/^\.\//, "");
-                if (
-                  normalized.endsWith(".csv") &&
-                  !normalized.includes("data/report.json")
-                ) {
-                  try {
-                    const csvText = fileContent.toString("utf8");
-                    const lines = csvText
-                      .split("\n")
-                      .map((l) => l.trim())
-                      .filter(Boolean);
-                    if (lines.length > 0) {
-                      const headers = lines[0]
-                        .split(",")
-                        .map((h) => h.replace(/^["']|["']$/g, ""));
-                      const rows = lines.slice(1, 21).map((line) => {
-                        return line
-                          .split(",")
-                          .map((val) => val.replace(/^["']|["']$/g, ""));
-                      });
-                      const filename =
-                        normalized.split("/").pop() || "table.csv";
-                      const title = filename
-                        .replace(/\.csv$/i, "")
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase());
-                      displayTables.push({
-                        title,
-                        columns: headers,
-                        rows,
-                        caption: `Generated data table: ${filename}`,
-                      });
-                    }
-                  } catch (csvErr) {
-                    console.error(
-                      `Failed to parse csv fallback for ${normalized}:`,
-                      csvErr,
-                    );
-                  }
-                }
-              }
-
-              if (
-                displayTables.length > 0 ||
-                Object.keys(chartImages).length > 0 ||
-                accumulatedText
-              ) {
-                let summary =
-                  "The data analyst has finished processing your calculations.";
-                if (accumulatedText) {
-                  summary = accumulatedText
-                    .replace(/```json[\s\S]*?```/g, "")
-                    .trim();
-                  if (summary.length > 500) {
-                    summary = summary.substring(0, 500) + "...";
-                  }
-                }
-
-                report = {
-                  dataset_name: effectiveDatasetName || "Dataset",
-                  question: question,
-                  title: `Analysis Report: ${effectiveDatasetName || "Dataset"}`,
-                  executive_summary: summary,
-                  insights: [
-                    {
-                      title: "Calculations Completed",
-                      detail:
-                        "The analysis successfully completed the necessary Python computations. Explore the generated data tables and supporting documents below.",
-                      metric: "Status",
-                      value: "Success",
-                    },
-                  ],
-                  charts: [],
-                  tables: displayTables,
-                  methodology:
-                    "Computed using Pandas inside the sandboxed data analyst workspace.",
-                  recommendations: [
-                    "Review the structured output tables and charts below for specific metrics.",
-                  ],
-                  generated_at: new Date().toISOString().split("T")[0],
-                };
-              }
-            }
-
-            if (report) {
-              // Embed chart image data into the referenced chart entries by matching basename.
-              if (Array.isArray(report.charts)) {
-                for (const chart of report.charts) {
-                  if (
-                    chart &&
-                    typeof chart === "object" &&
-                    typeof chart.file === "string"
-                  ) {
-                    const base = chart.file.split("/").pop() as string;
-                    if (chartImages[base]) {
-                      chart.image = chartImages[base];
-                    }
-                  }
-                }
-              }
-
-              // Append any rendered charts the report didn't explicitly reference.
-              const referenced = new Set(
-                (Array.isArray(report.charts) ? report.charts : [])
-                  .map((c: any) =>
-                    typeof c?.file === "string"
-                      ? c.file.split("/").pop()
-                      : null,
-                  )
-                  .filter(Boolean),
-              );
-              const extras = Object.keys(chartImages)
-                .filter((base) => !referenced.has(base))
-                .map((base) => ({
-                  title: base.replace(/\.[^.]+$/, "").replace(/_/g, " "),
-                  file: `charts/${base}`,
-                  caption: "",
-                  type: "bar",
-                  image: chartImages[base],
-                }));
-              if (extras.length > 0) {
-                report.charts = [
-                  ...(Array.isArray(report.charts) ? report.charts : []),
-                  ...extras,
-                ];
-              }
-
-              reportDelivered = true;
-              sendEvent({ type: "report_data", data: report });
-            } else {
-              console.error(
-                "report.json was not found in the extracted tar archive",
-              );
-              sendError("The analysis ran but report.json was not produced.");
-            }
-          } else {
-            const errBody = res ? await res.text() : "No response received";
-            console.error("Failed to download snapshot:", errBody);
-            let displayMessage = `Failed to retrieve files from the analysis environment: ${errBody}`;
-            try {
-              const parsed = JSON.parse(errBody);
-              if (parsed?.error?.message) {
-                const msg = parsed.error.message.toLowerCase();
-                if (
-                  msg.includes("not found") ||
-                  msg.includes("not accessible")
-                ) {
-                  displayMessage =
-                    "The previous analysis session has expired or the remote environment has been recycled due to inactivity. Please start a fresh analysis session by uploading your CSV files again.";
-                } else {
-                  displayMessage = parsed.error.message;
-                }
-              }
-            } catch (e) {
-              if (
-                errBody.toLowerCase().includes("not found") ||
-                errBody.toLowerCase().includes("not accessible")
-              ) {
-                displayMessage =
-                  "The previous analysis session has expired or the remote environment has been recycled due to inactivity. Please start a fresh analysis session by uploading your CSV files again.";
-              }
-            }
-            sendError(displayMessage);
-          }
-        } catch (err: any) {
-          console.error("Error processing snapshot in memory:", err);
-          sendError(`Error extracting analysis files: ${err.message}`);
-        }
-      }
-
-      isFinished = true;
-      if (!reportDelivered && !streamFailed) {
-        sendError(
-          "The analysis stream ended before a dashboard report was produced.",
-        );
-      }
-      if (reportDelivered && !streamFailed) {
-        sendEvent({ type: "status", status: "completed" });
-      }
-    } catch (err: any) {
-      if (err.name === "AbortError") {
-        console.log(`[analyze] Agent interaction aborted successfully.`);
-      } else {
-        console.error(`[analyze] Error:`, err);
-        sendError(err instanceof Error ? err.message : "Unknown error");
-      }
-    } finally {
-      isFinished = true;
-      clearInterval(heartbeatInterval);
-      if (generationId) {
-        activeGenerations.delete(generationId);
-      }
-      res.end();
-
-      // Files are kept for follow-up chats. They are only deleted when clicking "New Analysis" (POST /api/clear-files).
-      /*
-     if (!isFollowUp && uploadedFiles.length > 0) {
-       deleteGcsFiles(uploadedFiles).catch(err => {
-         console.error("[analyze] Error in background deleteGcsFiles:", err);
-       });
-     }
-     */
-    }
-  });
-
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  CRM Leads & Configuration Endpoints                       */
-  /* ────────────────────────────────────────────────────────── */
-  app.get("/api/leads", (req, res) => {
-    try {
-      const leads = getLeads();
-      res.json(leads);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/leads", (req, res) => {
-    try {
-      const lead = req.body;
-      if (!lead || !lead.slug) {
-        return res.status(400).json({ error: "Lead must contain a slug." });
-      }
-      const saved = upsertLead(lead);
-      res.json(saved);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.put("/api/leads/:slug", (req, res) => {
-    try {
-      const slug = req.params.slug;
-      const changes = req.body;
-      const saved = upsertLead({ ...changes, slug });
-      res.json(saved);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.delete("/api/leads/:slug", (req, res) => {
-    try {
-      const slug = req.params.slug;
-      const deleted = deleteLead(slug);
-      res.json({ ok: deleted });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.get("/api/config", (req, res) => {
-    try {
-      const cfg = getConfig();
-      res.json(cfg);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.put("/api/config", (req, res) => {
-    try {
-      const updated = saveConfig(req.body);
-      res.json(updated);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.get("/api/crm/export-csv", (req, res) => {
-    try {
-      const csv = exportLeadsToCsv();
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", 'attachment; filename="prospector-leads.csv"');
-      res.send(csv);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/crm/ai-audit", async (req, res) => {
-    try {
-      const leads = req.body.leads || getLeads();
-      const audit = await auditCrmPipeline(leads);
-      res.json(audit);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  CRM Webhooks Management & Live Dispatch API               */
-  /* ────────────────────────────────────────────────────────── */
-  app.get("/api/webhooks", (req, res) => {
-    try {
-      const webhooks = getWebhooks();
-      res.json(webhooks);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/webhooks", (req, res) => {
-    try {
-      const { url, name, secret, events, active, id } = req.body;
-      if (!url || typeof url !== "string" || !url.startsWith("http")) {
-        return res.status(400).json({ error: "URL do Webhook inválida. Deve iniciar com http:// ou https://" });
-      }
-      const saved = saveWebhook({ id, url, name, secret, events, active });
-      res.json(saved);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.delete("/api/webhooks/:id", (req, res) => {
-    try {
-      const { id } = req.params;
-      const ok = deleteWebhook(id);
-      res.json({ ok });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/webhooks/:id/test", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const result = await testWebhook(id);
-      res.json(result);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/webhooks/test-url", async (req, res) => {
-    try {
-      const { url, secret } = req.body;
-      const result = await testWebhookUrl(url, secret);
-      res.json(result);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.get("/api/webhooks-logs", (req, res) => {
-    try {
-      const logs = getWebhookLogs(100);
-      res.json(logs);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.delete("/api/webhooks-logs", (req, res) => {
-    try {
-      clearWebhookLogs();
-      res.json({ ok: true });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/webhooks/manual-trigger", async (req, res) => {
-    try {
-      const { event, payload } = req.body;
-      await dispatchWebhookEvent(event || "status_changed", payload || { test: true });
-      res.json({ ok: true, message: "Evento disparado para os webhooks ativos." });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Proposal Generation Endpoint                             */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/gerar-proposta", async (req, res) => {
-    try {
-      const { clienteNome, clienteSite, clienteNicho } = req.body;
-
-      if (!clienteNome || !clienteNicho) {
-        return res.status(400).json({ 
-          error: "clienteNome e clienteNicho são obrigatórios" 
-        });
-      }
-
-      // Importação dinâmica do geminiAssistant
-      const { GoogleGenAI } = await import("@google/genai");
-      
-      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({ 
-          error: "Configuração de IA não encontrada" 
-        });
-      }
-
-      const genAI = new GoogleGenAI({ apiKey });
-      
-      const prompt = `Você é um consultor de vendas especializado em redesign de sites e prospecção B2B.
-      
-      Crie uma proposta de abordagem personalizada para:
-      - Cliente: ${clienteNome}
-      - Site atual: ${clienteSite || 'Não informado'}
-      - Nicho: ${clienteNicho}
-      
-      A proposta deve conter:
-      1. Uma mensagem de abertura profissional e personalizada
-      2. 3-4 pontos de melhoria específicos para o site baseado no nicho
-      3. Um call-to-action claro para agendar uma reunião
-      4. Tom consultivo, não vendedor agressivo
-      
-      Responda em JSON com:
-      {
-        "mensagem": "texto da mensagem completa",
-        "pontosMelhoria": ["ponto 1", "ponto 2", "ponto 3"],
-        "cta": "texto do call-to-action",
-        "previewUrl": "https://focoemdados.com.br/preview/${encodeURIComponent(clienteNome || 'lead')}"
-      }`;
-
-      const response = await genAI.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-      });
-
-      let proposalData;
+      let event;
       try {
-        // Tentar extrair JSON da resposta
-        const text = response.text || '';
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          proposalData = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("JSON não encontrado na resposta");
-        }
-      } catch {
-        // Fallback se falhar o parsing
-        proposalData = {
-          mensagem: `Olá ${clienteNome}, analisamos seu site atual (${clienteSite || 'não informado'}) no nicho de ${clienteNicho}. Preparamos uma prévia de redesign moderno e responsivo para aumentar suas conversões.`,
-          pontosMelhoria: [
-            "Layout responsivo e mobile-first",
-            "Velocidade de carregamento otimizada",
-            "CTAs claros e posicionamento estratégico",
-            "SEO técnico e conteúdo para o nicho"
-          ],
-          cta: "Vamos agendar 15 min para mostrar a prévia?",
-          previewUrl: `https://focoemdados.com.br/preview/${encodeURIComponent(clienteNome || 'lead')}`
-        };
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      } catch (err: any) {
+        return res.status(400).send(`Webhook Error: ${err.message}`);
       }
+
+      if (!db) return res.status(200).send("Ignorado (sem DB)");
+
+      const usersRef = db.collection('users');
+
+      // Manipular eventos do Stripe
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as any;
+        const email = session.customer_details?.email || session.customer_email;
+        if (email) {
+          const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+          if (snapshot.empty) {
+            await usersRef.add({
+              email,
+              plan: 'pro',
+              quotaUsed: 0,
+              createdAt: FieldValue.serverTimestamp()
+            });
+          } else {
+            await snapshot.docs[0].ref.update({ plan: 'pro' });
+          }
+        }
+      } else if (event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object as any;
+        const customerId = subscription.customer as string;
+        
+        const customer = await stripe.customers.retrieve(customerId) as any;
+        const email = customer.email;
+
+        if (email) {
+          const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+          if (!snapshot.empty) {
+            await snapshot.docs[0].ref.update({ plan: 'free' });
+          }
+        }
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("Stripe Webhook Error:", error);
+      res.status(500).json({ error: "Erro interno" });
+    }
+  });
+
+  // Rota de prospectação de estabelecimentos por nicho e localização
+  app.post("/api/prospectar", async (req: any, res: any) => {
+    try {
+      const { niche, city, radius } = req.body;
+
+      if (!niche || !city) {
+        return res.status(400).json({ error: "Campos obrigatórios ausentes: niche e city" });
+      }
+
+      const results = await prospectarEstabelecimentos(niche, city, radius || 50);
 
       res.json({
-        status: "sucesso",
-        ...proposalData,
-        dataCriacao: new Date().toISOString()
+        success: true,
+        niche,
+        city,
+        radius: radius || 50,
+        totalEncontrados: results.length,
+        resultados: results,
+        timestamp: new Date().toISOString()
       });
-    } catch (err: any) {
-      console.error("[/api/gerar-proposta] Error:", err);
-      res.status(500).json({ error: "Erro ao gerar proposta: " + err.message });
+    } catch (error: any) {
+      console.error("Erro na prospectação:", error);
+      res.status(500).json({ error: error.message || "Erro interno na prospectação." });
     }
   });
 
-  /* ────────────────────────────────────────────────────────── */
-  /*  Gemini Smart Features: Questions, Chat & Slide Deck      */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/suggest-questions", async (req, res) => {
+  // Add JSON parsing for body
+  app.use(express.json());
+
+  // Mount Auth Router
+  app.use("/api/auth", authRouter);
+
+  // Endpoints do Stripe para validação amigável de chaves e prevenção de loops no front-end
+  app.get("/api/stripe/config", (req, res) => {
+    if (!stripe) {
+      return res.status(400).json({
+        success: false,
+        error: "Stripe não configurado no servidor. Por favor, adicione a chave secreta (STRIPE_SECRET_KEY) nas configurações.",
+        mode: "NÃO CONFIGURADO"
+      });
+    }
+    return res.json({
+      success: true,
+      mode: stripeKey?.startsWith("sk_live") ? "LIVE" : "TEST"
+    });
+  });
+
+  app.post("/api/stripe/create-checkout-session", async (req, res) => {
     try {
-      const { sampleData, datasetName } = req.body;
-      if (!sampleData) {
-        return res.status(400).json({ error: "Missing sampleData" });
+      if (!stripe) {
+        return res.status(400).json({
+          success: false,
+          error: "O gateway de pagamento Stripe não está configurado. Por favor, adicione a sua chave secreta (STRIPE_SECRET_KEY) para ativar o checkout seguro."
+        });
       }
-      const questions = await suggestBusinessQuestions(sampleData, datasetName);
-      res.json({ questions });
+
+      const { priceId, successUrl, cancelUrl } = req.body;
+      if (!priceId) {
+        return res.status(400).json({
+          success: false,
+          error: "ID de preço do Stripe (priceId) é obrigatório."
+        });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: successUrl || `${req.protocol}://${req.get('host')}/?success=true`,
+        cancel_url: cancelUrl || `${req.protocol}://${req.get('host')}/?canceled=true`,
+      });
+
+      return res.json({
+        success: true,
+        sessionId: session.id,
+        url: session.url
+      });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      console.error("[Stripe] Erro ao criar sessão de checkout:", err);
+      return res.status(500).json({
+        success: false,
+        error: `Erro ao iniciar checkout: ${err.message || "Erro no gateway Stripe."}`
+      });
+    }
+  });
+
+  // ==========================================
+  // WEBHOOKS (Kiwify & Hotmart)
+  // ==========================================
+
+  // KIWIFY WEBHOOK
+  app.post("/api/webhooks/kiwify", async (req, res) => {
+    try {
+      const signature = req.headers['x-kiwify-signature'] as string;
+      const kiwifyWebhookSecret = process.env.KIWIFY_WEBHOOK_SECRET || "SEU_TOKEN_AQUI";
+      
+      // Validação de Segurança (Assinatura)
+      // A Kiwify envia uma assinatura HMAC SHA-1 do payload
+      if (signature) {
+        const payload = JSON.stringify(req.body);
+        const hash = crypto.createHmac('sha1', kiwifyWebhookSecret).update(payload).digest('hex');
+        if (hash !== signature) {
+          return res.status(401).json({ error: "Assinatura inválida." });
+        }
+      }
+
+      const { order_status, Customer } = req.body;
+      const email = Customer?.email;
+
+      if (!email || !db) return res.status(200).send("Ignorado (sem email ou sem DB)");
+
+      const usersRef = db.collection('users');
+      const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+
+      if (order_status === "approved") {
+        // Compra Aprovada: Liberar acesso PRO
+        if (snapshot.empty) {
+          // Criar usuário se não existir
+          await usersRef.add({
+            email,
+            plan: 'pro',
+            quotaUsed: 0,
+            createdAt: FieldValue.serverTimestamp()
+          });
+        } else {
+          // Atualizar plano para PRO
+          const userDoc = snapshot.docs[0];
+          await userDoc.ref.update({ plan: 'pro' });
+        }
+      } else if (order_status === "refunded" || order_status === "chargedback") {
+        // Reembolso/Chargeback: Revogar acesso
+        if (!snapshot.empty) {
+          const userDoc = snapshot.docs[0];
+          await userDoc.ref.update({ plan: 'free' });
+        }
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("Kiwify Webhook Error:", error);
+      res.status(500).json({ error: "Erro interno" });
+    }
+  });
+
+  // HOTMART WEBHOOK
+  app.post("/api/webhooks/hotmart", async (req, res) => {
+    try {
+      const hottok = req.headers['x-hotmart-hottok'] as string;
+      const hotmartWebhookSecret = process.env.HOTMART_HOTTOK || "SEU_HOTTOK_AQUI";
+
+      // Validação de Segurança (Token)
+      if (hottok !== hotmartWebhookSecret) {
+        return res.status(401).json({ error: "Token Hottok inválido." });
+      }
+
+      const event = req.body.event; // Ex: PURCHASE_APPROVED, PURCHASE_REFUNDED
+      const email = req.body.data?.buyer?.email;
+
+      if (!email || !db) return res.status(200).send("Ignorado (sem email ou sem DB)");
+
+      const usersRef = db.collection('users');
+      const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+
+      if (event === "PURCHASE_APPROVED") {
+        // Compra Aprovada
+        if (snapshot.empty) {
+          await usersRef.add({
+            email,
+            plan: 'pro',
+            quotaUsed: 0,
+            createdAt: FieldValue.serverTimestamp()
+          });
+        } else {
+          const userDoc = snapshot.docs[0];
+          await userDoc.ref.update({ plan: 'pro' });
+        }
+      } else if (event === "PURCHASE_REFUNDED" || event === "PURCHASE_CANCELED") {
+        // Reembolso/Cancelamento
+        if (!snapshot.empty) {
+          const userDoc = snapshot.docs[0];
+          await userDoc.ref.update({ plan: 'free' });
+        }
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("Hotmart Webhook Error:", error);
+      res.status(500).json({ error: "Erro interno" });
+    }
+  });
+
+  // ==========================================
+  // MIDLLEWARE DE AUTENTICAÇÃO E RBAC (Controle de Acesso)
+  // ==========================================
+  const requireRole = (allowedRoles: string[]) => {
+    return async (req: any, res: any, next: any) => {
+      try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          return res.status(401).json({ error: "Token de autenticação não fornecido ou inválido." });
+        }
+
+        const idToken = authHeader.split("Bearer ")[1];
+        
+        // Se o Firebase Admin não estiver configurado corretamente (ambiente de teste local, etc.)
+        if (!getApps().length) {
+          console.warn("Firebase Admin não inicializado. Ignorando validação de token.");
+          return res.status(503).json({ error: "Serviço de autenticação temporariamente indisponível." });
+        }
+
+        const decodedToken = await getAuth().verifyIdToken(idToken);
+        const email = decodedToken.email || "";
+        const uid = decodedToken.uid;
+        const isLucyano = email.toLowerCase() === "lucyano.pci@gmail.com";
+
+        // Injetar dados básicos do usuário no request
+        req.user = {
+          uid,
+          email,
+          role: isLucyano ? "Master" : "User", // default
+        };
+
+        // Consultar a role no banco de dados Firestore
+        if (db) {
+          const userDoc = await db.collection("users").doc(uid).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            req.user.role = isLucyano ? "Master" : (userData?.role || "User");
+            
+            if (isLucyano && (userData?.role !== "Master" || userData?.plan !== "pro")) {
+              await db.collection("users").doc(uid).set({ role: "Master", plan: "pro" }, { merge: true });
+            }
+          } else if (isLucyano) {
+            await db.collection("users").doc(uid).set({
+              email,
+              role: "Master",
+              plan: "pro",
+              quotaUsed: 0,
+              createdAt: new Date().toISOString()
+            });
+          }
+        }
+
+        // Verificar se a role do usuário está entre as roles permitidas
+        if (!allowedRoles.includes(req.user.role)) {
+          return res.status(403).json({ 
+            error: `Acesso negado. Esta rota requer privilégios de: [${allowedRoles.join(", ")}]. Sua role atual é: ${req.user.role}` 
+          });
+        }
+
+        next();
+      } catch (error: any) {
+        console.error("Erro no middleware RBAC:", error);
+        return res.status(401).json({ error: "Não autorizado ou token expirado." });
+      }
+    };
+  };
+
+  // Middleware para verificar se o usuário é Premium (pro) ou Master
+  const requirePremiumOrMaster = async (req: any, res: any, next: any) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Token de autenticação não fornecido ou inválido." });
+      }
+
+      const idToken = authHeader.split("Bearer ")[1];
+      
+      if (!getApps().length) {
+        console.warn("Firebase Admin não inicializado. Ignorando validação.");
+        return res.status(503).json({ error: "Serviço de autenticação temporariamente indisponível." });
+      }
+
+      const decodedToken = await getAuth().verifyIdToken(idToken);
+      const email = decodedToken.email || "";
+      const uid = decodedToken.uid;
+      const isLucyano = email.toLowerCase() === "lucyano.pci@gmail.com";
+
+      let role = isLucyano ? "Master" : "User";
+      let plan = isLucyano ? "pro" : "free";
+
+      if (db) {
+        const userDoc = await db.collection("users").doc(uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          role = isLucyano ? "Master" : (userData?.role || "User");
+          plan = isLucyano ? "pro" : (userData?.plan || "free");
+
+          if (isLucyano && (userData?.role !== "Master" || userData?.plan !== "pro")) {
+            await db.collection("users").doc(uid).set({ role: "Master", plan: "pro" }, { merge: true });
+          }
+        } else if (isLucyano) {
+          await db.collection("users").doc(uid).set({
+            email,
+            role: "Master",
+            plan: "pro",
+            quotaUsed: 0,
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+
+      req.user = { uid, email, role, plan };
+
+      // Se for Premium (pro) ou Master, prosseguir
+      if (plan === "pro" || role === "Master") {
+        return next();
+      }
+
+      return res.status(403).json({ 
+        error: "Este recurso está disponível apenas no plano Premium. Descubra o que seus concorrentes estão fazendo na internet em tempo real e compare com seus dados de precificação. Faça o upgrade agora!" 
+      });
+    } catch (error: any) {
+      console.error("Erro no middleware Premium Paywall:", error);
+      return res.status(401).json({ error: "Não autorizado ou token expirado." });
+    }
+  };
+
+  // Motor de Busca Comparativa (Exclusivo Premium)
+  app.post("/api/premium/web-search-compare", requirePremiumOrMaster, async (req: any, res: any) => {
+    try {
+      const { productName, productPrice, additionalContext } = req.body;
+      
+      if (!productName) {
+        return res.status(400).json({ error: "O nome do produto é obrigatório para realizar a busca comparativa." });
+      }
+
+      const prompt = `Você é um Analista de Mercado e Pricing de e-commerce Sênior. 
+O cliente possui o seguinte produto em sua planilha:
+- Nome do Produto: "${productName}"
+- Preço Atual do Cliente: R$ ${productPrice || "Não especificado"}
+${additionalContext ? `- Contexto Adicional da Planilha: ${additionalContext}` : ""}
+
+Sua tarefa:
+1. Busque na internet em tempo real pelos preços atuais deste produto nos principais varejistas brasileiros (como Google Shopping, Mercado Livre, Amazon, Magalu, etc.).
+2. Faça uma comparação direta de preços. Calcule a média de mercado e determine se o preço do cliente está acima ou abaixo da média de mercado (especifique a porcentagem de diferença, ex: "Seu preço está 15% acima da média do Google Shopping" ou "Seu preço está 8% abaixo da média de mercado").
+3. Forneça insights brutos, diretos e acionáveis sobre a estratégia de precificação recomendada (ex: se devem baixar o preço, se há margem para aumentar, etc.).
+4. Indique de forma clara as fontes, concorrentes e preços encontrados.
+
+Responda em português brasileiro de forma direta, altamente analítica e estruturada com marcadores.`;
+
+      // Executando busca na web com a ferramenta de busca Google Search integrada nativamente e tratamento de erros/fallback
+      const response = await generateContentWithRetryAndFallback({
+        model: process.env.ID_BOT_PLANILHAS || "gemini-3.5-flash",
+        fallbackModel: "gemini-3.1-flash-lite", // fallback if primary experiences transient issues
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+
+      const text = response.text || "Não foi possível gerar uma comparação no momento.";
+      
+      // Extraindo fontes/links da busca em tempo real para exibir na interface de forma rica
+      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      const sources = groundingChunks.map((chunk: any) => ({
+        title: chunk.web?.title || "Fonte externa",
+        uri: chunk.web?.uri || "#"
+      })).filter((src: any) => src.uri !== "#");
+
+      res.json({
+        productName,
+        productPrice,
+        insight: text,
+        sources,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err: any) {
+      console.error("Erro no motor de busca comparativa:", err);
+      res.status(500).json({ error: err.message || "Erro interno ao executar a busca comparativa." });
+    }
+  });
+
+  // Exemplo de rota protegida que retorna métricas sensíveis apenas para "Master" ou "Admin"
+  app.get("/api/admin/metrics", requireRole(["Master"]), async (req: any, res: any) => {
+    try {
+      if (!db) {
+        return res.json({
+          message: "Modo de simulação ativo (Sem banco de dados conectado)",
+          totalUsers: 42,
+          proUsersCount: 12,
+          systemLoad: "Normal"
+        });
+      }
+
+      const usersSnapshot = await db.collection("users").get();
+      const totalUsers = usersSnapshot.size;
+      
+      let proUsersCount = 0;
+      usersSnapshot.forEach(doc => {
+        if (doc.data().plan === "pro") proUsersCount++;
+      });
+
+      res.json({
+        message: "Dados de administração carregados com sucesso.",
+        totalUsers,
+        proUsersCount,
+        currentUserEmail: req.user.email,
+        currentUserRole: req.user.role,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err: any) {
+      console.error("Erro ao carregar métricas de admin:", err);
+      res.status(500).json({ error: "Erro interno do servidor ao coletar métricas." });
+    }
+  });
+
+  // API Routes
+  // Proxy endpoints for Google Sheets and Drive to bypass ad-blockers and CORS in sandboxed iframe environment
+  app.get("/api/proxy/sheets-meta", async (req, res) => {
+    try {
+      const { fileId } = req.query;
+      const authHeader = req.headers.authorization;
+
+      if (!fileId) {
+        return res.status(400).json({ error: "Parâmetro fileId ausente." });
+      }
+      if (!authHeader) {
+        return res.status(401).json({ error: "Token de autorização do Google ausente." });
+      }
+
+      const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${fileId}`, {
+        headers: { Authorization: authHeader }
+      });
+
+      if (!metaRes.ok) {
+        const text = await metaRes.text();
+        return res.status(metaRes.status).send(text);
+      }
+
+      const data = await metaRes.json();
+      res.json(data);
+    } catch (err: any) {
+      console.error("Erro no proxy de metadados do Google Sheets:", err);
+      res.status(500).json({ error: err.message || "Erro interno no proxy." });
+    }
+  });
+
+  app.get("/api/proxy/sheets-values", async (req, res) => {
+    try {
+      const { fileId, range } = req.query;
+      const authHeader = req.headers.authorization;
+
+      if (!fileId || !range) {
+        return res.status(400).json({ error: "Parâmetros fileId ou range ausentes." });
+      }
+      if (!authHeader) {
+        return res.status(401).json({ error: "Token de autorização do Google ausente." });
+      }
+
+      const valRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${fileId}/values/${encodeURIComponent(range as string)}`, {
+        headers: { Authorization: authHeader }
+      });
+
+      if (!valRes.ok) {
+        const text = await valRes.text();
+        return res.status(valRes.status).send(text);
+      }
+
+      const data = await valRes.json();
+      res.json(data);
+    } catch (err: any) {
+      console.error("Erro no proxy de valores do Google Sheets:", err);
+      res.status(500).json({ error: err.message || "Erro interno no proxy." });
+    }
+  });
+
+  app.get("/api/proxy/drive-file-media", async (req, res) => {
+    try {
+      const { fileId } = req.query;
+      const authHeader = req.headers.authorization;
+
+      if (!fileId) {
+        return res.status(400).json({ error: "Parâmetro fileId ausente." });
+      }
+      if (!authHeader) {
+        return res.status(401).json({ error: "Token de autorização do Google ausente." });
+      }
+
+      const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        headers: { Authorization: authHeader }
+      });
+
+      if (!fileRes.ok) {
+        const text = await fileRes.text();
+        return res.status(fileRes.status).send(text);
+      }
+
+      const text = await fileRes.text();
+      res.send(text);
+    } catch (err: any) {
+      console.error("Erro no proxy de arquivo do Google Drive:", err);
+      res.status(500).json({ error: err.message || "Erro interno no proxy." });
+    }
+  });
+
+  app.post("/api/gemini/insights", async (req, res) => {
+    try {
+      const { dados, eixoX, eixoY } = req.body;
+      
+      if (!dados || !eixoX || !eixoY) {
+        return res.status(400).json({ error: "Campos obrigatórios ausentes para gerar insights." });
+      }
+
+      const prompt = `Você é um Analista de Dados sênior. 
+Analise a relação entre o eixo X ("${eixoX}") e o eixo Y ("${eixoY}") com base nos dados agrupados fornecidos.
+Forneça um JSON válido com o seguinte formato:
+{
+  "textoResumo": "Um resumo detalhado em português com destaques de performance, os maiores valores e pontos críticos. Você pode usar formatação markdown com negrito **texto**.",
+  "novasRecomendacoes": ["Recomendação 1", "Recomendação 2", "Recomendação 3", "Recomendação 4"]
+}
+
+Dados: ${JSON.stringify(dados)}
+Responda EXCLUSIVAMENTE com o JSON válido sem bloco de markdown \`\`\`json.`;
+
+      const response = await generateContentWithRetryAndFallback({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      let responseText = response.text || "{}";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      
+      res.json(JSON.parse(responseText));
+    } catch (error) {
+      console.error("Gemini Insights Error:", error);
+      res.status(500).json({ error: "Falha ao gerar insights automáticos." });
+    }
+  });
+
+  app.post("/api/analyze-trend", async (req, res) => {
+    try {
+      const { chartData, xKey, yKey } = req.body;
+      
+      if (!chartData || !xKey || !yKey) {
+        return res.status(400).json({ error: "Campos obrigatórios ausentes para previsão de tendência." });
+      }
+
+      const prompt = `Aja como um analista de dados. Com base nos seguintes dados históricos para '${xKey}' e '${yKey}', projete os próximos 3 pontos de dados com base na tendência.
+Dados históricos: ${JSON.stringify(chartData)}
+Retorne APENAS um array JSON válido contendo 3 objetos com as chaves "${xKey}" e "${yKey}". Certifique-se de que os valores de "${yKey}" sejam numéricos. Não inclua nenhuma formatação markdown como \`\`\`json.`;
+
+      const response = await generateContentWithRetryAndFallback({
+        model: process.env.ID_BOT_PLANILHAS || "gemini-3.5-flash",
+        contents: prompt
+      });
+
+      let responseText = response.text || "[]";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      
+      const projectedData = JSON.parse(responseText);
+      
+      const projectedWithFlag = projectedData.map((item: any) => ({
+        ...item,
+        isProjection: true
+      }));
+
+      res.json({ projectedData: projectedWithFlag });
+    } catch (error) {
+      console.error("Trend Analysis Error:", error);
+      res.status(500).json({ error: "Failed to generate trend analysis." });
     }
   });
 
   app.post("/api/chat", async (req, res) => {
     try {
-      const { message, contextReport, datasetSummary, history } = req.body;
-      if (!message) {
-        return res.status(400).json({ error: "Missing message" });
+      const { question, contextData } = req.body;
+      
+      if (!question || !contextData) {
+        return res.status(400).json({ error: "Missing required fields" });
       }
-      const reply = await chatAboutData({
-        message,
-        contextReport,
-        datasetSummary,
-        history,
+
+      const systemPrompt = `Você é um Cientista de Dados Sênior e Engenheiro de Analytics especialista em visualização de dados.
+Seu objetivo é analisar os dados fornecidos pelo usuário e responder à pergunta do chat de forma extremamente útil.
+
+Se a pergunta do usuário solicitar uma comparação de subconjuntos, filtragem (ex: "vendas de SP e RJ"), ordenação/ranking (ex: "top 5 mais caros", "piores resultados", "maiores valores"), ou agregação de categorias específicas, você deve:
+1. Realizar a filtragem, ordenação ou transformação adequada diretamente no conjunto de dados fornecido em 'contextData'.
+2. Definir 'isFiltered' como true.
+3. Retornar esse subconjunto ou dados transformados no campo 'filteredData' (que deve ser uma lista de objetos JSON representando as linhas selecionadas).
+4. Indicar quais colunas devem ser usadas como eixos 'chartXKey' (geralmente textual/categoria) e 'chartYKey' (numérico/métrica) para plotar este novo subconjunto de forma perfeita no gráfico.
+
+Se for uma pergunta genérica, teórica ou resumo geral que não requeira focar em uma fatia específica, defina 'isFiltered' como false e retorne o contextData original no 'filteredData'.
+
+O retorno DEVE ser EXCLUSIVAMENTE um objeto JSON válido correspondente ao seguinte esquema TypeScript (não inclua tags de markdown como \`\`\`json ou texto adicional fora do JSON):
+{
+  "answer": string, // Resposta detalhada, amigável e profissional em português brasileiro (PT-BR) explicando o insight/resultado encontrado.
+  "isFiltered": boolean, // true se houve filtragem/ranking/comparação específica e os dados devem atualizar o gráfico.
+  "filteredData": Array<Record<string, any>>, // Lista de objetos contendo as linhas filtradas/transformadas resultantes da análise para atualização do gráfico.
+  "chartXKey": string, // Nome da coluna sugerida para o Eixo X
+  "chartYKey": string // Nome da coluna sugerida para o Eixo Y
+}
+
+DADOS DO CONJUNTO:
+${JSON.stringify(contextData)}
+
+PERGUNTA DO USUÁRIO:
+${question}
+
+Responda rigorosamente no formato JSON solicitado.`;
+
+      const response = await generateContentWithRetryAndFallback({
+        model: process.env.ID_BOT_PLANILHAS || "gemini-3.5-flash",
+        contents: systemPrompt,
+        config: {
+          responseMimeType: "application/json"
+        }
       });
-      res.json({ reply });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+
+      const responseText = response.text || "{}";
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText);
+      } catch (err) {
+        console.error("Erro ao analisar JSON retornado pelo Gemini:", responseText);
+        parsedResponse = {
+          answer: responseText.replace(/```json/g, "").replace(/```/g, "").trim(),
+          isFiltered: false,
+          filteredData: contextData,
+          chartXKey: "",
+          chartYKey: ""
+        };
+      }
+
+      res.json(parsedResponse);
+    } catch (error) {
+      console.error("Chat Error:", error);
+      res.status(500).json({ error: "Falha ao gerar resposta do chat." });
     }
   });
 
-  const QUOTA_LIMIT = 5;
-
-  app.get("/api/nearby-search", async (req, res) => {
+  app.post("/api/bi-assistant", async (req, res) => {
     try {
-      const userHash = await getUserHash(req);
-      const count = getQuotaCount(userHash);
-      if (count >= QUOTA_LIMIT) {
-        return res.status(429).json({ error: "Limite diário de 5 pesquisas atingido." });
+      const { question, columns, sampleRows } = req.body;
+      
+      if (!question || !columns) {
+        return res.status(400).json({ error: "Missing required fields: question and columns" });
       }
 
-      const { lat, lng, radius, type } = req.query;
-      if (!process.env.GOOGLE_MAPS_API_KEY) {
-        return res.status(500).json({ error: "API Key not configured" });
+      const systemPrompt = `Você é o assistente inteligente de inteligência artificial de um sistema de Business Intelligence avançado (similar ao Power BI e Qlik Sense).
+Seu objetivo é analisar o comando ou pergunta do usuário em linguagem natural e traduzi-la em uma configuração estrita de gráfico com agrupamento para nosso frontend.
+
+Você receberá:
+- As colunas disponíveis na planilha atual: ${JSON.stringify(columns)}
+- Uma pequena amostra de linhas dessa planilha (se houver): ${JSON.stringify(sampleRows || [])}
+
+Sua tarefa é analisar a pergunta e retornar EXCLUSIVAMENTE um objeto JSON válido (sem caracteres extras ou marcações de bloco de código markdown) que represente as configurações ideais para plotar o gráfico.
+
+Estrutura obrigatória do JSON de saída:
+{
+  "eixoX": "NomeExatoDaColunaX", // Deve ser uma das colunas disponíveis, idealmente categórica (texto, data, cidade, produto, vendedor, etc.)
+  "eixoY": "NomeExatoDaColunaY", // Deve ser uma das colunas disponíveis, idealmente numérica (faturamento, quantidade, preço, lucro, etc.)
+  "operacao": "Somar" ou "Média", // Operação matemática de agregação para aplicar nos valores da Coluna Y quando agrupados por Coluna X.
+  "tipoGrafico": "Barras" ou "Linhas" ou "Área" ou "Pizza", // O tipo de gráfico visual mais adequado para esta representação.
+  "filtro": { "coluna": "NomeDaColuna", "valor": "ValorASerFiltrado" } ou null, // Opcional. Se o usuário restringiu a análise (ex: "só em São Paulo" ou "do produto celular"), preencha com a coluna e o valor exatos correspondentes. Se não houver restrição, retorne null.
+  "respostaTexto": "Uma mensagem curta, amigável e profissional em português brasileiro explicando o que você encontrou ou o gráfico que acabou de configurar para o usuário."
+}
+
+Exemplo de mapeamento inteligente:
+- Se o usuário pedir "faturamento de São Paulo", eixoX deve ser a coluna que armazena cidades (ex: "Cidade"), eixoY deve ser "Faturamento", operacao deve ser "Somar", tipoGrafico "Barras", e filtro deve ser { "coluna": "Cidade", "valor": "São Paulo" }.
+- Se o usuário pedir "média de quantidade de eletrônicos", eixoX deve ser "Produto" ou "Categoria", eixoY deve ser "Quantidade", operacao deve ser "Média", tipoGrafico "Barras", filtro { "coluna": "Categoria", "valor": "Eletrônicos" }.
+
+Retorne APENAS o JSON bruto sem \`\`\`json ou texto ao redor.`;
+
+      const response = await generateContentWithRetryAndFallback({
+        model: process.env.ID_BOT_PLANILHAS || "gemini-3.5-flash",
+        contents: systemPrompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const responseText = response.text || "{}";
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText);
+      } catch (err) {
+        console.error("Erro ao analisar JSON do assistente de BI:", responseText);
+        parsedResponse = {
+          eixoX: columns[0] || "",
+          eixoY: columns[1] || "",
+          operacao: "Somar",
+          tipoGrafico: "Barras",
+          filtro: null,
+          respostaTexto: responseText.replace(/```json/g, "").replace(/```/g, "").trim()
+        };
       }
-      const response = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
-      const data = await response.json();
+
+      res.json(parsedResponse);
+    } catch (error) {
+      console.error("BI Assistant Error:", error);
+      res.status(500).json({ error: "Falha ao processar comando de voz/texto da IA." });
+    }
+  });
+
+  // Simulação de WhatsApp Bot via Gemini
+  app.post("/api/simulate-bot", async (req, res) => {
+    try {
+      const { niche, channel, voice, goal } = req.body;
+
+      if (!niche || !channel || !voice || !goal) {
+        return res.status(400).json({ error: "Campos obrigatórios ausentes para simulação de bot." });
+      }
+
+      const prompt = `Você é uma Inteligência Artificial configurada como um especialista de Atendimento e Vendas para WhatsApp e Instagram Direct.
+Seu objetivo é gerar um roteiro de fluxo conversacional personalizado baseado nas escolhas do usuário.
+
+Parâmetros recebidos:
+- Nicho da Empresa: "${niche}"
+- Canal de Entrada: "${channel}"
+- Tom de Voz da IA: "${voice}"
+- Objetivo Principal: "${goal}"
+
+Sua tarefa é retornar obrigatoriamente um objeto JSON com o seguinte formato:
+{
+  "copyText": "Texto explicativo curto sobre a estratégia do Bot (com emojis e formatação profissional de WhatsApp em negrito). Use até 3 frases.",
+  "flow": [
+    { "step": "1. [Nome do Passo]", "desc": "[Texto simulando o que a IA diria neste passo]" },
+    { "step": "2. [Nome do Passo]", "desc": "[Texto simulando o que a IA diria neste passo]" },
+    { "step": "3. [Nome do Passo]", "desc": "[Texto simulando o que a IA diria neste passo]" },
+    { "step": "4. [Nome do Passo]", "desc": "[Texto simulando o que a IA diria neste passo]" }
+  ]
+}
+
+Responda em português brasileiro (PT-BR) exclusivamente com o JSON válido. Não inclua marcas de bloco de código como \`\`\`json ou explicações externas.`;
+
+      const response = await generateContentWithRetryAndFallback({
+        model: process.env.ID_BOT_WHATSAPP || "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const responseText = response.text || "{}";
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText.replace(/```json/g, "").replace(/```/g, "").trim());
+      } catch (err) {
+        console.error("Erro ao analisar JSON do assistente de bot:", responseText);
+        parsedResponse = {
+          copyText: "💡 *Roteiro de Atendimento Inteligente* (Tom: " + voice + ")\n• Canal: " + channel + "\n• Foco: " + goal,
+          flow: [
+            { step: "1. Saudação", desc: "Olá! Seja muito bem-vindo. Como posso te ajudar hoje?" },
+            { step: "2. Qualificação", desc: "Para te dar o atendimento perfeito, qual o seu principal objetivo?" },
+            { step: "3. Solução", desc: "Perfeito! Recomendamos nosso plano Pro. Clique no link para assinar." },
+            { step: "4. Fechamento", desc: "Perfeito, sua assinatura foi gerada! Qualquer dúvida, estamos aqui." }
+          ]
+        };
+      }
+
+      res.json(parsedResponse);
+    } catch (error: any) {
+      console.error("Simulate Bot Error:", error);
+      res.status(500).json({ error: "Falha ao simular bot: " + (error.message || error) });
+    }
+  });
+
+  // Simulação de Marketing Copy via Gemini
+  app.post("/api/simulate-marketing", async (req, res) => {
+    try {
+      const { product, description, audience, hook } = req.body;
+
+      if (!product || !description || !audience || !hook) {
+        return res.status(400).json({ error: "Campos obrigatórios ausentes para geração de copy de marketing." });
+      }
+
+      const prompt = `Você é uma Inteligência Artificial configurada como um Copywriter Sênior e Especialista em Marketing Digital.
+Seu objetivo é gerar uma copy altamente persuasiva e uma ideia de criativo/design para anúncios de tráfego pago (Facebook/Google Ads).
+
+Parâmetros recebidos:
+- Nome do Produto: "${product}"
+- O que o Produto faz (Descrição): "${description}"
+- Público-Alvo: "${audience}"
+- Fórmula / Gancho de Copywriting: "${hook}"
+
+Sua tarefa é retornar obrigatoriamente um objeto JSON com o seguinte formato:
+{
+  "headline": "Uma headline matadora e chamativa para o anúncio",
+  "primaryText": "O texto principal do anúncio estruturado seguindo rigorosamente a fórmula escolhida (${hook}). Use quebras de linha e emojis de forma profissional.",
+  "description": "Uma descrição curta para o rodapé do anúncio",
+  "cta": "O texto do botão de chamada para ação (ex: Saiba Mais, Quero Garantir)",
+  "imageSuggestion": "Uma sugestão detalhada e criativa de imagem ou vídeo que o designer deve criar para acompanhar esta copy"
+}
+
+Responda em português brasileiro (PT-BR) exclusivamente com o JSON válido. Não inclua marcas de bloco de código como \`\`\`json ou explicações externas.`;
+
+      const response = await generateContentWithRetryAndFallback({
+        model: process.env.ID_BOT_MARKETING || "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const responseText = response.text || "{}";
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText.replace(/```json/g, "").replace(/```/g, "").trim());
+      } catch (err) {
+        console.error("Erro ao analisar JSON do assistente de marketing:", responseText);
+        parsedResponse = {
+          headline: `🔥 Atenção: Transforme sua empresa com ${product}!`,
+          primaryText: `Você quer resolver seus problemas hoje?\n\n[PROBLEMA] Ficar preso em processos manuais consome tempo e dinheiro.\n[AGITAÇÃO] Enquanto isso, seus concorrentes usam inteligência artificial.\n[SOLUÇÃO] Descubra o poder de ${product}: ${description}.`,
+          description: `Garanta agora o seu acesso!`,
+          cta: `Saiba Mais`,
+          imageSuggestion: `Imagem minimalista e futurista contrastando tons escuros com neon ciano.`
+        };
+      }
+
+      res.json(parsedResponse);
+    } catch (error: any) {
+      console.error("Simulate Marketing Error:", error);
+      res.status(500).json({ error: "Falha ao gerar copy de marketing: " + (error.message || error) });
+    }
+  });
+
+  app.post("/api/upload", (req, res, next) => {
+    upload.single("file")(req, res, (err: any) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({ error: "O tamanho do arquivo excede o limite máximo permitido de 10MB." });
+        }
+        return res.status(400).json({ error: err.message || "Falha no upload do arquivo." });
+      }
+      next();
+    });
+  }, async (req: any, res: any) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      }
+
+      // Autenticar token se fornecido no header Authorization
+      const authHeader = req.headers.authorization;
+      let uid = "";
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const idToken = authHeader.split("Bearer ")[1];
+        if (getApps().length) {
+          try {
+            const decodedToken = await getAuth().verifyIdToken(idToken);
+            uid = decodedToken.uid;
+          } catch (tokenErr) {
+            console.error("Erro ao verificar token no upload:", tokenErr);
+          }
+        }
+      }
+
+      // Validar quota no backend para usuários gratuitos antes de continuar processando o arquivo
+      let newQuotaUsed = 0;
+      if (uid && db) {
+        const userRef = db.collection("users").doc(uid);
+        const userDoc = await userRef.get();
+        let currentQuota = 0;
+        let plan = "free";
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          currentQuota = userData?.quotaUsed || 0;
+          plan = userData?.plan || "free";
+        }
+
+        if (plan === "free" && currentQuota >= 5) { // 5 is FREE_QUOTA_LIMIT
+          return res.status(403).json({ error: "Você atingiu o limite de 5 relatórios do plano gratuito. Faça upgrade para o PRO." });
+        }
+
+        newQuotaUsed = currentQuota + 1;
+        await userRef.set({ quotaUsed: newQuotaUsed }, { merge: true });
+      }
+
+      const originalName = req.file.originalname || "";
+      const isExcel = originalName.endsWith(".xlsx") || originalName.endsWith(".xls");
+
+      let rawHeaders: string[] = [];
+      let rawData: any[] = [];
+
+      if (isExcel) {
+        try {
+          const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+          const sheetName = workbook.SheetNames[0];
+          if (!sheetName) {
+            return res.status(400).json({ error: "O arquivo Excel não possui planilhas." });
+          }
+          const worksheet = workbook.Sheets[sheetName];
+          const sheetJson = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+          if (!sheetJson.length) {
+            return res.status(400).json({ error: "A planilha selecionada está vazia." });
+          }
+          rawData = sheetJson;
+          rawHeaders = Object.keys(sheetJson[0] || {});
+        } catch (excelErr: any) {
+          console.error("Excel parse error:", excelErr);
+          return res.status(400).json({ error: "Falha ao processar o arquivo Excel: " + excelErr.message });
+        }
+      } else {
+        const fileContent = req.file.buffer.toString("utf-8");
+        const results = Papa.parse(fileContent, {
+          header: true,
+          dynamicTyping: true, // Automatically converts standard numbers/booleans
+          skipEmptyLines: true,
+        });
+
+        if (results.errors.length && !results.data.length) {
+          return res.status(400).json({ error: "Falha ao processar o arquivo CSV", details: results.errors });
+        }
+
+        rawData = results.data;
+        if (!rawData.length) {
+          return res.status(400).json({ error: "O arquivo CSV está vazio." });
+        }
+        rawHeaders = results.meta.fields || Object.keys(rawData[0] || {});
+      }
+
+      // Clean up headers and rows to remove whitespace/quotes from keys and values
+      const headers = rawHeaders.map(h => h.trim().replace(/^["']|["']$/g, ""));
+
+      let data = rawData.map(row => {
+        const cleanedRow: Record<string, any> = {};
+        Object.entries(row).forEach(([key, val]) => {
+          const cleanedKey = key.trim().replace(/^["']|["']$/g, "");
+          let cleanedVal = val;
+          if (typeof val === 'string') {
+            cleanedVal = val.trim().replace(/^["']|["']$/g, "");
+          }
+          cleanedRow[cleanedKey] = cleanedVal;
+        });
+        return cleanedRow;
+      });
+
+      // Pré-processamento: Identificação e conversão de tipos de dados
+      const columnTypes: Record<string, string> = {};
       
-      incrementQuotaCount(userHash);
+      headers.forEach(header => {
+        const sampleValues = data.map(row => row[header]).filter(v => v !== null && v !== undefined && v !== '');
+        if (sampleValues.length === 0) {
+          columnTypes[header] = 'unknown';
+          return;
+        }
+
+        // Try to see if this column is predominantly numeric
+        let numericCount = 0;
+        sampleValues.forEach(val => {
+          if (tryParseNumber(val) !== null) {
+            numericCount++;
+          }
+        });
+
+        // If more than 60% of non-empty values are numeric, convert the column
+        const isNumericColumn = (numericCount / sampleValues.length) >= 0.6;
+
+        if (isNumericColumn) {
+          columnTypes[header] = 'number';
+          // Convert values in the original data to actual numbers
+          data.forEach(row => {
+            const rawVal = row[header];
+            if (rawVal !== null && rawVal !== undefined && rawVal !== '') {
+              const num = tryParseNumber(rawVal);
+              row[header] = num !== null ? num : 0;
+            } else {
+              row[header] = null;
+            }
+          });
+        } else {
+          // Check if it is boolean
+          let booleanCount = 0;
+          sampleValues.forEach(val => {
+            const s = String(val).toLowerCase().trim();
+            if (typeof val === 'boolean' || s === 'true' || s === 'false' || s === 'sim' || s === 'não' || s === 'nao') {
+              booleanCount++;
+            }
+          });
+
+          if ((booleanCount / sampleValues.length) >= 0.6) {
+            columnTypes[header] = 'boolean';
+            // Convert values to booleans
+            data.forEach(row => {
+              const rawVal = row[header];
+              if (rawVal === null || rawVal === undefined || rawVal === '') {
+                row[header] = null;
+              } else {
+                const s = String(rawVal).toLowerCase().trim();
+                row[header] = (s === 'true' || s === 'sim' || rawVal === true);
+              }
+            });
+          } else {
+            // Check if it is a date column
+            let dateCount = 0;
+            sampleValues.forEach(val => {
+              const strVal = String(val).trim();
+              const dateParse = Date.parse(strVal);
+              const isDateRegex = /^\d{4}-\d{2}-\d{2}|^\d{2}\/\d{2}\/\d{4}|^\d{2}-\d{2}-\d{4}/.test(strVal);
+              if (!isNaN(dateParse) && isDateRegex) {
+                dateCount++;
+              }
+            });
+
+            if ((dateCount / sampleValues.length) >= 0.5) {
+              columnTypes[header] = 'date';
+            } else {
+              columnTypes[header] = 'string';
+            }
+          }
+        }
+      });
+
+      // Validação: Garantir que existam colunas para gráficos (pelo menos 1 dimensão e 1 métrica)
+      const hasMetric = Object.values(columnTypes).includes('number');
+      const hasDimension = Object.values(columnTypes).includes('string') || Object.values(columnTypes).includes('date');
+      
+      if (!hasMetric || !hasDimension) {
+         return res.status(400).json({ 
+            error: "Validação falhou. O arquivo deve conter pelo menos uma coluna de texto/data (dimensão) e uma coluna numérica (métrica) para gerarmos gráficos." 
+         });
+      }
+
+      // Generate a quick AI insight based on headers and first few rows
+      let insight = "Os insights aparecerão aqui.";
+      try {
+        const dataSample = data.slice(0, 3);
+        const prompt = `Aja como um analista de dados sênior. Você recebeu um conjunto de dados com as seguintes colunas e tipos: ${JSON.stringify(columnTypes)}. 
+Aqui estão as primeiras 3 linhas: ${JSON.stringify(dataSample)}. 
+Escreva um resumo curto e engajador de exatamente 2 frases (em português brasileiro, PT-BR) sobre o que esses dados parecem tratar e que tipo de insights podem ser extraídos. Seja profissional.`;
+        
+        const response = await generateContentWithRetryAndFallback({
+          model: process.env.ID_BOT_PLANILHAS || "gemini-3.5-flash",
+          contents: prompt
+        });
+        insight = response.text || insight;
+      } catch (aiError) {
+        console.error("AI Insight Error:", aiError);
+        insight = "Não foi possível gerar os insights da IA no momento devido a um erro.";
+      }
+
+      // We return top 50 rows for performance in UI for this MVP
+      return res.json({
+        headers,
+        columnTypes,
+        totalRows: data.length,
+        sampleData: data.slice(0, 50),
+        insight,
+        quotaUsed: newQuotaUsed > 0 ? newQuotaUsed : undefined,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor ao processar a planilha." });
+    }
+  });
+
+  // ==========================================
+  // WHATSAPP API & GEMINI RESPONDER ENGINE (PROXY PARA CLOUD RUN)
+  // ==========================================
+  
+  const CHATBOT_API_URL = process.env.CHATBOT_API_URL || "https://chatbot-v2-240342026700.us-central1.run.app";
+
+  // Endpoint de status da sessão do WhatsApp (Proxy)
+  app.get("/api/whatsapp/session", async (req, res) => {
+    try {
+      const response = await fetch(`${CHATBOT_API_URL}/api/whatsapp/session`);
+      if (response.ok) {
+        const data = await response.json();
+        return res.json(data);
+      }
+      // Se falhar no Cloud Run, retorna estado desconectado amigável
+      res.json({ status: 'DISCONNECTED', qrCode: null, connectedAt: null, phoneNumber: null, chats: {} });
+    } catch (err) {
+      res.json({ status: 'DISCONNECTED', qrCode: null, connectedAt: null, phoneNumber: null, chats: {} });
+    }
+  });
+
+  // A rota '/get-qr' que retorna o QR Code da API real ou inicia se desconectada
+  app.get("/get-qr", async (req, res) => {
+    try {
+      // No Cloud Run, o QR Code é exposto na rota de sessão ou similar
+      const response = await fetch(`${CHATBOT_API_URL}/api/whatsapp/session`);
+      if (response.ok) {
+        const data = await response.json();
+        return res.json({
+          qr: data.qrCode || data.qr,
+          qrCode: data.qrCode || data.qr,
+          status: data.status
+        });
+      }
+      res.json({ qr: null, qrCode: null, status: 'DISCONNECTED' });
+    } catch (err) {
+      res.json({ qr: null, qrCode: null, status: 'DISCONNECTED' });
+    }
+  });
+
+  // Iniciar processo de conexão real
+  app.post("/api/whatsapp/connect", async (req, res) => {
+    try {
+      const response = await fetch(`${CHATBOT_API_URL}/api/whatsapp/connect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.json();
       res.json(data);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message || "Erro de conexão com o serviço de chatbot." });
     }
   });
 
-  app.post("/api/slides", async (req, res) => {
+  // Simular scan (caso queira simular localmente mas persistir ou espelhar a requisição)
+  app.post("/api/whatsapp/simulate-scan", async (req, res) => {
     try {
-      const { report } = req.body;
-      if (!report) {
-        return res.status(400).json({ error: "Missing report data" });
-      }
-      const slides = await generateExecutiveSlideDeck(report);
-      res.json({ slides });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Contract Generator & Preview Routes                       */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/generate-contract", (req, res) => {
-    try {
-      const { lead, contratante, formaPagamento, prazoEntrega, rodadasAjustes } = req.body;
-      if (!lead) {
-        return res.status(400).json({ error: "Missing lead data" });
-      }
-      const cfg = contratante || getConfig().contratante;
-      const html = generateContractHtml({
-        lead,
-        contratante: cfg,
-        formaPagamento,
-        prazoEntrega,
-        rodadasAjustes,
+      const response = await fetch(`${CHATBOT_API_URL}/api/whatsapp/simulate-scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
       });
-      res.json({ html });
+      const data = await response.json();
+      res.json(data);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message || "Erro de simulação no serviço de chatbot." });
     }
   });
 
-  app.get("/api/contract-preview/:slug", (req, res) => {
+  // Desconectar sessão real
+  app.post("/api/whatsapp/disconnect", async (req, res) => {
     try {
-      const leads = getLeads();
-      const lead = leads.find((l) => l.slug === req.params.slug);
-      if (!lead) {
-        return res.status(404).send("Lead não encontrado");
-      }
-      const cfg = getConfig().contratante;
-      const html = generateContractHtml({ lead, contratante: cfg });
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(html);
-    } catch (err: any) {
-      res.status(500).send(`Erro ao gerar contrato: ${err.message}`);
-    }
-  });
-
-  app.get("/api/contract-docx/:slug", async (req, res) => {
-    try {
-      const leads = getLeads();
-      const lead = leads.find((l) => l.slug === req.params.slug);
-      if (!lead) {
-        return res.status(404).send("Lead não encontrado");
-      }
-      const cfg = getConfig().contratante;
-      const buffer = await generateContractDocxBuffer({ lead, contratante: cfg });
-      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-      res.setHeader("Content-Disposition", `attachment; filename=contrato-${lead.slug}.docx`);
-      res.send(buffer);
-    } catch (err: any) {
-      res.status(500).send(`Erro ao gerar .docx: ${err.message}`);
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Multi-Source Prospecting API (Google Maps, Instagram, CNAE) */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/prospecting/search", async (req, res) => {
-      try {
-        const { niche, city, cnae, radius, sources } = req.body;
-        const targetNiche = niche || "Negócios Locais";
-        const targetCity = city || "São Paulo - SP";
-        const targetCnae = cnae || "4711-3/02";
-        const targetRadiusKm = typeof radius === "number" && radius > 0 && radius <= 100 ? radius : 50;
-        const targetRadiusMeters = targetRadiusKm * 1000;
-        const activeSources = sources ? Object.entries(sources).filter(([_, v]) => v).map(([k]) => k).join(", ") : "Maps, Instagram, LinkedIn";
-
-        let leads: any[] = [];
-        try {
-          const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-          if (!apiKey) throw new Error('GEMINI_API_KEY não configurada');
-          const ai = new GoogleGenAI({ apiKey });
-          const prompt = `Gere exatamente 4 empresas reais ou altamente realistas da categoria "${targetNiche}" localizadas em "${targetCity}" (CNAE: "${targetCnae}").
-          Use como fontes de dados de enriquecimento: ${activeSources}.
-
-          Para cada empresa, retorne um objeto JSON contendo:
-          - name (string)
-          - category (string)
-          - city (string)
-          - cnaeCode (string)
-          - cnaeDesc (string)
-          - phone (string)
-          - whatsapp (string)
-          - email (string)
-          - instagram (string, ex: @handle)
-          - instagramFollowers (string, ex: 12.4k)
-          - linkedinSize (string, ex: 11-50 funcionários)
-          - rating (number, ex: 4.8)
-          - reviewsCount (number, ex: 142)
-          - revenueEst (string, ex: R$ 100k - 250k/mês)
-          - websiteStatus (string, ex: Sem Automação WhatsApp / Site Desatualizado)
-          - address (string)
-
-          Retorne APENAS um array JSON válido, sem texto adicional.`;
-
-        let response;
-        try {
-          response = await ai.models.generateContent({
-            model: "gemini-3.7-flash",
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-            }
-          });
-          leads = JSON.parse(response.text || "[]");
-          
-          // Trigger OpenSquad mission
-          try {
-            await runOpenSquadMission({
-              cardId: 'prospect_hunt',
-              niche: targetNiche,
-              city: targetCity,
-              crmLeads: leads
-            });
-            console.log("[prospecting] OpenSquad mission triggered automatically.");
-          } catch (squadErr) {
-            console.error("[prospecting] Failed to trigger OpenSquad mission:", squadErr);
-          }
-        } catch (apiErr: any) {
-          console.warn("[prospecting] API Call failed (possibly 429/quota):", apiErr.message);
-          // Fallback silencioso para estruturação local se a API falhar
-          throw new Error("API Limit Reached");
-        }
-        
-        const text = response.text || "[]";
-        leads = JSON.parse(text);
-      } catch (aiErr) {
-        console.warn("[prospecting] AI generation fallback used:", aiErr);
-        // Garante que o fallback de dados simulados seja usado caso a IA falhe
-        leads = []; 
-      }
-
-      if (!leads || leads.length === 0) {
-        const pfx = targetNiche.split(" ")[0];
-        leads = [
-          {
-            name: `${pfx} Master ${targetCity.split(" ")[0]}`,
-            category: targetNiche,
-            city: targetCity,
-            cnaeCode: targetCnae,
-            cnaeDesc: "Serviços Especializados de Atendimento Comercial",
-            phone: "+55 11 98765-4321",
-            whatsapp: "+5511987654321",
-            email: `contato@${pfx.toLowerCase()}master.exemplo`,
-            instagram: `@${pfx.toLowerCase()}master`,
-            instagramFollowers: "15.2k",
-            linkedinSize: "11-50 funcionários",
-            rating: 4.8,
-            reviewsCount: 184,
-            revenueEst: "R$ 150k - 300k/mês",
-            websiteStatus: "Sem Chat / Oportunidade IA",
-            address: `Av. Principal, 1000 - ${targetCity}`
-          },
-          {
-            name: `Grupo ${pfx} Premium`,
-            category: targetNiche,
-            city: targetCity,
-            cnaeCode: targetCnae,
-            cnaeDesc: "Soluções Avançadas e Consultoria",
-            phone: "+55 11 97123-8899",
-            whatsapp: "+5511971238899",
-            email: `comercial@grupo${pfx.toLowerCase()}.exemplo`,
-            instagram: `@grupo_${pfx.toLowerCase()}`,
-            instagramFollowers: "8.9k",
-            linkedinSize: "10-20 funcionários",
-            rating: 4.6,
-            reviewsCount: 96,
-            revenueEst: "R$ 90k - 200k/mês",
-            websiteStatus: "Site Lento / Sem WhatsApp",
-            address: `Rua Comercial, 500 - ${targetCity}`
-          },
-          {
-            name: `${pfx} Soluções e Tecnologia`,
-            category: targetNiche,
-            city: targetCity,
-            cnaeCode: targetCnae,
-            cnaeDesc: "Desenvolvimento e Suporte Operacional",
-            phone: "+55 11 96543-1122",
-            whatsapp: "+5511965431122",
-            email: `suporte@${pfx.toLowerCase()}solucoes.exemplo`,
-            instagram: `@${pfx.toLowerCase()}solucoes`,
-            instagramFollowers: "22.1k",
-            linkedinSize: "51-200 funcionários",
-            rating: 4.9,
-            reviewsCount: 310,
-            revenueEst: "R$ 300k - 600k/mês",
-            websiteStatus: "Alta Demanda de Leads",
-            address: `Alameda dos Negócios, 200 - ${targetCity}`
-          }
-        ];
-      }
-
-      const processed = leads.map((l: any, i: number) => ({
-        ...l,
-        id: `pros-${Date.now()}-${i}`,
-        slug: `lead-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`
-      }));
-
-      res.json({ leads: processed, raioMeters: targetRadius });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Prospect API — Geocoding + Gemini Lead Discovery          */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/prospect", async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") return res.status(200).end();
-
-    const { nicho, cidade, raio, maxResults } = req.body || {};
-    if (!nicho || !cidade) {
-      return res.status(400).json({
-        error: "Campos obrigatórios: nicho, cidade.",
-        example: { nicho: "Odontologia", cidade: "Barueri/SP", raio: 10 },
+      const response = await fetch(`${CHATBOT_API_URL}/api/whatsapp/disconnect`, {
+        method: "POST"
       });
+      const data = await response.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Erro ao desconectar no serviço de chatbot." });
     }
+  });
 
-    const nichoClean = String(nicho).trim().slice(0, 120);
-    const cidadeClean = String(cidade).trim().slice(0, 120);
-    const raioKm = typeof raio === "number" && raio > 0 && raio <= 100 ? raio : 10;
-    const limit = typeof maxResults === "number" && maxResults > 0 && maxResults <= 50 ? maxResults : 20;
-
+  // Processar Webhook Simulator integrado ao Cloud Run
+  app.post("/api/whatsapp/webhook-simulate", async (req, res) => {
     try {
-      // PASSO 1: Geocodificação via Nominatim
-      let geoLat: number | null = null;
-      let geoLon: number | null = null;
-      let geoDisplayName: string | null = null;
+      const response = await fetch(`${CHATBOT_API_URL}/api/whatsapp/webhook-simulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.json();
+      res.json(data);
+    } catch (err: any) {
+      // Fallback para simulação local caso o Cloud Run esteja offline ou a rota de simulação falhe
       try {
-        const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(cidadeClean)}`;
-        const geoRes = await fetch(geoUrl, {
-          headers: {
-            "User-Agent": "FocoEmDados-Prospector/1.0 (contato@focoemdados.com.br)",
-            "Accept-Language": "pt-BR",
-          },
-          signal: AbortSignal.timeout(8000),
+        const { message, botConfig } = req.body;
+        const bot = botConfig || {
+          name: "Vendas WhatsApp - E-commerce",
+          niche: "E-commerce",
+          voice: "Persuasivo",
+          goal: "Recuperação de carrinho abandonado e conversão de Pix",
+          instructions: "Você é um assistente de vendas da loja Foco em Dados."
+        };
+        const systemPrompt = `Você é um Robô de Atendimento com IA. Nova mensagem do cliente: "${message}". Responda de forma persuasiva para cumprir: ${bot.goal}`;
+        const responseAI = await generateContentWithRetryAndFallback({
+          model: "gemini-3.5-flash",
+          contents: systemPrompt
         });
-        if (geoRes.ok) {
-          const geoData: any[] = await geoRes.json();
-          if (geoData && geoData.length > 0) {
-            geoLat = parseFloat(geoData[0].lat);
-            geoLon = parseFloat(geoData[0].lon);
-            geoDisplayName = geoData[0].display_name || cidadeClean;
-          }
-        }
-      } catch (geoErr) {
-        console.warn("[api/prospect] Geocode fallback:", geoErr);
-      }
-
-      // PASSO 2: Descoberta de Leads via Gemini
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
-      const geoContext = geoLat && geoLon ? ` (coordenadas: ${geoLat}, ${geoLon})` : "";
-      const prompt = `Você é um especialista em prospecção B2B e inteligência de mercado.
-Gere uma lista de ${limit} empresas reais ou altamente realistas do nicho "${nichoClean}" localizadas em "${cidadeClean}"${geoContext}.
-
-Para cada empresa, retorne um objeto JSON contendo:
-- id (string, slug único)
-- nome (string, nome real da empresa)
-- nicho (string)
-- cidade (string)
-- temSite (boolean)
-- siteUrl (string|null, URL do site atual se existir)
-- necessitaRedesign (boolean, true se o site for antigo, lento ou inexistente)
-- notas (string, motivo da qualificação)
-- telefone (string)
-- whatsapp (string, formato 55XXXXXXXXXXX)
-- email (string)
-- rating (number, nota Google 1-5)
-- reviewsCount (number)
-- status (string: "Identificado")
-
-Retorne APENAS um array JSON válido, sem texto adicional.
-Filtre empresas com boa reputação física mas presença digital defasada.`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" },
-      });
-
-      let leadsFromAI: any[] = [];
-      try {
-        const parsed = JSON.parse(response.text || "[]");
-        leadsFromAI = Array.isArray(parsed) ? parsed.slice(0, limit) : [];
-      } catch {
-        console.error("[api/prospect] Gemini JSON parse error");
-      }
-
-      // PASSO 3: Geração de Redesign Preview via Gemini
-      const leadsComRedesign = await Promise.all(
-        leadsFromAI.map(async (lead: any) => {
-          if (!lead.necessitaRedesign) return lead;
-          try {
-            const redesignPrompt = `Gere uma estrutura de Landing Page moderna em HTML/Tailwind CSS para "${lead.nome}" do segmento de ${lead.nicho} em ${lead.cidade}.
-Foco: CTA de WhatsApp, SEO local, design responsivo, alta conversão.
-Site atual: ${lead.siteUrl || "sem site próprio"}.
-Retorne APENAS o HTML completo, sem markdown.`;
-
-            const redesignResponse = await ai.models.generateContent({
-              model: "gemini-3.7-flash",
-              contents: redesignPrompt,
-            });
-
-            const previewHtml = redesignResponse.text || "";
-            if (previewHtml.length > 100) {
-              // Salvar preview no output dir
-              const previewId = `preview-${lead.id}-${Date.now()}`;
-              const previewDir = path.join(process.cwd(), "output", previewId);
-              fs.mkdirSync(previewDir, { recursive: true });
-              fs.writeFileSync(path.join(previewDir, "index.html"), previewHtml, "utf-8");
-              lead.redesignPreviewUrl = `/output/${previewId}/index.html`;
-              lead.status = "Redesign Gerado";
-            }
-          } catch (redesignErr) {
-            console.warn(`[api/prospect] Redesign fallback para ${lead.nome}:`, redesignErr);
-          }
-          return lead;
-        })
-      );
-
-      // PASSO 4: Persistir leads no CRM local
-      const savedLeads: any[] = [];
-      for (const lead of leadsComRedesign) {
-        try {
-          const saved = upsertLead({
-            slug: lead.id || `prospect-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-            nome: lead.nome,
-            nicho: lead.nicho,
-            cidade: lead.cidade,
-            telefone: lead.telefone,
-            whatsapp: lead.whatsapp,
-            email: lead.email,
-            nota: lead.rating,
-            avaliacoes: lead.reviewsCount,
-            siteAntigo: lead.siteUrl,
-            urlNova: lead.redesignPreviewUrl,
-            motivo: lead.notas || "Prospectado via API /api/prospect",
-            status: lead.status === "Redesign Gerado" ? "redesenhado" : "novo",
-            obs: `Prospectado automaticamente. Raio: ${raioKm}km.`,
-          });
-          savedLeads.push(saved);
-        } catch (saveErr) {
-          console.warn("[api/prospect] Falha ao salvar lead:", saveErr);
-        }
-      }
-
-      return res.status(200).json({
-        sucesso: true,
-        totalProcessados: savedLeads.length,
-        coordenadasBusca: {
-          lat: geoLat,
-          lon: geoLon,
-          raioKm,
-          cidade: geoDisplayName || cidadeClean,
-        },
-        leads: savedLeads,
-      });
-    } catch (err: any) {
-      console.error("[api/prospect] Pipeline error:", err);
-      return res.status(500).json({ error: err.message || "Erro ao processar prospecção" });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  OpenSquad Multi-Agent Collaboration Routes                */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/opensquad/run-mission", async (req, res) => {
-    try {
-      const { cardId, niche, city, customPrompt, ticketTarget, mrrTarget, focus, modelName } = req.body;
-      const crmLeads = getLeads();
-      const result = await runOpenSquadMission({
-        cardId: cardId || "prospect_hunt",
-        niche: niche || "Restaurantes & Gastronomia",
-        city: city || "São Paulo - SP",
-        customPrompt,
-        crmLeads,
-        ticketTarget: Number(ticketTarget) || 1500,
-        mrrTarget: Number(mrrTarget) || 200,
-        focus: focus || "Conversão Mobile e WhatsApp",
-        modelName: modelName || "gemini-3.7-flash",
-      });
-      res.json(result);
-    } catch (err: any) {
-      console.error("[api/opensquad/run-mission] Error:", err);
-      res.status(500).json({ error: err.message || "Falha ao executar missão do Squad." });
-    }
-  });
-
-  app.post("/api/opensquad/import-leads", (req, res) => {
-    try {
-      const { leads } = req.body;
-      if (!Array.isArray(leads) || leads.length === 0) {
-        return res.status(400).json({ error: "Nenhum lead fornecido para importação." });
-      }
-
-      const imported: any[] = [];
-      leads.forEach((l) => {
-        const saved = upsertLead({
-          ...l,
-          slug: l.slug || `squad-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        return res.json({
+          success: true,
+          reply: responseAI.text || "Entendido! Estou processando seu atendimento.",
+          history: [],
+          session: { status: "CONNECTED" }
         });
-        imported.push(saved);
-      });
-
-      res.json({ success: true, count: imported.length, leads: imported });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Live Redesign Presentation Tunnel Routes                  */
-  /* ────────────────────────────────────────────────────────── */
-
-  // 0. Proxy de site com remoção de X-Frame-Options para exibição segura em iframe
-  app.get("/api/site-proxy", async (req, res) => {
-    const rawUrl = req.query.url as string;
-    if (!rawUrl) {
-      return res.status(400).send("URL não informada.");
-    }
-
-    const targetUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000);
-
-      const response = await fetch(targetUrl, {
-        signal: controller.signal,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-        },
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Status ${response.status}: ${response.statusText}`);
+      } catch (innerErr: any) {
+        res.status(500).json({ error: innerErr.message || "Erro ao processar simulação." });
       }
-
-      let html = await response.text();
-
-      // Injeta base href no HTML para que assets relativos (CSS, imagens, fontes) carreguem do domínio original
-      const baseTag = `<base href="${targetUrl}">`;
-      if (html.includes("<head>")) {
-        html = html.replace("<head>", `<head>${baseTag}`);
-      } else if (html.includes("<HEAD>")) {
-        html = html.replace("<HEAD>", `<HEAD>${baseTag}`);
-      } else {
-        html = `${baseTag}${html}`;
-      }
-
-      // Remove metas de CSP ou X-Frame se existirem no corpo do HTML
-      html = html.replace(/<meta[^>]*http-equiv=["']?(content-security-policy|x-frame-options)["']?[^>]*>/gi, "");
-
-      // Headers liberais para visualização
-      res.removeHeader("X-Frame-Options");
-      res.removeHeader("Content-Security-Policy");
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.send(html);
-    } catch (err: any) {
-      console.warn(`[site-proxy] Could not proxy ${targetUrl}:`, err.message);
-      // Fallback amigável de diagnóstico quando o site antigo está inacessível ou offline
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(`
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="bg-neutral-900 text-neutral-200 p-8 flex flex-col items-center justify-center min-h-[400px] text-center font-sans">
-          <div class="max-w-md space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl mx-auto">
-              ⚠️
-            </div>
-            <h3 class="text-sm font-bold text-white">Site Original Inacessível ou Bloqueado</h3>
-            <p class="text-xs text-neutral-400 leading-relaxed">O endereço <strong>${targetUrl}</strong> está inacessível no momento.</p>
-            <p class="text-[10px] text-neutral-600">Erro: ${err.message}</p>
-          </div>
-        </body>
-        </html>
-      `);
     }
   });
 
-  // 1. Rota JSON de dados e métricas do túnel
-  app.get("/api/tunnel/:slug", (req, res) => {
-    try {
-      const { slug } = req.params;
-      const leads = getLeads();
-      const lead = leads.find((l) => l.slug === slug);
-      if (!lead) {
-        return res.status(404).json({ error: "Lead não encontrado para gerar túnel." });
-      }
-
-      const hostUrl = `${req.protocol}://${req.get("host")}`;
-      const cfg = getConfig();
-      const qrCodeUrl = generateSvgQrCode(`${hostUrl}/tunnel/${lead.slug}`);
-
-      res.json({
-        slug: lead.slug,
-        lead,
-        tunnelUrl: `${hostUrl}/tunnel/${lead.slug}`,
-        liveSiteUrl: `${hostUrl}/api/live-site/${lead.slug}`,
-        qrCodeUrl,
-        contratante: cfg.contratante,
-        performanceScore: {
-          oldScore: 32,
-          newScore: 99,
-          oldLoadTime: "4.2s",
-          newLoadTime: "0.4s",
-          mobileReadinessOld: "Incompatível (Sem Viewport)",
-          mobileReadinessNew: "100% Mobile First & WhatsApp",
-        },
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+  // ROTA GET '/' que responde com JSON { status: "online", bot: "aguardando_conexao" } para checagem/uptime de saúde
+  app.get("/", (req, res, next) => {
+    // Se o cliente explicitamente solicita JSON ou se for uma rota de checagem automatizada (ex: com query ou Accept JSON)
+    if (req.headers.accept && req.headers.accept.includes("application/json") || req.query.json === "true") {
+      return res.json({ status: "online", bot: "aguardando_conexao" });
     }
+    // Caso contrário, continua para renderizar o front-end em React (Vite/Static files)
+    next();
   });
 
-  // 2. Rota de renderização dinâmica do site moderno redesenhado
-  app.get("/api/live-site/:slug", (req, res) => {
-    try {
-      const { slug } = req.params;
-      const leads = getLeads();
-      const lead = leads.find((l) => l.slug === slug);
-      if (!lead) {
-        return res.status(404).send("Site não encontrado no banco de prospecção.");
-      }
-
-      const cfg = getConfig();
-      const agencyPhone = cfg.contratante?.whatsapp || "5511999999999";
-      const html = generateDynamicRedesignHtml(lead, agencyPhone);
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(html);
-    } catch (err: any) {
-      res.status(500).send(`Erro ao renderizar site do túnel: ${err.message}`);
-    }
-  });
-
-  // 2b. Rota de Editor Visual (Nano banana) injetando camada de edição interativa
-  app.get(["/api/live-site-editor/:slug", "/sites/:slug/editor"], (req, res) => {
-    try {
-      const { slug } = req.params;
-      const leads = getLeads();
-      const lead = leads.find((l) => l.slug === slug);
-      if (!lead) {
-        return res.status(404).send("Site não encontrado para edição visual.");
-      }
-
-      const cfg = getConfig();
-      const agencyPhone = cfg.contratante?.whatsapp || "5511999999999";
-      let html = generateDynamicRedesignHtml(lead, agencyPhone);
-
-      const editorScript = `
-<!-- PROSPECTOR-EDITOR-START -->
-<style id="pe-style">
-#pe-bar{position:fixed;top:0;left:0;right:0;z-index:99999;background:#111;color:#fff;font:14px/1 -apple-system,Segoe UI,Roboto,sans-serif;display:flex;align-items:center;gap:16px;padding:10px 16px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-#pe-bar button{background:#22c55e;color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:600;cursor:pointer}
-#pe-bar button:hover{background:#16a34a}
-body{margin-top:44px !important}
-.pe-hover{outline:2px dashed #22c55e !important;outline-offset:2px;cursor:pointer}
-[contenteditable="true"]:focus{outline:2px solid #3b82f6 !important;outline-offset:2px}
-</style>
-<div id="pe-bar">
-  <strong>Modo Edição Visual (Nano banana)</strong>
-  <span>Clique em textos para editar · clique em imagens para trocar</span>
-  <button id="pe-export" type="button">Exportar página limpa</button>
-</div>
-<input type="file" id="pe-file" accept="image/*" style="display:none">
-<script id="pe-script">
-(function(){
-  var TEXT='h1,h2,h3,h4,h5,h6,p,li,a,span,button,td,th,figcaption,blockquote,strong,em';
-  document.querySelectorAll(TEXT).forEach(function(el){
-    if(el.closest('#pe-bar'))return;
-    if(el.children.length===0||el.childElementCount<=1){
-      el.addEventListener('click',function(e){
-        if(el.tagName==='A'||el.tagName==='BUTTON')e.preventDefault();
-        el.setAttribute('contenteditable','true');el.focus();
-      });
-      el.addEventListener('mouseenter',function(){el.classList.add('pe-hover')});
-      el.addEventListener('mouseleave',function(){el.classList.remove('pe-hover')});
-      el.addEventListener('blur',function(){el.removeAttribute('contenteditable')});
-    }
-  });
-  var fileInput=document.getElementById('pe-file'),currentImg=null;
-  document.querySelectorAll('img').forEach(function(img){
-    img.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();currentImg=img;fileInput.click()});
-    img.addEventListener('mouseenter',function(){img.classList.add('pe-hover')});
-    img.addEventListener('mouseleave',function(){img.classList.remove('pe-hover')});
-  });
-  fileInput.addEventListener('change',function(){
-    var f=fileInput.files[0];if(!f||!currentImg)return;
-    var r=new FileReader();
-    r.onload=function(){currentImg.src=r.result;if(currentImg.srcset)currentImg.removeAttribute('srcset')};
-    r.readAsDataURL(f);fileInput.value='';
-  });
-  document.getElementById('pe-export').addEventListener('click',function(){
-    var doc=document.documentElement.cloneNode(true);
-    ['#pe-bar','#pe-style','#pe-script','#pe-file'].forEach(function(s){var n=doc.querySelector(s);if(n)n.remove()});
-    doc.querySelectorAll('[contenteditable]').forEach(function(n){n.removeAttribute('contenteditable')});
-    doc.querySelectorAll('.pe-hover').forEach(function(n){n.classList.remove('pe-hover')});
-    var html='<!DOCTYPE html>\\n'+doc.outerHTML;
-    var blob=new Blob([html],{type:'text/html'});
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='index.html';a.click();
-  });
-})();
-</script>
-<!-- PROSPECTOR-EDITOR-END -->
-`;
-
-      if (html.includes("</body>")) {
-        html = html.replace("</body>", `${editorScript}\n</body>`);
-      } else {
-        html += editorScript;
-      }
-
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(html);
-    } catch (err: any) {
-      res.status(500).send(`Erro ao carregar editor visual: ${err.message}`);
-    }
-  });
-
-  // 2c. Rota de Comparação Antes vs Depois (comparar.html)
-  app.get(["/comparar.html", "/comparar"], (req, res) => {
-    try {
-      const leads = getLeads();
-      const clientes = leads.map(l => ({
-        nome: l.nome,
-        slug: l.slug,
-        old: l.siteAntigo || null,
-        motivo: l.siteAntigo ? undefined : "Site original não cadastrado"
-      }));
-      const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comparador — Antes vs Depois (Foco Completo)</title>
-<style>
-  :root{--bg:#0f1420;--card:#1a2130;--ink:#e8ecf4;--muted:#8a97ad;--line:#2a3346;--old:#ef4444;--new:#22c55e;--blue:#3b82f6}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;padding:20px;min-height:100vh}
-  h1{font-size:22px;margin:0 0 4px}
-  p.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-  .tab{background:var(--card);border:1px solid var(--line);color:var(--ink);padding:9px 16px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600}
-  .tab.on{background:var(--blue);border-color:var(--blue);color:#fff}
-  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:900px){.cols{grid-template-columns:1fr}}
-  .col{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-  .chead{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
-  .chead .lb{display:flex;align-items:center;gap:8px}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .dot.o{background:var(--old)} .dot.n{background:var(--new)}
-  .chead a{color:#22d3ee;text-decoration:none;font-weight:600;font-size:12px}
-  .chead a:hover{text-decoration:underline}
-  iframe{width:100%;height:72vh;border:0;background:#fff;display:block}
-  .empty{height:72vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:20px}
-  .empty strong{color:var(--old);font-size:17px}
-  .hint{color:var(--muted);font-size:12px;margin-top:14px}
-</style>
-</head>
-<body>
-<h1>Antes vs Depois — Foco Completo & Nano banana</h1>
-<p class="sub">Esquerda: site atual do cliente · Direita: nova versão profissional gerada pelo Nano banana.</p>
-<div class="tabs" id="tabs"></div>
-<div class="cols">
-  <div class="col">
-    <div class="chead"><span class="lb"><span class="dot o"></span>SITE ATUAL</span><a id="oldlink" href="#" target="_blank" rel="noopener">abrir em nova aba ↗</a></div>
-    <div id="oldwrap"></div>
-  </div>
-  <div class="col">
-    <div class="chead"><span class="lb"><span class="dot n"></span>NOVA VERSÃO (NANO BANANA)</span><a id="newlink" href="#" target="_blank" rel="noopener">abrir em nova aba ↗</a></div>
-    <div id="newwrap"></div>
-  </div>
-</div>
-<script>
-var CLIENTES=${JSON.stringify(clientes)};
-var tabs=document.getElementById('tabs');
-CLIENTES.forEach(function(c,i){
-  var b=document.createElement('button');b.className='tab'+(i===0?' on':'');b.textContent=c.nome;
-  b.onclick=function(){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});b.classList.add('on');mostra(c)};
-  tabs.appendChild(b);
-});
-function mostra(c){
-  var ow=document.getElementById('oldwrap'),nw=document.getElementById('newwrap');
-  var ol=document.getElementById('oldlink'),nl=document.getElementById('newlink');
-  var novo='/api/live-site/'+c.slug;
-  nw.innerHTML='<iframe src="'+novo+'"></iframe>';nl.href=novo;
-  if(c.old){
-    var proxyUrl = '/api/site-proxy?url=' + encodeURIComponent(c.old);
-    ow.innerHTML='<iframe src="'+proxyUrl+'"></iframe>';
-    ol.href=c.old;
-    ol.style.display='inline';
-  }
-  else{ow.innerHTML='<div class="empty"><strong>Sem site original cadastrado</strong><span>'+(c.motivo||'')+'</span></div>';ol.style.display='none'}
-}
-if(CLIENTES.length)mostra(CLIENTES[0]);
-</script>
-</body>
-</html>`;
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(html);
-    } catch (err: any) {
-      res.status(500).send(`Erro ao gerar comparador: ${err.message}`);
-    }
-  });
-
-  // 3. Rota principal do Túnel de Apresentação Client-Facing
-  app.get(["/tunnel/:slug", "/preview-tunnel/:slug"], (req, res) => {
-    try {
-      const { slug } = req.params;
-      const leads = getLeads();
-      const lead = leads.find((l) => l.slug === slug);
-      if (!lead) {
-        return res.status(404).send(`
-          <div style="font-family: sans-serif; text-align: center; padding: 40px; color: #333;">
-            <h2>Túnel não encontrado</h2>
-            <p>O identificador do redesign solicitado não existe ou expirou.</p>
-          </div>
-        `);
-      }
-
-      const hostUrl = `${req.protocol}://${req.get("host")}`;
-      const cfg = getConfig();
-      const html = generateClientTunnelPresentationHtml({
-        lead,
-        hostUrl,
-        agencyName: cfg.contratante?.nome || "OpenSquad Digital",
-        agencyPhone: cfg.contratante?.whatsapp || "5511999999999",
-      });
-
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(html);
-    } catch (err: any) {
-      res.status(500).send(`Erro ao abrir túnel: ${err.message}`);
-    }
-  });
-
-  // Vite middleware for development (with a robust fallback to dev middleware if dist/index.html is missing)
-  const distPath = path.join(process.cwd(), "dist");
-  const indexHtmlExists = fs.existsSync(path.join(distPath, "index.html"));
-
-  if (process.env.NODE_ENV !== "production" || !indexHtmlExists) {
-    if (process.env.NODE_ENV === "production") {
-      console.warn(
-        "Production mode enabled, but dist/index.html not found. Falling back to Vite dev server middleware to ensure app stays operational.",
-      );
-    }
-    const { createServer: createViteServer } = await import("vite");
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    // Express 5 format for catch-all (if using express 5) or Express 4. Let's use *all for v5 or * for v4.
-    // We can use default express 4 catch-all
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  // Vercel: export the app for serverless function usage
-  // Local: start the server with listen
-  if (process.env.VERCEL || process.env.VERCEL_ENV) {
-    console.log("[server] Running on Vercel — app exported, not listening.");
-  } else {
-    const server = app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-    // Disable timeouts for long-running agent interactions
-    server.setTimeout(0);
-    server.requestTimeout = 0;
-    server.headersTimeout = 0;
-    server.keepAliveTimeout = 0;
-  }
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Servidor rodando na porta ${port}`);
+  });
 }
 
-  /* ────────────────────────────────────────────────────────── */
-  /*  n8n Webhook Integration Endpoint                         */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/n8n-webhook", async (req, res) => {
-    try {
-      const { clienteNome, clienteSite, clienteNicho } = req.body;
-      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
-
-      if (!n8nWebhookUrl) {
-        return res.status(500).json({ error: "URL do Webhook do n8n não configurada nas variáveis de ambiente." });
-      }
-
-      const payload = {
-        clienteNome,
-        clienteSite,
-        clienteNicho,
-        timestamp: new Date().toISOString(),
-      };
-
-      const n8nResponse = await fetch(n8nWebhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!n8nResponse.ok) {
-        throw new Error(`Falha ao disparar automação no n8n: ${n8nResponse.statusText}`);
-      }
-
-      let n8nResult = {};
-      try {
-        n8nResult = await n8nResponse.json();
-      } catch {
-        n8nResult = { success: true };
-      }
-
-      return res.status(200).json({
-        status: "sucesso",
-        mensagem: "Webhook disparado para o n8n com sucesso!",
-        data: n8nResult,
-      });
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : "Erro interno ao conectar com o n8n.";
-      return res.status(500).json({ status: "erro", mensagem: errorMessage });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  In-memory Prospect Storage & Save Endpoint               */
-  /* ────────────────────────────────────────────────────────── */
-  const prospeccoesStore: Array<{
-    id: string;
-    nome: string;
-    nicho: string;
-    siteAtual: string;
-    status: string;
-    criado_em: string;
-  }> = [
-    { id: "1", nome: "Clínica Sorriso Perfeito", nicho: "Saúde e Odontologia", siteAtual: "sorrisoperfeito-antigo.com.br", status: "novo", criado_em: new Date().toISOString() },
-    { id: "2", nome: "Auto Peças Rodagem", nicho: "Automotivo", siteAtual: "rodagempecas.com", status: "contatado", criado_em: new Date().toISOString() },
-    { id: "3", nome: "Empório dos Doces Artesanais", nicho: "Confeitaria", siteAtual: "emporiodoces.com.br", status: "proposta_enviada", criado_em: new Date().toISOString() }
-  ];
-
-  app.post("/api/salvar-prospeccao", async (req, res) => {
-    try {
-      const { nome, nicho, siteAtual, status } = req.body;
-
-      if (!nome || !nicho) {
-        return res.status(400).json({ error: "Nome e nicho são obrigatórios." });
-      }
-
-      const novoLead = {
-        id: String(Date.now()),
-        nome,
-        nicho,
-        siteAtual: siteAtual || "",
-        status: status || "novo",
-        criado_em: new Date().toISOString()
-      };
-
-      prospeccoesStore.unshift(novoLead);
-
-      return res.status(200).json({
-        status: "sucesso",
-        mensagem: "Lead salvo com sucesso no banco de dados!",
-        dados: [novoLead],
-      });
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar lead.";
-      return res.status(500).json({ status: "erro", mensagem: errorMessage });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Resend Email Dispatch Endpoint                           */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/enviar-proposta", async (req, res) => {
-    try {
-      const resendApiKey = process.env.RESEND_API_KEY;
-
-      if (!resendApiKey) {
-        return res.status(500).json({ error: "Chave de API do Resend não configurada no servidor." });
-      }
-
-      const { Resend } = await import("resend");
-      const resend = new Resend(resendApiKey);
-
-      const { destinatarioEmail, clienteNome, nicho, linkProposta } = req.body;
-
-      if (!destinatarioEmail || !clienteNome) {
-        return res.status(400).json({ error: "E-mail do destinatário e nome do cliente são obrigatórios." });
-      }
-
-      const { data, error } = await resend.emails.send({
-        from: "Foco em Dados <atendimento@focoemdados.com.br>",
-        to: [destinatarioEmail],
-        subject: `Proposta Exclusiva de Redesign para ${clienteNome}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 32px; border-radius: 12px;">
-            <h2 style="color: #38bdf8; margin-top: 0;">Olá, ${clienteNome}!</h2>
-            <p style="font-size: 16px; line-height: 1.5; color: #cbd5e1;">
-              Analisamos o seu posicionamento no nicho de <strong>${nicho}</strong> e preparamos uma proposta de transformação digital e alta conversão para o seu negócio.
-            </p>
-            <div style="margin: 32px 0;">
-              <a href="${linkProposta}" style="background-color: #f59e0b; color: #09090b; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                Visualizar Proposta Interativa
-              </a>
-            </div>
-            <p style="font-size: 14px; color: #94a3b8; border-top: 1px solid #1e293b; padding-top: 16px;">
-              Atenciosamente,<br/><strong>Equipe Foco em Dados</strong>
-            </p>
-          </div>
-        `,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      return res.status(200).json({
-        status: "sucesso",
-        mensagem: "E-mail de proposta disparado com sucesso pelo Resend!",
-        data,
-      });
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao enviar o e-mail.";
-      return res.status(500).json({ status: "erro", mensagem: errorMessage });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Prospect List Endpoint                                   */
-  /* ────────────────────────────────────────────────────────── */
-  app.get("/api/listar-prospeccoes", async (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    try {
-      return res.status(200).json({
-        status: "sucesso",
-        dados: prospeccoesStore,
-      });
-    } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao listar do banco.";
-      return res.status(500).json({ status: "erro", mensagem: errorMessage });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Stripe Checkout Session Endpoint                         */
-  /* ────────────────────────────────────────────────────────── */
-  
-  /* ────────────────────────────────────────────────────────── */
-  /*  Stripe Subscription Checkout Session                     */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/criar-sessao-pagamento", async (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Método não permitido" });
-    }
-    try {
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-        apiVersion: "2025-02-27.acacia",
-      });
-
-      const { email } = req.body;
-      const origin = req.headers.origin || "https://www.focoemdados.com.br";
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "brl",
-              product_data: {
-                name: "Foco em Dados - Acesso Total PRO",
-                description: "Painel de Prospecção B2B e Agentes Inteligentes",
-              },
-              unit_amount: 3990,
-              recurring: {
-                interval: "month",
-              },
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "subscription",
-        customer_email: email,
-        success_url: origin + "/prospeccao?pagamento=sucesso",
-        cancel_url: origin + "/?pagamento=cancelado",
-      });
-
-      return res.status(200).json({ urlCheckout: session.url });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao criar sessão de pagamento.";
-      return res.status(500).json({ error: errorMessage });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Stripe Checkout Alias (/api/criar-checkout)              */
-  /* ────────────────────────────────────────────────────────── */
-  
-  /* ────────────────────────────────────────────────────────── */
-  /*  Stripe Checkout Session (Exact Match)                    */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/criar-checkout", async (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Método não permitido" });
-    }
-    try {
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-        apiVersion: "2025-02-27.acacia",
-      });
-
-      const origin = req.headers.origin || "https://www.focoemdados.com.br";
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "brl",
-              product_data: {
-                name: "Foco em Dados - Acesso Total PRO",
-                description: "Sistema Operacional de Vendas & IA B2B",
-              },
-              unit_amount: 3990,
-              recurring: { interval: "month" },
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "subscription",
-        success_url: origin + "/prospeccao?status=sucesso",
-        cancel_url: origin + "/?status=cancelado",
-      });
-
-      return res.status(200).json({ url: session.url, urlCheckout: session.url });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao conectar com o Stripe.";
-      return res.status(500).json({ error: errorMessage });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Stitch Redesign Integration Endpoint                     */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/stitch-redesign", async (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    try {
-      const { clienteNome, clienteSite, clienteNicho } = req.body;
-      const stitchApiKey = process.env.STITCH_API_KEY;
-
-      if (!stitchApiKey) {
-        return res.status(500).json({ error: "Stitch API Key não configurada." });
-      }
-
-      // Requisição HTTP real para a API do Stitch utilizando a chave fornecida
-      const stitchResponse = await fetch("https://api.stitch.tech/v1/redesign", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${stitchApiKey}`
-        },
-        body: JSON.stringify({
-          name: clienteNome,
-          url: clienteSite,
-          niche: clienteNicho,
-          mode: "high_conversion"
-        })
-      });
-
-      if (!stitchResponse.ok) {
-        // Fallback sênior se a API externa do Stitch retornar erro no momento dos testes
-        return res.status(200).json({
-          status: "sucesso",
-          origem: "stitch_ia_fallback",
-          previewUrl: `https://preview.focoemdados.com.br/stitch/${encodeURIComponent(clienteNome || 'lead')}`,
-          scoreAntigo: 38,
-          scoreNovo: 98,
-          mensagem: `Redesign Stitch gerado com sucesso para ${clienteNome} no nicho de ${clienteNicho}.`
-        });
-      }
-
-      const stitchData = await stitchResponse.json();
-      return res.status(200).json({
-        status: "sucesso",
-        origem: "stitch_api_real",
-        ...stitchData
-      });
-    } catch (err: any) {
-      // Fallback robusto garantindo que o fluxo nunca quebre para o usuário
-      return res.status(200).json({
-        status: "sucesso",
-        origem: "stitch_resilient_fallback",
-        previewUrl: `https://preview.focoemdados.com.br/stitch/demo`,
-        scoreAntigo: 40,
-        scoreNovo: 97,
-        mensagem: "Redesign gerado com sucesso pelo Stitch Studio."
-      });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Overpass Pipeline Prospecção (dados reais OSM)           */
-  /* ────────────────────────────────────────────────────────── */
-  function getOverpassFilter(nicho: string, customNicho?: string): string {
-    const term = (customNicho || nicho || "").toLowerCase();
-
-    if (term.includes("automotivo") || term.includes("oficina") || term.includes("mecânica") || term.includes("mecanica") || term.includes("autopeça") || term.includes("autopecas"))
-      return ["node[\"shop\"=\"car_repair\"]","node[\"shop\"=\"car\"]","node[\"amenity\"=\"car_wash\"]","node[\"shop\"=\"tyres\"]"].join("; ");
-    if (term.includes("pallet") || term.includes("embalagen") || term.includes("logistica") || term.includes("galpao") || term.includes("galpão") || term.includes("industrial") || term.includes("armazém") || term.includes("armazem") || term.includes("estoque"))
-      return ["node[\"industrial\"=\"packaging\"]","node[\"craft\"=\"carpenter\"]","node[\"building\"=\"warehouse\"]","node[\"shop\"=\"trade\"]","node[\"industrial\"=\"woodworking\"]"].join("; ");
-    if (term.includes("odonto") || term.includes("dentista") || term.includes("clínic") || term.includes("clinica") || term.includes("saúde") || term.includes("saude") || term.includes("médic") || term.includes("medic") || term.includes("farmácia") || term.includes("farmacia"))
-      return ["node[\"amenity\"=\"dentist\"]","node[\"amenity\"=\"clinic\"]","node[\"amenity\"=\"pharmacy\"]","node[\"amenity\"=\"doctors\"]"].join("; ");
-    if (term.includes("restaurante") || term.includes("gastronomia") || term.includes("comida") || term.includes("food") || term.includes("lanchonete") || term.includes("pizzaria") || term.includes("churrascaria") || term.includes("hamburgueria") || term.includes("padaria") || term.includes("confeitaria"))
-      return ["node[\"amenity\"=\"restaurant\"]","node[\"amenity\"=\"cafe\"]","node[\"amenity\"=\"fast_food\"]","node[\"amenity\"=\"bar\"]","node[\"amenity\"=\"bakery\"]"].join("; ");
-    if (term.includes("advocacia") || term.includes("advogado") || term.includes("jurídic") || term.includes("juridic") || term.includes("escritório") || term.includes("escritorio"))
-      return ["node[\"office\"=\"lawyer\"]","node[\"office\"=\"government\"]"].join("; ");
-    if (term.includes("barbearia") || term.includes("barba") || term.includes("cabelo") || term.includes("salão") || term.includes("salao") || term.includes("estética") || term.includes("estetica") || term.includes("beleza"))
-      return ["node[\"shop\"=\"barber\"]","node[\"shop\"=\"beauty\"]","node[\"shop\"=\"hairdresser\"]","node[\"shop\"=\"cosmetics\"]","way[\"shop\"=\"barber\"]","way[\"shop\"=\"beauty\"]","way[\"shop\"=\"hairdresser\"]","relation[\"shop\"=\"barber\"]","relation[\"shop\"=\"beauty\"]","relation[\"shop\"=\"hairdresser\"]"].join("; ");
-    if (term.includes("comércio") || term.includes("comercio") || term.includes("loja") || term.includes("varejo") || term.includes("mercado") || term.includes("supermercado"))
-      return ["node[\"shop\"=\"supermarket\"]","node[\"shop\"=\"convenience\"]","node[\"shop\"=\"general\"]","node[\"shop\"=\"department_store\"]"].join("; ");
-    if (term.includes("constru") || term.includes("obra") || term.includes("engenharia") || term.includes("arquitetura") || term.includes("material de construção"))
-      return ["node[\"shop\"=\"doityourself\"]","node[\"shop\"=\"hardware\"]","node[\"craft\"=\"painter\"]","node[\"craft\"=\"plumber\"]","node[\"craft\"=\"electrician\"]"].join("; ");
-    if (term.includes("imobiliá") || term.includes("imobiliaria") || term.includes("imóvel") || term.includes("imovel") || term.includes("corretor") || term.includes("imobili"))
-      return ["node[\"office\"=\"estate_agent\"]","node[\"shop\"=\"estate_agent\"]"].join("; ");
-    if (term.includes("escola") || term.includes("curso") || term.includes("educação") || term.includes("educacao") || term.includes("aula") || term.includes("faculdade") || term.includes("universidade"))
-      return ["node[\"amenity\"=\"school\"]","node[\"amenity\"=\"college\"]","node[\"amenity\"=\"university\"]","node[\"amenity\"=\"kindergarten\"]"].join("; ");
-    if (term.includes("tecnologia") || term.includes("software") || term.includes("informática") || term.includes("informatica") || term.includes("ti ") || term.includes("sistemas"))
-      return ["node[\"office\"=\"it\"]","node[\"shop\"=\"computer\"]","node[\"shop\"=\"electronics\"]"].join("; ");
-    if (term.includes("academia") || term.includes("fitness") || term.includes("gym") || term.includes("crossfit") || term.includes("pilates") || term.includes("yoga"))
-      return ["node[\"leisure\"=\"fitness_centre\"]","node[\"leisure\"=\"sports_centre\"]","node[\"amenity\"=\"gym\"]"].join("; ");
-    if (term.includes("pet") || term.includes("veteriná") || term.includes("veterina") || term.includes("animal") || term.includes("cão") || term.includes("gato"))
-      return ["node[\"shop\"=\"pet\"]","node[\"amenity\"=\"veterinary\"]"].join("; ");
-    if (term.includes("posto") || term.includes("combustível") || term.includes("combustivel") || term.includes("gasolina") || term.includes("álcool") || term.includes("etanol"))
-      return ["node[\"amenity\"=\"fuel\"]"].join("; ");
-    if (term.includes("hotel") || term.includes("pousada") || term.includes("hostel") || term.includes("hospedagem") || term.includes("aluguel") || term.includes("airbnb"))
-      return ["node[\"tourism\"=\"hotel\"]","node[\"tourism\"=\"hostel\"]","node[\"tourism\"=\"guest_house\"]"].join("; ");
-
-    const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return [`node["name"~"${safeTerm}",i]`,`node["description"~"${safeTerm}",i]`,`node["shop"="${safeTerm}"]`].join("; ");
-  }
-
-  const OVERPASS_ENDPOINTS = [
-    "https://overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
-  ];
-
-  async function queryOverpass(query: string): Promise<any> {
-    const body = `data=${encodeURIComponent(query)}`;
-    for (const endpoint of OVERPASS_ENDPOINTS) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const res = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              "User-Agent": "FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)",
-              "Accept": "application/json",
-            },
-            body,
-            signal: AbortSignal.timeout(30_000),
-          });
-          const text = await res.text();
-          if (!text.startsWith("{") && !text.startsWith("[")) {
-            if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
-            continue;
-          }
-          return JSON.parse(text);
-        } catch {
-          if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
-          continue;
-        }
-      }
-    }
-    throw new Error("Todos os endpoints Overpass API retornaram erro.");
-  }
-
-  app.post("/api/pipeline-prospeccao", async (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") return res.status(200).end();
-
-    const { nicho, cidade, raio, customNicho, ticketAlvo, mrrAlvo, focoAbordagem, maxResults } = req.body || {};
-    if (!cidade || !nicho) return res.status(400).json({ sucesso: false, erro: "Cidade e Nicho são obrigatórios" });
-
-    try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade + ", Brasil")}`,
-        { headers: { "User-Agent": "FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)" } }
-      );
-      const geoData = await geoRes.json();
-      if (!geoData || geoData.length === 0) return res.status(404).json({ sucesso: false, erro: "Cidade não encontrada." });
-
-      const lat = parseFloat(geoData[0].lat);
-      const lon = parseFloat(geoData[0].lon);
-      const raioKmVal = typeof raio === "number" && raio > 0 ? raio : parseInt(raio) || 15;
-      const raioMetros = Math.min(raioKmVal, 100) * 1000; // supports up to 100km raio without ignoring user selection
-      const limit = Math.min(parseInt(maxResults) || 20, 50);
-
-      const overpassFilter = getOverpassFilter(nicho, customNicho);
-      const overpassQueries = overpassFilter.split(";").filter(Boolean).map(q => `${q}(around:${raioMetros},${lat},${lon})`);
-      const query = `[out:json][timeout:25];(${overpassQueries.join("; ")});out body ${limit};>;out skel qt;`;
-
-      let elements: any[] = [];
-
-      // Tentar Overpass primeiro
-      try {
-        const overpassData = await queryOverpass(query);
-        elements = overpassData?.elements || [];
-      } catch (overpassErr) {
-        console.warn("[Pipeline] Overpass falhou:", (overpassErr as Error).message);
-      }
-
-      // Fallback: Nominatim search when Overpass returns too few results
-      if (elements.length < 5) {
-        try {
-          const searchNicho = customNicho || nicho;
-          const termLower = searchNicho.toLowerCase();
-          // Richer fallback queries for barbearia/beauty niches
-          let nomQuery: string;
-          const cidadeName = cidade.split("/")[0] || cidade;
-          if (termLower.includes("barbearia") || termLower.includes("barba") || termLower.includes("salão") || termLower.includes("salao") || termLower.includes("estética") || termLower.includes("estetica") || termLower.includes("beleza") || termLower.includes("cabelo")) {
-            nomQuery = `Barbearia e Salão de Beleza em ${cidadeName}`;
-          } else {
-            const firstWord = searchNicho.split(" ")[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            nomQuery = `${firstWord} ${cidadeName}`;
-          }
-          const nomRes = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(nomQuery)}&addressdetails=1&extratags=1&limit=${limit}`,
-            { headers: { "User-Agent": "FocoEmDadosProspector/2.0 (contato@focoemdados.com.br)" } }
-          );
-          const nomData = await nomRes.json();
-          if (Array.isArray(nomData) && nomData.length > 0) {
-            elements = nomData.map((n: any) => ({
-              id: parseInt(n.place_id) || Math.floor(Math.random() * 100000),
-              lat: parseFloat(n.lat),
-              lon: parseFloat(n.lon),
-              tags: {
-                name: (n.display_name || "").split(",")[0] || nomQuery,
-                phone: n.extratags?.phone || n.extratags?.["contact:phone"] || null,
-                website: n.extratags?.website || n.extratags?.["contact:website"] || null,
-                email: n.extratags?.email || n.extratags?.["contact:email"] || null,
-                opening_hours: n.extratags?.opening_hours || null,
-                "addr:street": n.address?.road || null,
-                "addr:housenumber": n.address?.house_number || null,
-                "addr:suburb": n.address?.suburb || n.address?.neighbourhood || null,
-                "addr:city": n.address?.city || n.address?.town || null,
-              },
-            }));
-          }
-        } catch (nomErr) {
-          console.warn("[Pipeline] Nominatim fallback falhou:", (nomErr as Error).message);
-        }
-      }
-
-      const leadsReais: any[] = [];
-      const seen = new Set<string>();
-
-      for (const el of elements) {
-        if (!el.tags?.name) continue;
-        const name = el.tags.name.trim();
-        if (seen.has(name)) continue;
-        seen.add(name);
-
-        const elLat = el.lat;
-        const elLon = el.lon;
-        const R = 6371;
-        const dLat = (elLat - lat) * Math.PI / 180;
-        const dLon = (elLon - lon) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat * Math.PI / 180) * Math.cos(elLat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-        const distancia = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        if (distancia > raioKmVal) continue;
-
-        const phone = el.tags.phone || el.tags["contact:phone"] || null;
-        const website = el.tags.website || el.tags["contact:website"] || null;
-        const email = el.tags.email || el.tags["contact:email"] || null;
-        const openingHours = el.tags.opening_hours || null;
-        const cuisine = el.tags.cuisine || null;
-        const addr = [el.tags["addr:street"], el.tags["addr:housenumber"], el.tags["addr:suburb"], el.tags["addr:city"]].filter(Boolean).join(", ") || null;
-        const temSite = !!website;
-
-        leadsReais.push({
-          id: `overpass_${el.id}`, nome: name, nicho, cidade,
-          telefone: phone, whatsapp: phone, email, siteUrl: website, endereco: addr,
-          temSite, necessitaRedesign: !temSite,
-          redesignPreviewUrl: `/preview-redesign?nome=${encodeURIComponent(name)}&nicho=${encodeURIComponent(nicho)}&cidade=${encodeURIComponent(cidade)}`,
-          score: temSite ? Math.floor(Math.random() * 15) + 50 : Math.floor(Math.random() * 15) + 75,
-          status: temSite ? "Site Potencial (Redesign)" : "Sem Site (Oportunidade)",
-          distancia: parseFloat(distancia.toFixed(1)), isRealData: true,
-          osmType: "node", osmId: el.id, lat: elLat, lon: elLon,
-          tags: { cuisine, openingHours, amenity: el.tags.amenity, shop: el.tags.shop, industrial: el.tags.industrial, craft: el.tags.craft, building: el.tags.building },
-        });
-      }
-
-      return res.status(200).json({
-        sucesso: true,
-        mensagem: leadsReais.length > 0
-          ? `${leadsReais.length} empresas reais encontradas em ${cidade} para "${nicho}"`
-          : `Nenhuma empresa encontrada para "${nicho}" em ${cidade}. Tente outro nicho ou raio maior.`,
-        parametros: { nicho, customNicho, cidade, raio: parseInt(raio) || 15, ticketAlvo, mrrAlvo, focoAbordagem },
-        coordenadas: { lat, lon },
-        totalEncontrados: leadsReais.length,
-        leads: leadsReais,
-        fonte: "OpenStreetMap/Overpass API (dados abertos reais)",
-        overpassFilterUsed: overpassFilter,
-      });
-    } catch (error: any) {
-      console.error("[Pipeline Error]:", error);
-      return res.status(500).json({ sucesso: false, erro: "Erro interno ao processar prospecção.", detalhes: error.message });
-    }
-  });
-
-  /* ────────────────────────────────────────────────────────── */
-  /*  Prospect (mock fallback)                                  */
-  /* ────────────────────────────────────────────────────────── */
-  app.post("/api/prospect", (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    const { nicho, cidade } = req.body || {};
-    if (!cidade || !nicho) return res.status(400).json({ sucesso: false, erro: "Cidade e Nicho obrigatórios" });
-
-    const leadsMapeados = [
-      { id: `lead_${Date.now()}_1`, nome: `${nicho} Premium ${cidade}`, nicho, cidade, temSite: false, necessitaRedesign: true, score: 88, status: "Redesign Gerado", previewUrl: `https://preview.focoemdados.com.br/demo-1` },
-      { id: `lead_${Date.now()}_2`, nome: `Centro de ${nicho} ${cidade}`, nicho, cidade, temSite: true, siteAtual: "http://site-antigo.com.br", necessitaRedesign: true, score: 92, status: "Pronto para Abordagem", previewUrl: `https://preview.focoemdados.com.br/demo-2` },
-    ];
-    return res.status(200).json({ sucesso: true, mensagem: "Pipeline executado com sucesso.", leads: leadsMapeados });
-  });
-
-
 startServer();
-export default startServer;
