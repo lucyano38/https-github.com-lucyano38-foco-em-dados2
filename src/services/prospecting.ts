@@ -14,30 +14,41 @@ export interface ProspectingResult {
 const CNAE_MAP: Record<string, { code: string; description: string }> = {
   odontologia: { code: "8630-5/04", description: "Atividades de cirurgiões-dentistas" },
   dentista: { code: "8630-5/04", description: "Atividades de cirurgiões-dentistas" },
-  "clínica odontológica": { code: "8630-5/04", description: "Atividades de cirurgiões-dentistas" },
-  odontologia_estetica: { code: "8630-5/04", description: "Atividades de cirurgiões-dentistas" },
+  "clinica odontologica": { code: "8630-5/04", description: "Atividades de cirurgiões-dentistas" },
+  "odontologia e estetica": { code: "8630-5/04", description: "Atividades de cirurgiões-dentistas" },
   estetica: { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
-  "clínica estética": { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
+  "clinica estetica": { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
   beleza: { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
   "salao beleza": { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
   spa: { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
-  "salão spa": { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
+  "salao spa": { code: "9602-3/01", description: "Lojas de beleza e salões de beleza" },
 };
 
 const GOOGLE_PLACES_TERMS: Record<string, string[]> = {
   odontologia: ["dentista", "cirurgião-dentista", "clínica odontológica", "clínica dental"],
   dentista: ["dentista", "cirurgião-dentista", "clínica odontológica", "clínica dental"],
-  "clínica odontológica": ["dentista", "cirurgião-dentista", "clínica odontológica", "clínica dental"],
-  odontologia_estetica: ["dentista", "clínica odontológica", "cirurgião-dentista"],
+  "clinica odontologica": ["dentista", "cirurgião-dentista", "clínica odontológica", "clínica dental"],
+  "odontologia e estetica": ["dentista", "clínica odontológica", "cirurgião-dentista"],
   estetica: ["estetica", "beauty", "spa", "clinica estetica", "salao beleza"],
   beleza: ["beauty", "spa", "estetica", "clinica estetica", "salao beleza"],
   "salao beleza": ["salao beleza", "beauty salon", "estetica", "spa"],
   spa: ["spa", "wellness", "beauty", "clinica estetica"],
-  "salão spa": ["spa", "wellness", "beauty salon"],
+  "salao spa": ["spa", "wellness", "beauty salon"],
 };
 
+function normalizeNiche(niche: string): string {
+  return niche
+    .toLowerCase()
+    .replace(/&/g, " e ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/_/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 export function getGooglePlacesTerms(niche: string): string[] {
-  const key = niche.toLowerCase().trim();
+  const key = normalizeNiche(niche);
   if (GOOGLE_PLACES_TERMS[key]) {
     return GOOGLE_PLACES_TERMS[key];
   }
@@ -50,7 +61,7 @@ export function getGooglePlacesTerms(niche: string): string[] {
 }
 
 export function getCnaeCodes(niche: string): { code: string; description: string } | null {
-  const key = niche.toLowerCase().trim();
+  const key = normalizeNiche(niche);
   if (CNAE_MAP[key]) {
     return CNAE_MAP[key];
   }

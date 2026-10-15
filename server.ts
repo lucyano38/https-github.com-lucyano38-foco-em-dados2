@@ -1,4 +1,4 @@
-import express from "express";
+//rep -rn "prospectarEstabelecimentos" . --exclude-dir=node_modules --exclude-dir=.import express from "express";
 import path from "path";
 import multer from "multer";
 import Papa from "papaparse";
